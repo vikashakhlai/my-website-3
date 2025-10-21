@@ -1,0 +1,65 @@
+.quotes-container {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  font-family: "Noto Sans", sans-serif;
+  background: url("/uploads/quotes-bg.png") center/contain no-repeat;
+  background-color: #f9f9f9;
+}
+
+.quote-item {
+  width: 45%;
+  max-width: 500px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(5px);
+  padding: 20px 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.quote-item:hover {
+  transform: scale(1.02);
+}
+
+.quote-item-1 {
+  position: absolute;
+  top: 10%;
+  left: 8%;
+}
+
+.quote-item-2 {
+  position: absolute;
+  bottom: 10%;
+  right: 8%;
+}
+
+.quote-ar {
+  direction: rtl;
+  text-align: right;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.quote-ru {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 14px;
+}
+
+.quote-author {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0077cc;
+  text-decoration: none;
+}
+
+.quote-author:hover {
+  text-decoration: underline;
+}

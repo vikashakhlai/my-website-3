@@ -6,9 +6,11 @@ import {
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { Article } from 'src/articles/article.entity';
 import { Book } from '../books/book.entity';
+import { Quote } from 'src/quotes/quote.entity';
 
 export enum Era {
   PRE_ISLAMIC = 'pre_islamic', // Доисламский
@@ -70,4 +72,7 @@ export class Personality {
     inverseJoinColumn: { name: 'book_id', referencedColumnName: 'id' },
   })
   books!: Book[];
+
+  @OneToMany(() => Quote, (quote) => quote.personality)
+  quotes!: Quote[];
 }

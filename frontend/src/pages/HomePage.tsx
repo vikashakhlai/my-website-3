@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import CenteredBlock from "../components/CenteredBlock";
 import BookList from "../components/BookList";
-import QuoteSlider from "../components/QuoteSlider";
-import dataQuotes from "../components/dataQuotes";
+import QuotesBlock from "../components/QuotesBlock";
 import { Book } from "../types/Book";
 import ArticleCard from "../components/ArticleCard";
 import { Article } from "../types/article";
@@ -84,7 +83,7 @@ const HomePage = () => {
       </section>
 
       <section className="section">
-        <QuoteSlider quotes={dataQuotes} />
+        <QuotesBlock />
       </section>
 
       <section className="section">

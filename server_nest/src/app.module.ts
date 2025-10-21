@@ -15,6 +15,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { VideosModule } from './videos/videos.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { PersonalitiesModule } from './personalities/personalities.module';
+import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { PersonalitiesModule } from './personalities/personalities.module';
     VideosModule,
     DictionaryModule,
     PersonalitiesModule,
+    QuotesModule,
   ],
 
   controllers: [AppController],
