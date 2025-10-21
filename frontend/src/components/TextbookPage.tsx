@@ -14,8 +14,11 @@ const TextbookPage = () => {
   const [textbook, setTextbook] = useState<TextBookProps | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Хук для избранного учебников
+  // ✅ Подключаем избранное для учебников
   const { favorites, toggleFavorite } = useFavorites("textbook");
+
+  // 🔹 Локальное состояние для мгновенного обновления кнопки
+  const [localFavorite, setLocalFavorite] = useState(false);
 
   useEffect(() => {
     const fetchTextbook = async () => {
@@ -34,11 +37,25 @@ const TextbookPage = () => {
     fetchTextbook();
   }, [id]);
 
+  // 🔹 Обновляем локальное состояние при изменении списка избранного
+  useEffect(() => {
+    if (textbook) {
+      setLocalFavorite(favorites.some((f) => f.id === textbook.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favorites, textbook?.id]);
+
+  // 🔹 Обработчик клика
+  const handleToggleFavorite = async () => {
+    if (!textbook) return;
+
+    const wasFavorite = favorites.some((f) => f.id === textbook.id);
+    await toggleFavorite(textbook);
+    setLocalFavorite(!wasFavorite);
+  };
+
   if (loading) return <div>Загрузка...</div>;
   if (!textbook) return <div>Учебник не найден</div>;
-
-  // ✅ теперь безопасная проверка
-  const isFavorite = favorites.some((f) => f.id === textbook.id);
 
   return (
     <div className="textbook-page">
@@ -74,8 +91,8 @@ const TextbookPage = () => {
         {/* ❤️ Кнопка избранного */}
         <div className="favorite-btn-container">
           <FavoriteButton
-            isFavorite={isFavorite}
-            onToggle={() => toggleFavorite(textbook)}
+            isFavorite={localFavorite}
+            onToggle={handleToggleFavorite}
           />
         </div>
 

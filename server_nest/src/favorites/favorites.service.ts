@@ -4,10 +4,16 @@ import { In, Repository } from 'typeorm';
 import { Favorite } from './favorite.entity';
 import { Book } from '../books/book.entity';
 import { Textbook } from '../textbooks/textbook.entity';
-import { Article } from 'src/articles/article.entity';
+import { Article } from '../articles/article.entity';
 import { Video } from '../videos/video.entity';
+import { Personality } from '../personalities/personality.entity';
 
-export type FavoriteType = 'book' | 'textbook' | 'article' | 'video';
+export type FavoriteType =
+  | 'book'
+  | 'textbook'
+  | 'article'
+  | 'video'
+  | 'personality';
 
 @Injectable()
 export class FavoritesService {
@@ -26,6 +32,9 @@ export class FavoritesService {
 
     @InjectRepository(Video)
     private readonly videoRepo: Repository<Video>,
+
+    @InjectRepository(Personality)
+    private readonly personalityRepo: Repository<Personality>,
   ) {}
 
   /** ⭐ Добавить элемент в избранное */
@@ -46,7 +55,7 @@ export class FavoritesService {
     });
 
     if (existing) {
-      return existing; // уже добавлено
+      return existing;
     }
 
     const favorite = this.favoriteRepo.create({
@@ -55,7 +64,7 @@ export class FavoritesService {
       itemId,
     });
 
-    return this.favoriteRepo.save(favorite);
+    return await this.favoriteRepo.save(favorite);
   }
 
   /** 🗑 Удалить элемент из избранного */
@@ -63,7 +72,7 @@ export class FavoritesService {
     userId: string,
     itemId: number,
     type: FavoriteType,
-  ): Promise<Favorite> {
+  ): Promise<void> {
     const existing = await this.favoriteRepo.findOne({
       where: { userId, itemType: type, itemId },
     });
@@ -74,7 +83,7 @@ export class FavoritesService {
       );
     }
 
-    return this.favoriteRepo.remove(existing);
+    await this.favoriteRepo.remove(existing);
   }
 
   /** 📋 Получить все избранные элементы пользователя по конкретному типу */
@@ -90,13 +99,12 @@ export class FavoritesService {
     const repo = this.getRepoByType(type);
     const items = await repo.find({ where: { id: In(ids) } });
 
-    // сохранить порядок избранного
     return ids
       .map((id) => items.find((i) => i.id === id))
       .filter((i): i is NonNullable<typeof i> => Boolean(i));
   }
 
-  /** 📋 Получить все избранные элементы пользователя по типу */
+  /** 📋 Получить все избранные элементы всех типов */
   async getAllUserFavorites(userId: string) {
     const favorites = await this.favoriteRepo.find({
       where: { userId },
@@ -108,16 +116,25 @@ export class FavoritesService {
       textbooks: [] as Textbook[],
       articles: [] as Article[],
       videos: [] as Video[],
+      personalities: [] as Personality[],
     };
 
-    for (const type of ['book', 'textbook', 'article', 'video'] as const) {
+    for (const type of [
+      'book',
+      'textbook',
+      'article',
+      'video',
+      'personality',
+    ] as const) {
       const ids = favorites
         .filter((f) => f.itemType === type)
         .map((f) => f.itemId);
+
       if (!ids.length) continue;
 
       const repo = this.getRepoByType(type);
       const items = await repo.find({ where: { id: In(ids) } });
+
       (grouped as any)[`${type}s`] = ids
         .map((id) => items.find((i) => i.id === id))
         .filter(Boolean);
@@ -127,22 +144,18 @@ export class FavoritesService {
   }
 
   /** 🧩 Определяем, какой репозиторий использовать */
-  private getRepoByType(
-    type: FavoriteType,
-  ): Repository<Book | Textbook | Article | Video> {
+  private getRepoByType(type: FavoriteType): Repository<any> {
     switch (type) {
       case 'book':
-        return this.bookRepo as Repository<Book | Textbook | Article | Video>;
+        return this.bookRepo;
       case 'textbook':
-        return this.textbookRepo as Repository<
-          Book | Textbook | Article | Video
-        >;
+        return this.textbookRepo;
       case 'article':
-        return this.articleRepo as Repository<
-          Book | Textbook | Article | Video
-        >;
+        return this.articleRepo;
       case 'video':
-        return this.videoRepo as Repository<Book | Textbook | Article | Video>;
+        return this.videoRepo;
+      case 'personality':
+        return this.personalityRepo;
       default:
         throw new NotFoundException(`Неизвестный тип избранного: ${type}`);
     }
@@ -155,6 +168,7 @@ export class FavoritesService {
       textbook: 'Учебник',
       article: 'Статья',
       video: 'Видео',
+      personality: 'Личность',
     };
     return map[type];
   }

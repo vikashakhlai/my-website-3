@@ -27,6 +27,13 @@ export class QuotesService {
       .getMany();
   }
 
+  async findByPersonality(personalityId: number) {
+    return this.quoteRepo.find({
+      where: { personality: { id: personalityId } },
+      relations: ['personality'],
+    });
+  }
+
   // 🔹 Создать новую цитату
   async create(text_ar: string, text_ru: string, personalityId?: number) {
     const quote = this.quoteRepo.create({

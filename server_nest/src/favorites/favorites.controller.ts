@@ -15,7 +15,13 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { Request } from 'express';
 
 // допустимые типы избранного
-export const ALLOWED_TYPES = ['book', 'textbook', 'article', 'video'] as const;
+export const ALLOWED_TYPES = [
+  'book',
+  'textbook',
+  'article',
+  'video',
+  'personality',
+] as const;
 export type FavoriteType = (typeof ALLOWED_TYPES)[number];
 
 @Controller('favorites')

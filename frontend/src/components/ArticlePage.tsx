@@ -17,15 +17,20 @@ import MultipleChoiceExercise from "../components/Exercises/MultipleChoiceExerci
 import OpenQuestionExercise from "./Exercises/OpenQuestionExercise";
 import FlashcardsExercise from "./Exercises/FlashcardsExercise";
 import MatchingPairsExercise from "./Exercises/MatchingPairsExercise";
+
 import useScrollToTop from "../hooks/useScrollToTop";
+import FavoriteButton from "../components/FavoriteButton";
 
 const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useScrollToTop();
 
+  // 🔹 Загружаем статью
   useEffect(() => {
     if (!id) {
       navigate("/");
@@ -55,6 +60,53 @@ const ArticlePage = () => {
       });
   }, [id, navigate]);
 
+  // 🔹 Проверяем, добавлена ли статья в избранное
+  useEffect(() => {
+    const fetchFavoriteStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token || !id) return;
+
+        const res = await fetch("/api-nest/favorites/article", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+
+        const favorites = await res.json();
+        setIsFavorite(favorites.some((f: any) => f.id === Number(id)));
+      } catch (err) {
+        console.error("Ошибка при загрузке избранного:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFavoriteStatus();
+  }, [id]);
+
+  // 🔹 Добавление / удаление из избранного
+  const toggleFavorite = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Для добавления в избранное нужно войти в аккаунт.");
+      return;
+    }
+
+    try {
+      const method = isFavorite ? "DELETE" : "POST";
+      const res = await fetch(`/api-nest/favorites/article/${id}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Ошибка при изменении избранного");
+
+      setIsFavorite(!isFavorite);
+    } catch (err) {
+      console.error("Ошибка избранного:", err);
+    }
+  };
+
   if (!article) {
     return <div className="article-page">Загрузка...</div>;
   }
@@ -68,14 +120,25 @@ const ArticlePage = () => {
         className="article-image"
       />
 
-      {/* Тема статьи — как бейдж */}
+      {/* Заголовок и избранное */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          justifyContent: "space-between",
+        }}
+      >
+        <h1 className="article-title">{article.titleRu}</h1>
+        <FavoriteButton isFavorite={isFavorite} onToggle={toggleFavorite} />
+      </div>
+
+      <h2 className="article-title-arabic">{article.titleAr}</h2>
+
+      {/* Тема */}
       <div className="article-theme">
         Тема: <span className="article-theme-label">{article.themeRu}</span>
       </div>
-
-      {/* Заголовки */}
-      <h1 className="article-title">{article.titleRu}</h1>
-      <h2 className="article-title-arabic">{article.titleAr}</h2>
 
       {/* Описание */}
       {article.description && (
@@ -119,11 +182,13 @@ const ArticlePage = () => {
                 <FlashcardsExercise key={exercise.id} exercise={exercise} />
               );
             }
+
             if (isMatchingPairsExercise(exercise)) {
               return (
                 <MatchingPairsExercise key={exercise.id} exercise={exercise} />
               );
             }
+
             return null;
           })}
         </div>

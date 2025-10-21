@@ -5,18 +5,28 @@ import {
   FavoriteEntity,
 } from "../api/favorites";
 
+/**
+ * Универсальный хук для работы с избранным.
+ * Поддерживает загрузку, добавление, удаление и проверку состояния.
+ */
 export const useFavorites = (type: FavoriteItemType) => {
   const [favorites, setFavorites] = useState<FavoriteEntity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // === 📦 Загрузка избранного ===
   const loadFavorites = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const data = await favoritesApi.getFavorites(type);
-      setFavorites(data);
+      if (Array.isArray(data)) {
+        setFavorites(data);
+      } else {
+        console.warn("Неверный формат данных от API избранного:", data);
+        setFavorites([]);
+      }
     } catch (err) {
       console.error(`Ошибка при загрузке избранных ${type}:`, err);
       setError("Не удалось загрузить избранное");
@@ -40,8 +50,8 @@ export const useFavorites = (type: FavoriteItemType) => {
           await favoritesApi.remove(type, item.id);
           setFavorites((prev) => prev.filter((f) => f.id !== item.id));
         } else {
-          const added = await favoritesApi.add(type, item.id);
-          setFavorites((prev) => [...prev, added]);
+          await favoritesApi.add(type, item.id);
+          setFavorites((prev) => [...prev, item]);
         }
       } catch (err) {
         console.error("Ошибка при изменении избранного:", err);
@@ -50,6 +60,7 @@ export const useFavorites = (type: FavoriteItemType) => {
     [favorites, type]
   );
 
+  // === 🔍 Проверка избранного ===
   const isFavorite = useCallback(
     (id: number) => favorites.some((f) => f.id === id),
     [favorites]

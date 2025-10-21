@@ -14,8 +14,8 @@ const BookList = ({ books = [] }: BookListProps) => {
         base: "1fr",
         sm: "repeat(2, 1fr)",
         md: "repeat(3, 1fr)",
-        lg: "repeat(4, 1fr)",
-        xl: "repeat(auto-fit, minmax(240px, 1fr))",
+        lg: "repeat(5, 1fr)",
+        xl: "repeat(auto-fit, minmax(230px, 1fr))",
       }}
       gap="6"
     >

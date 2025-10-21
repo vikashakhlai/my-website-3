@@ -11,12 +11,17 @@ const Layout = () => {
 
   // пути, где словарь должен быть скрыт
   const hiddenDictionaryRoutes = ["/DictionaryPage", "/login", "/register"];
-
   const isDictionaryHidden = hiddenDictionaryRoutes.includes(location.pathname);
+
+  // пути, где не нужно показывать шапку (и при желании футер)
+  const hideHeaderRoutes = ["/login", "/register"];
+  const isHeaderHidden = hideHeaderRoutes.includes(location.pathname);
 
   return (
     <>
-      <Header />
+      {/* 👇 Скрываем Header на страницах авторизации */}
+      {!isHeaderHidden && <Header />}
+
       <main className="main-content">
         <Outlet />
       </main>

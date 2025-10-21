@@ -6,7 +6,8 @@ export type FavoriteItemType =
   | "textbook"
   | "article"
   | "video"
-  | "exercise";
+  | "exercise"
+  | "personality";
 
 export interface FavoriteEntity {
   id: number;

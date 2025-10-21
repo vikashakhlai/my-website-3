@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  ParseIntPipe,
+  Param,
+} from '@nestjs/common';
 import { QuotesService } from './quotes.service';
 
 @Controller('quotes')
@@ -22,6 +30,11 @@ export class QuotesController {
           }
         : null, // 💡 безопасно обрабатываем отсутствие автора
     }));
+  }
+
+  @Get('by-personality/:id')
+  async getByPersonality(@Param('id', ParseIntPipe) id: number) {
+    return this.quotesService.findByPersonality(id);
   }
 
   // ➕ добавление цитаты

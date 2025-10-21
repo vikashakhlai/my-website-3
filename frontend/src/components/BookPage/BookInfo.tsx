@@ -1,50 +1,12 @@
 import { Link } from "react-router-dom";
 import styles from "./BookInfo.module.css";
 import { Book } from "./BookPage";
-import FavoriteButton from "../FavoriteButton";
-import { useState } from "react";
-import { jwtDecode } from "jwt-decode";
 
 interface BookInfoProps {
   book: Book;
 }
 
-interface JWTPayload {
-  sub: string;
-  role: string;
-}
-
 const BookInfo = ({ book }: BookInfoProps) => {
-  const [isFavorite, setIsFavorite] = useState<boolean>(
-    book.isFavorite ?? false
-  );
-
-  const toggleFavorite = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Для добавления в избранное нужно войти в аккаунт.");
-      return;
-    }
-
-    try {
-      const decoded = jwtDecode<JWTPayload>(token);
-      console.log("👤 userId (из токена):", decoded.sub);
-
-      const res = await fetch(`/api-nest/books/${book.id}/favorite`, {
-        method: isFavorite ? "DELETE" : "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Ошибка при изменении избранного");
-
-      setIsFavorite(!isFavorite);
-    } catch (err) {
-      console.error("❌ Ошибка избранного:", err);
-    }
-  };
-
   const cover =
     book.cover_url && book.cover_url.startsWith("http")
       ? book.cover_url
@@ -86,8 +48,6 @@ const BookInfo = ({ book }: BookInfoProps) => {
               ))
             : "Не указаны"}
         </div>
-
-        <FavoriteButton isFavorite={isFavorite} onToggle={toggleFavorite} />
 
         {book.description && (
           <div className={styles.description}>{book.description}</div>

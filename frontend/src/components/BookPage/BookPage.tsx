@@ -9,6 +9,8 @@ import BookTags from "./BookTags";
 import BookRating from "./BookRating";
 import BookGallery from "./BookGallery";
 import BookComments from "./BookComments";
+import FavoriteButton from "../../components/FavoriteButton";
+import { useFavorites } from "../../hooks/useFavorites";
 
 // === Типы ===
 export interface Author {
@@ -66,26 +68,23 @@ const BookPage = () => {
 
   useScrollToTop();
 
+  // ❤️ Подключаем избранное
+  const { favorites, toggleFavorite } = useFavorites("book");
+  const [localFavorite, setLocalFavorite] = useState(false);
+
   const fetchBook = async () => {
     try {
-      const token = localStorage.getItem("token"); // <-- достаём токен
-
+      const token = localStorage.getItem("token");
       const res = await fetch(`/api-nest/books/${id}?t=${Date.now()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}, // <-- добавляем в headers
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-
       const data = await res.json();
-      console.log("📚 BOOK DATA:", data);
 
-      // Обрабатываем API, независимо от структуры
       const rootBook = data.book ?? data;
-
       const safeBook: Book = {
         ...rootBook,
-
-        // ✅ нормализуем издателя
         publisher: rootBook.publisher
           ? rootBook.publisher
           : rootBook.publisher_id
@@ -96,7 +95,6 @@ const BookPage = () => {
                 `Издательство #${rootBook.publisher_id}`,
             }
           : undefined,
-
         authors: Array.isArray(rootBook.authors) ? rootBook.authors : [],
         tags: Array.isArray(rootBook.tags) ? rootBook.tags : [],
         comments: Array.isArray(rootBook.comments) ? rootBook.comments : [],
@@ -122,6 +120,21 @@ const BookPage = () => {
     if (id) fetchBook();
   }, [id]);
 
+  // ✅ Синхронизируем локальное состояние
+  useEffect(() => {
+    if (book?.id) {
+      setLocalFavorite(favorites.some((f) => f.id === book.id));
+    }
+  }, [favorites, book?.id]);
+
+  // ❤️ Обработчик
+  const handleToggleFavorite = async () => {
+    if (!book) return;
+    const wasFavorite = favorites.some((f) => f.id === book.id);
+    await toggleFavorite(book);
+    setLocalFavorite(!wasFavorite);
+  };
+
   if (loading) return <div className={styles.container}>Загрузка...</div>;
   if (error) return <div className={styles.container}>Ошибка: {error}</div>;
   if (!book) return <div className={styles.container}>Книга не найдена</div>;
@@ -131,6 +144,13 @@ const BookPage = () => {
       <BackZone to="/BooksPage" />
       <div className={styles.container}>
         <BookInfo book={book} />
+        {/* ❤️ Кнопка добавления в избранное */}
+        <div className={styles.favoriteButtonWrapper}>
+          <FavoriteButton
+            isFavorite={localFavorite}
+            onToggle={handleToggleFavorite}
+          />
+        </div>
         <BookTags tags={book.tags} />
         <BookRating
           book={book}
