@@ -39,7 +39,7 @@ import { PersonalitiesModule } from './personalities/personalities.module';
           password: dbConfig.password,
           database: dbConfig.database,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: process.env.NODE_ENV !== 'production', // в проде выключаем
+          synchronize: false,
           logging: process.env.NODE_ENV === 'development',
           ssl:
             process.env.NODE_ENV === 'production'

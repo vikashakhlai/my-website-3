@@ -13,7 +13,7 @@ import { Author } from '../authors/authors.entity';
 import { Tag } from '../tags/tags.entity';
 import { BookComment } from './book-comment.entity';
 import { BookRating } from './book-rating.entity';
-import { Publisher } from '../publishers/publisher.entity'; // ✅ лучше без абсолютного пути 'src/...'
+import { Publisher } from '../publishers/publisher.entity';
 import { Personality } from 'src/personalities/personality.entity';
 
 @Entity('books')
@@ -43,7 +43,7 @@ export class Book {
   created_at!: Date;
 
   // 🔗 Авторы — связь многие ко многим
-  @ManyToMany(() => Author, (author) => author.books, { cascade: true })
+  @ManyToMany(() => Author, (author) => author.books)
   @JoinTable({
     name: 'book_authors',
     joinColumn: { name: 'book_id', referencedColumnName: 'id' },

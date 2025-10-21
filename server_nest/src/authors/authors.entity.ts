@@ -1,24 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { Book } from '../books/book.entity';
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Book } from 'src/books/book.entity';
 
-@Entity('authors')
+@Entity({ name: 'authors' })
 export class Author {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id' })
   id!: number;
 
-  @Column({ type: 'text' })
-  full_name!: string;
+  @Column({ name: 'full_name', type: 'varchar', nullable: true })
+  fullName!: string;
 
-  @Column({ type: 'text' })
-  slug!: string;
+  @Column({ name: 'bio', type: 'text', nullable: true })
+  bio?: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  bio!: string;
+  @Column({ name: 'photo_url', type: 'varchar', nullable: true })
+  photoUrl?: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  photo_url!: string;
-
-  // 🔗 Связь многие-ко-многим с книгами
   @ManyToMany(() => Book, (book) => book.authors)
   books!: Book[];
 }
