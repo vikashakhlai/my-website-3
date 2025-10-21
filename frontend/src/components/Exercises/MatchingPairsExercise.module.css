@@ -1,0 +1,145 @@
+/* src/components/exercises/MatchingPairsExercise/MatchingPairsExercise.module.css */
+
+.exerciseContainer {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.instructions {
+  margin-bottom: 24px;
+  padding: 12px;
+  background: #e9ecef;
+  border-radius: 8px;
+}
+
+.instructionAr {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 8px 0;
+  text-align: right;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+.instructionRu {
+  font-size: 14px;
+  color: #555;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.matchingArea {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 30px;
+}
+
+.columnTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: right;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+.termsColumn,
+.definitionsColumn {
+  flex: 1;
+}
+
+.termItem,
+.definitionItem {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: right;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  line-height: 1.5;
+}
+
+.termItem:hover,
+.definitionItem:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.termItem.selected,
+.definitionItem.selected {
+  border-color: #0d6efd;
+  background: #e7f1ff;
+}
+
+.termItem.correct,
+.definitionItem.correct {
+  border-color: #28a745;
+  background: #d4edda;
+  color: #155724;
+  font-weight: 600;
+}
+
+.termItem.incorrect,
+.definitionItem.incorrect {
+  border-color: #dc3545;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Сопоставленные пары */
+.matchedPairs {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+.matchedTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: right;
+  direction: rtl;
+}
+
+.matchedPair {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  direction: rtl;
+  text-align: right;
+}
+
+.matchedTerm,
+.matchedDef {
+  unicode-bidi: plaintext;
+}
+
+.matchedTerm {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+.matchedDef {
+  color: #212529;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .matchingArea {
+    flex-direction: column;
+    gap: 20px;
+  }
+}

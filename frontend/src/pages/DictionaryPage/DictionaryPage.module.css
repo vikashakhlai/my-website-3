@@ -1,0 +1,292 @@
+/* DictionaryPage.module.css */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.searchSection {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 1.1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  outline: none;
+  direction: auto;
+  font-family: "Arial", sans-serif;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  border-color: #4a6cf7;
+}
+
+.keyboardToggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f0f4ff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #4a6cf7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Автодополнение */
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000; /* чтобы был поверх всех */
+  margin-top: 4px;
+}
+
+/* Если клавиатура открывается — поднимаем список выше */
+@media (max-height: 600px) {
+  .suggestions {
+    top: auto;
+    bottom: 100%; /* отступает от нижней границы окна */
+    margin-bottom: 4px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestionItem {
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 1rem;
+  direction: auto;
+  transition: background 0.2s;
+}
+
+.suggestionItem:hover {
+  background-color: #f8f9ff;
+}
+
+mark {
+  background-color: var(--secondary-color);
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Результаты */
+.results {
+  margin-top: 2rem;
+}
+
+.wordCard {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.wordHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.arabicWord {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2d3748;
+  font-family: "Arial", sans-serif;
+  direction: rtl;
+}
+
+.russianWord {
+  font-size: 1.2rem;
+  color: #4a5568;
+}
+
+.rootTag {
+  background: var(--color-primary);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 80px; /* чтобы не сжимался при маленьком тексте */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.2;
+}
+
+/* Если хотите чуть больше отступов между строками */
+.rootTag > span:first-child {
+  margin-bottom: 2px;
+}
+
+.verbForms {
+  margin: 1.5rem 0 1.2rem 0;
+}
+
+.formItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.formItem:last-child {
+  border-bottom: none;
+}
+
+.formItemHighlighted:last-child {
+  margin-bottom: 16px;
+}
+
+.formRoman {
+  min-width: 36px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.formArabic {
+  font-size: 1.3rem;
+  font-family: "Arial", sans-serif;
+  direction: rtl;
+  color: #2d3748;
+}
+
+.formMeaning {
+  color: #4a5568;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.examples {
+  margin-top: 0;
+  padding-top: 12px; /* ← ДОБАВЛЯЕМ ОТСТУП СВЕРХУ */
+  border-top: 1px solid #eee; /* ← опционально: линия разделения */
+}
+
+.exampleItem {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f8f8f8;
+}
+
+.exampleItem:last-child {
+  border-bottom: none;
+}
+
+.exampleAr {
+  font-family: "Arial", sans-serif;
+  direction: rtl;
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin-bottom: 0.3rem;
+}
+
+.exampleRu {
+  color: #4a5568;
+  font-style: italic;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+  .keyboard-row {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .key {
+    font-size: 1rem;
+    padding: 10px 0;
+  }
+
+  .searchInput {
+    font-size: 1rem;
+    padding: 12px 16px;
+  }
+}
+
+.loading {
+  text-align: center;
+  margin: 2rem 0;
+  color: #666;
+}
+
+.noResults {
+  text-align: center;
+  margin: 2rem 0;
+  color: #888;
+  font-style: italic;
+}
+
+.formItemHighlighted {
+  border: 2px solid var(--color-primary);
+  padding: 12px 16px; /* увеличено */
+  margin: 8px -16px 24px -16px; /* больше отступов */
+  border-radius: 8px;
+  background-color: #f0f7ff; /* лёгкий фон для лучшей видимости */
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.formItemHighlighted .formRoman {
+  font-weight: bold;
+  color: #ffffff;
+  font-size: 1.15em;
+  min-width: 40px;
+  height: 32px;
+}
+
+.formItemHighlighted .formArabic {
+  font-size: 1.35rem;
+}
+
+.formItemHighlighted .formMeaning {
+  font-size: 1.1em;
+  color: #2c3e50;
+}

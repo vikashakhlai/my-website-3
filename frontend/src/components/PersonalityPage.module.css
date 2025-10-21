@@ -1,0 +1,95 @@
+.pageWrapper {
+  padding: 20px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+.mainContent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.imageWrapper {
+  flex: 0 0 250px;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.title {
+  font-size: 2.2rem;
+  margin: 0 0 12px 0;
+  color: #2d3748;
+}
+
+.position {
+  font-size: 1.4rem;
+  color: #4a5568;
+  margin: 0 0 24px 0;
+}
+
+.section {
+  margin: 24px 0;
+}
+
+.sectionTitle {
+  font-size: 1.4rem;
+  margin: 0 0 12px 0;
+  color: #2b6cb0;
+}
+
+.factsList,
+.relatedList {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.factItem,
+.relatedItem {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.biography {
+  line-height: 1.7;
+  white-space: pre-line; /* сохраняет переносы из БД */
+}
+
+.relatedLink {
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.relatedLink:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+.articlesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}

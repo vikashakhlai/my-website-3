@@ -1,0 +1,27 @@
+.button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.button:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  color: #caa94d; /* песочно-золотой */
+  transition: color 0.3s ease, fill 0.3s ease, filter 0.3s ease;
+  fill: none;
+}
+
+.active .icon {
+  color: #ffb400;
+  fill: #ffb400;
+  filter: drop-shadow(0 0 4px rgba(255, 176, 0, 0.6));
+}

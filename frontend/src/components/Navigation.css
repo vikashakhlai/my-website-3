@@ -1,0 +1,24 @@
+.navigation {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #4a5568;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+
+.nav-link:hover {
+  color: var(--primary-color);
+  transform: scale(1.05);
+}
+
+.nav-link.active {
+  color: var(--primary-color);
+  font-weight: 600;
+  transform: scale(1.05);
+}

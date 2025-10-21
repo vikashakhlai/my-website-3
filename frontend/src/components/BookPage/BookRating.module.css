@@ -1,0 +1,33 @@
+.ratingSection {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.stars {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.star {
+  cursor: pointer;
+  font-size: 2rem;
+  color: #ddd;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.star:hover {
+  transform: scale(1.2);
+  color: #ffd700;
+}
+
+.star.filled {
+  color: #ffd700;
+}
+
+.average {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #666;
+}

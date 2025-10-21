@@ -1,0 +1,136 @@
+.pageContainer {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: #fafafa;
+  min-height: 100vh;
+}
+
+/* Заголовок */
+.sectionTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Верхняя секция — 1 большая + 1 маленькая */
+.topSection {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* большая и малая */
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Остальные книги — 3 карточки в ряд */
+.booksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.remainingSection {
+  margin-top: 40px;
+}
+
+/* ---------- Карточка ---------- */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Обложка */
+.cover {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #eee;
+}
+
+/* Контент */
+.content {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e1e1e;
+  margin-bottom: 6px;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.4;
+  margin-top: 8px;
+  flex-grow: 1;
+}
+
+/* Большая карточка */
+.big {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.big .cover {
+  height: 100%;
+  object-fit: contain;
+}
+
+.big .content {
+  padding: 24px;
+}
+
+/* Малая и средняя карточки */
+.small .cover,
+.middle .cover {
+  aspect-ratio: 3 / 4;
+}
+
+/* Ссылка-обертка */
+.linkWrapper {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+/* ---------- Адаптив ---------- */
+@media (max-width: 1024px) {
+  .topSection {
+    grid-template-columns: 1fr;
+  }
+
+  .booksGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .big {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .booksGrid {
+    grid-template-columns: 1fr;
+  }
+}

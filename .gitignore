@@ -1,0 +1,70 @@
+# ======================
+# Общие правила
+# ======================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.lock
+.env
+.env.*
+!.env.example
+
+# Кэш и временные файлы
+.cache/
+coverage/
+tmp/
+dist/
+build/
+logs/
+uploads/
+node_modules/
+package-lock.json
+yarn.lock
+
+# ======================
+# Frontend (React / Vite)
+# ======================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/.vite/
+frontend/coverage/
+
+# ======================
+# Express сервер (Node.js)
+# ======================
+server/node_modules/
+server/dist/
+server/build/
+server/uploads/
+server/logs/
+server/config/
+server/.env
+server/.env.*
+!server/.env.example
+server/package-lock.json
+
+# ======================
+# NestJS сервер
+# ======================
+server_nest/node_modules/
+server_nest/dist/
+server_nest/build/
+server_nest/logs/
+server_nest/uploads/
+server_nest/uploads/article_covers/
+server_nest/uploads/book_covers/
+server_nest/.env
+server_nest/.env.*
+!server_nest/.env.example
+server_nest/package-lock.json
+
+# ======================
+# Папка "later" (временные файлы)
+# ======================
+later/

@@ -1,0 +1,27 @@
+/* BackZone.module.css */
+
+.backZone {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05); /* очень светлый фон */
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 16px 0 16px 16px; /* отступ слева и сверху/снизу */
+}
+
+.backZone:hover {
+  background-color: rgba(0, 0, 0, 0.15); /* чуть темнее при наведении */
+}
+
+/* Стрелка влево (обычно для "назад") */
+.arrow {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 10px solid #333; /* цвет стрелки */
+}

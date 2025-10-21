@@ -1,0 +1,198 @@
+/* FillInTheBlanksExercise.module.css */
+
+.container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.title {
+  color: #4a90e2;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.optionsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.wordOption {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  user-select: none;
+}
+
+.wordOption:hover:not(.disabled) {
+  background-color: #e0e0e0;
+  transform: translateY(-1px);
+}
+
+.wordOption.selected {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.wordOption.disabled {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.sentencesContainer {
+  margin-top: 20px;
+}
+
+.sentence {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  font-size: 16px;
+  color: #333;
+  direction: rtl;
+  text-align: right;
+  white-space: nowrap;
+  overflow: visible;
+  word-break: keep-all;
+  gap: 4px;
+}
+
+.sentence .number {
+  font-weight: bold;
+  margin-left: 8px;
+  min-width: 20px;
+  text-align: left;
+  direction: ltr;
+  flex-shrink: 0;
+}
+
+.textPart {
+  white-space: nowrap;
+  display: inline;
+}
+
+.blankSlot {
+  display: inline-block;
+  min-width: 100px;
+  max-width: 200px;
+  height: auto;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  margin: 0 4px;
+  padding: 6px 12px;
+  text-align: center;
+  line-height: 1.4;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  cursor: pointer;
+  direction: ltr;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.blankSlot.correct {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+  animation: pulseGreen 0.5s ease-in-out;
+}
+
+.blankSlot.wrong {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+  animation: pulseRed 0.5s ease-in-out;
+}
+
+.vocabularyTable {
+  margin: 24px 0 32px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tableTitle {
+  color: #4a90e2;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.vocabularyTable table {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.vocabularyTable th,
+.vocabularyTable td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.vocabularyTable th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+}
+
+.vocabularyTable td {
+  color: #333;
+}
+
+.vocabularyTable td:last-child {
+  text-align: right;
+  direction: rtl;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.vocabularyTable tr:last-child td {
+  border-bottom: none;
+}
+
+@keyframes pulseGreen {
+  0% {
+    background-color: #d4edda;
+  }
+  50% {
+    background-color: #b8eac8;
+  }
+  100% {
+    background-color: #d4edda;
+  }
+}
+
+@keyframes pulseRed {
+  0% {
+    background-color: #f8d7da;
+  }
+  50% {
+    background-color: #f1b0b7;
+  }
+  100% {
+    background-color: #f8d7da;
+  }
+}

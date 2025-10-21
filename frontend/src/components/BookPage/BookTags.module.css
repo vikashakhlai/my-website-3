@@ -1,0 +1,28 @@
+.tagsSection {
+  margin-top: 20px;
+}
+
+.tagsSection strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.1em;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background-color: #e2e8f0;
+  color: #2d3748;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.9em;
+}
+
+.noTags {
+  color: #888;
+  font-style: italic;
+}
