@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./ArabicKeyboard.module.css";
 
 interface ArabicKeyboardProps {
@@ -23,18 +23,35 @@ const ArabicKeyboard: React.FC<ArabicKeyboardProps> = ({
     "arabic"
   );
 
-  // Основные раскладки
+  // ====== Добавляем глобальный обработчик клавиши Shift (toggle) ======
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        e.preventDefault();
+        setIsShiftActive((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+  // =====================================================================
+
+  // Основная арабская раскладка
   const arabicLetters = [
     ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],
     ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],
-    ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ"],
+    ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ", "ذ"], // добавили ذ
   ];
 
+  // Диакритические и спец. символы (Shift режим)
   const diacriticsAndSpecial = [
     ["أ", "إ", "آ", "ؤ", "ئ", "ة", "ى", "لا", "ء", "و", "ي", "ا"],
     ["َ", "ُ", "ِ", "ً", "ٌ", "ٍ", "ّ", "ْ", "ٓ", "ٔ", "ٕ", "ـ"],
   ];
 
+  // Русская раскладка
   const russianLetters = [
     ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ъ"],
     ["ф", "ы", "в", "а", "п", "р", "о", "л", "д", "ж", "э"],
@@ -42,18 +59,20 @@ const ArabicKeyboard: React.FC<ArabicKeyboardProps> = ({
   ];
 
   const currentLayout =
-    isShiftActive && currentLang === "arabic"
-      ? diacriticsAndSpecial
-      : currentLang === "russian"
+    currentLang === "russian"
       ? russianLetters
+      : isShiftActive
+      ? diacriticsAndSpecial
       : arabicLetters;
 
   const handleShiftToggle = () => setIsShiftActive((prev) => !prev);
+
   const handleToggleLang = () => {
     const newLang = currentLang === "arabic" ? "russian" : "arabic";
     setCurrentLang(newLang);
     onToggleLang();
   };
+
   const handleSpace = () => onKeyPress(" ");
   const handleBackspace = () => onKeyPress("Bksp");
 
@@ -105,7 +124,9 @@ const ArabicKeyboard: React.FC<ArabicKeyboardProps> = ({
       <div className={`${styles.keyboardRow} ${styles.bottomControls}`}>
         <div className={styles.bottomLeft}>
           <button
-            className={`${styles.keyButton} ${styles.serviceKey} ${styles.actionKey}`}
+            className={`${styles.keyButton} ${styles.serviceKey} ${
+              styles.actionKey
+            } ${isShiftActive ? styles.shiftActive : ""}`}
             onClick={handleShiftToggle}
           >
             {isShiftActive ? "↑" : "Shift"}
@@ -120,7 +141,7 @@ const ArabicKeyboard: React.FC<ArabicKeyboardProps> = ({
 
         <div className={styles.bottomRight}>
           <button
-            className={`${styles.keyButton} ${styles.serviceKey}`}
+            className={`${styles.keyButton} ${styles.serviceKey} ${styles.langToggle}`}
             onClick={handleToggleLang}
           >
             {currentLang === "arabic"

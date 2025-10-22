@@ -17,6 +17,7 @@ interface ExerciseWithItems extends Exercise {
 
 interface ArticleWithExercises extends Article {
   exercises: ExerciseWithItems[];
+  themeRu?: string | null;
 }
 
 @Injectable()
@@ -40,11 +41,17 @@ export class ArticlesService {
 
   /** 📰 Получить последние N статей */
   async getLatest(limit = 3): Promise<Article[]> {
-    return this.articleRepo.find({
+    const articles = await this.articleRepo.find({
       relations: ['theme'],
       order: { createdAt: 'DESC' },
       take: limit,
     });
+
+    // ✅ добавляем themeRu
+    return articles.map((a) => ({
+      ...a,
+      themeRu: a.theme?.name_ru || null,
+    }));
   }
 
   /** 📚 Получить список статей (опционально по теме) */
@@ -59,7 +66,13 @@ export class ArticlesService {
       qb.where('t.slug = :slug', { slug: themeSlug });
     }
 
-    return qb.getMany();
+    const articles = await qb.getMany();
+
+    // ✅ тоже добавляем themeRu
+    return articles.map((a) => ({
+      ...a,
+      themeRu: a.theme?.name_ru || null,
+    }));
   }
 
   /** 🔍 Получить статью по ID (с упражнениями и заданиями) */
@@ -137,6 +150,10 @@ export class ArticlesService {
       }
     }
 
-    return { ...article, exercises: enrichedExercises };
+    return {
+      ...article,
+      themeRu: article.theme?.name_ru || null,
+      exercises: enrichedExercises,
+    };
   }
 }
