@@ -42,7 +42,7 @@ const BookInfo = ({ book }: BookInfoProps) => {
                 <span key={a.id}>
                   {i > 0 && ", "}
                   <Link to={`/authors/${a.id}`} className={styles.authorLink}>
-                    {a.full_name}
+                    {a.fullName}{" "}
                   </Link>
                 </span>
               ))

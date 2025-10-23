@@ -34,7 +34,7 @@ const AuthorPage = () => {
 
     const fetchAuthor = async () => {
       try {
-        const response = await fetch(`/api/authors/${id}`);
+        const response = await fetch(`/api-nest/authors/${id}`);
         if (!response.ok) {
           throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }

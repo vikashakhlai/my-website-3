@@ -16,6 +16,7 @@ import { VideosModule } from './videos/videos.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { PersonalitiesModule } from './personalities/personalities.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { SubtitlesModule } from './subtitles/subtitles.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { QuotesModule } from './quotes/quotes.module';
     DictionaryModule,
     PersonalitiesModule,
     QuotesModule,
+    SubtitlesModule,
   ],
 
   controllers: [AppController],

@@ -5,6 +5,7 @@ import { Personality } from "../types/Personality";
 import { Era } from "../types/era";
 import styles from "./AllPersonalitiesPage.module.css";
 import PersonalityGrid from "./PersonalityGrid";
+import useScrollToTop from "../hooks/useScrollToTop";
 
 interface Pagination {
   currentPage: number;
@@ -20,7 +21,7 @@ interface Filters {
 const AllPersonalitiesPage = () => {
   const [personalities, setPersonalities] = useState<Personality[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFetching, setIsFetching] = useState(false); // 👈 для мягкой подгрузки
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
@@ -28,6 +29,7 @@ const AllPersonalitiesPage = () => {
     total: 0,
   });
   const [filters, setFilters] = useState<Filters>({ search: "", era: "" });
+  useScrollToTop();
 
   const loadPersonalities = useCallback(
     async (page = 1, showFullLoader = false) => {

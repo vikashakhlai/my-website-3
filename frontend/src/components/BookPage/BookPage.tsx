@@ -15,7 +15,7 @@ import { useFavorites } from "../../hooks/useFavorites";
 // === Типы ===
 export interface Author {
   id: number;
-  full_name: string;
+  fullName: string;
   bio?: string | null;
   photo_url?: string | null;
 }
