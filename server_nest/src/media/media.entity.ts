@@ -3,10 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Exercise } from 'src/articles/entities/exercise.entity';
+import { Dialect } from 'src/dialect/dialect.entity';
 
 @Entity('media')
 export class Media {
@@ -51,7 +54,14 @@ export class Media {
   @Column({ name: 'dialect_id', type: 'int' })
   dialectId!: number;
 
-  /** 🔒 Тип лицензии: public | cc-by | cc-by-sa | private | custom */
+  /** ⚙️ Связь с таблицей диалектов */
+  @ManyToOne(() => Dialect, (dialect) => dialect.medias, {
+    onDelete: 'CASCADE', // если удалить диалект — удалятся все связанные медиа
+  })
+  @JoinColumn({ name: 'dialect_id' })
+  dialect!: Dialect;
+
+  /** 🔒 Тип лицензии */
   @Column({
     name: 'license_type',
     type: 'varchar',
@@ -60,7 +70,7 @@ export class Media {
   })
   licenseType!: string;
 
-  /** 👤 Автор / источник, если лицензия требует указания */
+  /** 👤 Автор / источник */
   @Column({
     name: 'license_author',
     type: 'varchar',
@@ -69,7 +79,7 @@ export class Media {
   })
   licenseAuthor?: string;
 
-  // связь с упражнениями
+  /** 🧩 Связанные упражнения */
   @OneToMany(() => Exercise, (exercise) => exercise.media)
   exercises?: Exercise[];
 }

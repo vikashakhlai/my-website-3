@@ -3,6 +3,32 @@ import { createReadStream, statSync } from 'fs';
 import { join } from 'path';
 
 export function videoStreamMiddleware(req: Request, res: Response) {
+  // ✅ Явные CORS заголовки
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Range, Content-Type, Origin, Accept',
+  );
+  res.header(
+    'Access-Control-Expose-Headers',
+    'Content-Range, Accept-Ranges, Content-Length',
+  );
+  res.header('Accept-Ranges', 'bytes');
+
+  // ✅ Разрешаем preflight
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.sendStatus(200);
+    return;
+  }
+
+  console.log(
+    '🎬 videoStreamMiddleware triggered:',
+    req.method,
+    req.originalUrl,
+  );
+
   const { dialect, filename } = req.params;
   const videoPath = join(
     __dirname,
@@ -29,13 +55,12 @@ export function videoStreamMiddleware(req: Request, res: Response) {
       return;
     }
 
-    const parts = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(startStr, 10);
+    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
     const chunkSize = end - start + 1;
 
     const file = createReadStream(videoPath, { start, end });
-
     const headers = {
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Accept-Ranges': 'bytes',
@@ -46,7 +71,7 @@ export function videoStreamMiddleware(req: Request, res: Response) {
     res.writeHead(206, headers);
     file.pipe(res);
   } catch (err) {
-    console.error('Ошибка при отдаче видео:', err);
+    console.error('❌ Ошибка при отдаче видео:', err);
     res.status(404).send('Видео не найдено');
   }
 }

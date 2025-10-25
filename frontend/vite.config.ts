@@ -9,7 +9,11 @@ export default defineConfig({
       "/api-nest": {
         target: "http://localhost:3001",
         changeOrigin: true,
+        selfHandleResponse: false,
         rewrite: (path) => path.replace(/^\/api-nest/, "/api/v1"),
+        configure: (proxy, options) => {
+          console.log("🔧 Proxy /api-nest →", options.target);
+        },
       },
 
       // 🔹 Проксируем доступ к статическим файлам uploads

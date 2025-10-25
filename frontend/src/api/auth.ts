@@ -1,11 +1,14 @@
 import axios from "axios";
 
-// 📦 URL из .env или дефолтный локальный
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api/v1";
-
-// 🧠 Создаём общий axios instance
+// 📦 Определяем базовый URL в зависимости от среды
+const isDev = import.meta.env.DEV;
+// 🚀 теперь API_BASE будет идти напрямую на бэкенд
+const API_BASE = isDev
+  ? "http://localhost:3001/api/v1" // ✅ напрямую в Nest
+  : import.meta.env.VITE_API_URL || "https://localhost:3001/api/v1";
+  
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });

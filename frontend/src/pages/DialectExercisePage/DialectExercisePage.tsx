@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ReactPlayer from "react-player";
 import axios from "axios";
-import { getMediaUrl } from "../../utils/media";
 
 interface Media {
   id: number;
@@ -12,76 +10,86 @@ interface Media {
   dialectId: number;
   licenseType?: string;
   licenseAuthor?: string;
-  exercises?: any[];
 }
 
 const DialectExercisePage = () => {
-  const { id } = useParams();
+  const { slug, id } = useParams<{ slug: string; id: string }>();
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMedia = async () => {
+      if (!id) return;
+
       try {
+        setLoading(true);
+        console.log("🔍 GET /api-nest/media/", id);
+
+        // ⚡ тот же стиль запроса, что в DialectPage
         const response = await axios.get(`/api-nest/media/${id}`);
+        console.log("✅ Ответ:", response.data);
         setMedia(response.data);
-      } catch (error) {
-        console.error("Ошибка при загрузке медиа:", error);
+      } catch (err) {
+        console.error("❌ Ошибка загрузки:", err);
+        setError("Не удалось загрузить медиа");
       } finally {
         setLoading(false);
       }
     };
 
     fetchMedia();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (loading) return <p>Загрузка...</p>;
-  if (!media) return <p>Видео не найдено</p>;
+  if (loading) return <p className="text-center mt-10">Загрузка...</p>;
+  if (error) return <p className="text-center text-red-500 mt-10">{error}</p>;
+  if (!media) return <p className="text-center mt-10">Медиа не найдено</p>;
 
-  const videoUrl = getMediaUrl(media.mediaUrl);
-  const subtitlesUrl = getMediaUrl(media.subtitlesLink);
+  const videoUrl = media.mediaUrl?.trim();
+  const subtitlesUrl = media.subtitlesLink?.trim();
+
+  console.log("🎬 videoUrl:", videoUrl);
+  console.log("💬 subtitlesUrl:", subtitlesUrl);
 
   return (
-    <div
-      className="exercise-page"
-      style={{ maxWidth: "900px", margin: "0 auto", padding: "1rem" }}
-    >
+    <div className="max-w-3xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">{media.title}</h2>
 
-      <div
-        className="video-container"
-        style={{ position: "relative", paddingTop: "56.25%" }}
-      >
-        <ReactPlayer
-          url={videoUrl}
-          controls
-          width="100%"
-          height="100%"
-          style={{ position: "absolute", top: 0, left: 0 }}
-          config={
-            {
-              file: {
-                attributes: { crossOrigin: "anonymous" },
-                tracks: media.subtitlesLink
-                  ? [
-                      {
-                        kind: "subtitles",
-                        src: subtitlesUrl,
-                        srcLang: "ar",
-                        label: "Арабский (египетский)",
-                        default: true,
-                      },
-                    ]
-                  : [],
-              },
-            } as any
-          }
-        />
+      {/* 🎥 Видео */}
+      <div className="relative w-full bg-black rounded-lg overflow-hidden">
+        {videoUrl ? (
+          <video
+            key={videoUrl}
+            src={videoUrl}
+            controls
+            preload="auto"
+            crossOrigin="anonymous"
+            style={{ width: "100%", borderRadius: "12px" }}
+          >
+            {subtitlesUrl && (
+              <track
+                src={subtitlesUrl}
+                kind="subtitles"
+                srcLang="ar"
+                label="Арабский (египетский)"
+                default
+              />
+            )}
+            Ваш браузер не поддерживает тег <code>video</code>.
+          </video>
+        ) : (
+          <p className="text-white text-center p-6">Видео не найдено</p>
+        )}
       </div>
 
+      {/* ℹ️ Информация */}
       <div className="mt-4 text-gray-600 text-sm">
         <p>Диалект ID: {media.dialectId}</p>
+        {slug && (
+          <p>
+            🌍 Диалект: <strong>{slug}</strong>
+          </p>
+        )}
         {media.licenseType === "cc-by" && (
           <p>
             🔗 Видео предоставлено по лицензии CC-BY, автор:{" "}

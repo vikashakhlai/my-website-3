@@ -1,12 +1,20 @@
 // src/utils/media.ts
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export function getMediaUrl(path?: string | null): string {
   if (!path) return "/default-book-cover.jpg";
 
-  // если уже полный URL — возвращаем как есть
+  // Если это внешний URL — оставляем как есть
   if (path.startsWith("http")) return path;
 
-  // сейчас все пути в БД начинаются с '/', так что просто добавляем домен
-  return `${API_BASE}${path}`;
+  // Нормализуем путь: убедимся, что он начинается с '/'
+  const normalizedPath = path.startsWith("/") ? path : "/" + path;
+
+  // Для путей в uploads — используем относительный путь, чтобы работал прокси Vite
+  if (normalizedPath.startsWith("/uploads/")) {
+    return normalizedPath; // → /uploads/... → проксируется на бэкенд
+  }
+
+  // Для всего остального (например, API-генерируемых изображений) — используем API_BASE
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  return `${API_BASE}${normalizedPath}`;
 }

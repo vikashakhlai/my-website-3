@@ -5,7 +5,6 @@ import { getMediaUrl } from "../utils/media";
 
 const BookCard = ({ id, title, cover_url, tags }: Book) => {
   const displayImage = getMediaUrl(cover_url);
-
   const displayTheme =
     tags && tags.length > 0
       ? tags.map((tag) => tag.name).join(", ")

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Media } from './media.entity';
 import { Exercise } from 'src/articles/entities/exercise.entity';
+import { makeAbsoluteUrl } from 'src/utils/media-url.util';
 
 @Injectable()
 export class MediaService {
@@ -31,6 +32,10 @@ export class MediaService {
     if (!media) {
       throw new NotFoundException(`Медиа с ID ${id} не найдено`);
     }
+
+    // ✅ Преобразуем пути в абсолютные URL
+    media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);
+    media.subtitlesLink = makeAbsoluteUrl(media.subtitlesLink);
 
     return media;
   }

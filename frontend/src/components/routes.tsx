@@ -2,7 +2,7 @@
 import ArticlesPage from "../pages/ArticlesPage";
 import BooksPage from "../pages/BooksPage";
 import CoursesPage from "../pages/CoursesPage";
-import DialectPage from "../pages/DialectPage";
+import DialectPage from "../pages/DialectPage.js";
 import DictionaryPage from "../pages/DictionaryPage/DictionaryPage";
 import HomePage from "../pages/HomePage";
 import StudentBooksPage from "../pages/StudentBookPage/StudentBooksPage";
@@ -55,7 +55,7 @@ const routes = [
         ),
       },
       {
-        path: "/DialectPage",
+        path: "/dialects",
         element: (
           <ProtectedRoute>
             <DialectPage />
@@ -127,7 +127,7 @@ const routes = [
         ),
       },
       {
-        path: "/dialects/:slug/:id",
+        path: "/dialects/:slug/media/:id",
         element: (
           <ProtectedRoute>
             <DialectExercisePage />
@@ -135,7 +135,7 @@ const routes = [
         ),
       },
 
-      // 🔓 Незащищённые маршруты (доступны всем)
+      // 🔓 Незащищённые маршруты
       { path: "/login", element: <AuthPage /> },
       { path: "/register", element: <AuthPage /> },
     ],

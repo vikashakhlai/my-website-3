@@ -33,8 +33,8 @@ const Navigation = () => {
         Статьи
       </Link>
       <Link
-        to="/DialectPage"
-        className={isActive("/DialectPage") ? "nav-link active" : "nav-link"}
+        to="/dialects"
+        className={isActive("/dialects") ? "nav-link active" : "nav-link"}
       >
         Диалект
       </Link>

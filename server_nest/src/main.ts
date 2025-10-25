@@ -3,32 +3,47 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
+import cors from 'cors';
 import { join } from 'path';
 import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
 import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: {
-      origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
-      credentials: true,
-    },
-  });
+  const app = await NestFactory.create(AppModule);
 
-  // ✅ Раздаём все файлы (jpg, png, webp и т.п.)
-  // ✅ Раздача статических файлов (uploads)
+  // ✅ Настройки CORS
+  const corsOptions = {
+    origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Authorization',
+      'Range',
+      'Content-Type',
+      'Origin',
+      'Accept',
+    ],
+    exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'],
+  };
+
+  // ✅ Подключаем CORS до всего остального
+  app.use(cors(corsOptions));
+  app.enableCors(corsOptions);
+
+  // ✅ Путь к папке с загрузками
   const uploadsPath = join(__dirname, '..', 'uploads');
-  console.log('🗂  Serving static files from:', uploadsPath);
+
+  // ✅ Сначала обычная статика (для изображений, pdf и т.п.)
   app.use('/uploads', express.static(uploadsPath));
 
-  // ✅ Middleware для видео и субтитров
+  // ✅ Потом кастомные middleware для потокового видео и субтитров
   app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
   app.use('/uploads/:dialect/subtitles/:filename', subtitlesMiddleware);
 
   // ✅ Префикс API
   app.setGlobalPrefix('api/v1');
 
-  // ✅ Валидация DTO
+  // ✅ Глобальная валидация
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -37,11 +52,11 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Swagger (только dev)
+  // ✅ Swagger (dev)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('User Management API')
-      .setDescription('API для управления пользователями, ролями и авторами')
+      .setDescription('API для управления пользователями и ролями')
       .setVersion('1.0')
       .addBearerAuth(
         {
@@ -65,4 +80,5 @@ async function bootstrap() {
   console.log(`🚀 Сервер запущен на http://localhost:${port}/api/v1`);
   console.log(`📁 Статические файлы: http://localhost:${port}/uploads/...`);
 }
+
 bootstrap();
