@@ -1,44 +1,55 @@
 import { Request, Response } from 'express';
-import { createReadStream, statSync, readFileSync } from 'fs';
+import { createReadStream, statSync, readFileSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 
 export function subtitlesMiddleware(req: Request, res: Response) {
-  const { dialect, filename } = req.params;
-  const subtitlesPath = join(
-    __dirname,
-    '..',
-    '..',
-    'uploads',
-    'dialect',
-    dialect,
-    'subtitles',
-    filename,
-  );
-
+  console.log("🎬 subtitlesMiddleware вызван для:", req.originalUrl);
   try {
+    const { dialect, filename } = req.params;
+
+    if (!dialect || !filename) {
+      return res
+        .status(400)
+        .send('Некорректный запрос: отсутствует dialect или filename');
+    }
+
+    const subtitlesPath = join(
+      __dirname,
+      '..',
+      '..',
+      'uploads',
+      'dialect',
+      dialect,
+      'subtitles',
+      filename,
+    );
+
+    // 🔍 Проверяем существование файла
+    if (!existsSync(subtitlesPath)) {
+      console.warn('❌ Файл субтитров не найден:', subtitlesPath);
+      return res.status(404).send('Субтитры не найдены');
+    }
+
     const ext = extname(subtitlesPath).toLowerCase();
 
-    // Проверяем, что файл существует
-    const stat = statSync(subtitlesPath);
-    const fileSize = stat.size;
-
-    // Если .vtt → просто отдаем как есть
+    // 🟢 Если формат WebVTT — просто отдаём
     if (ext === '.vtt') {
+      const stat = statSync(subtitlesPath);
       res.writeHead(200, {
-        'Content-Length': fileSize,
+        'Content-Length': stat.size,
         'Content-Type': 'text/vtt; charset=utf-8',
       });
       return createReadStream(subtitlesPath).pipe(res);
     }
 
-    // Если .srt → конвертируем в WebVTT "на лету"
+    // 🟡 Если формат SRT — конвертируем в WebVTT "на лету"
     if (ext === '.srt') {
-      const srt = readFileSync(subtitlesPath, 'utf-8');
+      const srtContent = readFileSync(subtitlesPath, 'utf-8');
 
-      // Простейшая конвертация в WebVTT
-      const vtt =
+      // ✨ Простая, но корректная конвертация
+      const vttContent =
         'WEBVTT\n\n' +
-        srt
+        srtContent
           .replace(/\r+/g, '')
           .replace(
             /(\d+)\n(\d{2}:\d{2}:\d{2}),(\d{3}) --> (\d{2}:\d{2}:\d{2}),(\d{3})/g,
@@ -47,13 +58,14 @@ export function subtitlesMiddleware(req: Request, res: Response) {
           .trim();
 
       res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
-      return res.send(vtt);
+      return res.status(200).send(vttContent);
     }
 
-    // Если что-то другое — ошибка
-    res.status(400).send('Неподдерживаемый формат субтитров');
+    // 🔴 Иначе — неподдерживаемый формат
+    console.warn('⚠️ Неподдерживаемый формат субтитров:', ext);
+    return res.status(400).send('Неподдерживаемый формат субтитров');
   } catch (err) {
-    console.error('Ошибка при отдаче субтитров:', err);
-    res.status(404).send('Субтитры не найдены');
+    console.error('🔥 Ошибка при отдаче субтитров:', err);
+    return res.status(500).send('Ошибка сервера при загрузке субтитров');
   }
 }

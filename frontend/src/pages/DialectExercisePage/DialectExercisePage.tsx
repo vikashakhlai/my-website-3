@@ -34,9 +34,9 @@ const DialectExercisePage = () => {
 
       try {
         setLoading(true);
-        console.log("🔍 Запрос: /api-nest/media/" + id);
+        console.log("🔍 GET /api-nest/media/" + id);
         const response = await axios.get(`/api-nest/media/${id}`);
-        console.log("✅ Ответ:", response.data);
+        console.log("✅ Медиа:", response.data);
         setMedia(response.data);
       } catch (err) {
         console.error("❌ Ошибка загрузки:", err);
@@ -49,45 +49,72 @@ const DialectExercisePage = () => {
     fetchMedia();
   }, [id]);
 
-  // ⚙️ Инициализация Video.js — только когда media и videoRef в DOM
+  // ⚙️ Инициализация Video.js
   useEffect(() => {
     if (!media) return;
 
-    const timer = setTimeout(() => {
-      const videoEl = videoRef.current;
-      if (!videoEl || !videoEl.isConnected) {
-        console.warn("❌ videoRef всё ещё не в DOM — инициализация невозможна");
+    let frameId: number;
+
+    const initPlayer = () => {
+      const el = videoRef.current;
+      if (!el || !el.isConnected) {
+        // пробуем снова на следующем кадре
+        frameId = requestAnimationFrame(initPlayer);
         return;
       }
 
       if (playerRef.current) {
         playerRef.current.dispose();
+        playerRef.current = null;
       }
 
-      playerRef.current = videojs(videoEl, {
+      const player = videojs(el, {
         controls: true,
         preload: "auto",
         fluid: true,
         playbackRates: [0.5, 1, 1.25, 1.5, 2],
-        sources: [{ src: media.mediaUrl, type: "video/mp4" }],
+        sources: [
+          {
+            src: media.mediaUrl,
+            type: "video/mp4",
+          },
+        ],
+        controlBar: {
+          subsCapsButton: true, // оставить только кнопку субтитров
+        },
+        textTrackSettings: false, // 👈 полностью отключаем окно настроек субтитров
       });
 
-      if (media.subtitlesLink) {
-        playerRef.current.addRemoteTextTrack(
-          {
-            kind: "subtitles",
-            src: media.subtitlesLink,
-            srclang: "ar",
-            label: "Арабский (египетский)",
-            default: true,
-          },
-          false
-        );
-      }
-    }, 0);
+      player.ready(() => {
+        if (media.subtitlesLink) {
+          const trackObj = player.addRemoteTextTrack(
+            {
+              kind: "subtitles",
+              src: media.subtitlesLink,
+              srclang: "ar",
+              label: "Арабский (египетский)",
+              default: true,
+            },
+            false
+          );
+
+          const realTrack = (trackObj as unknown as { track?: TextTrack })
+            ?.track;
+          if (realTrack) {
+            realTrack.addEventListener("error", () => {
+              console.warn("⚠ Ошибка загрузки субтитров:", media.subtitlesLink);
+            });
+          }
+        }
+      });
+
+      playerRef.current = player;
+    };
+
+    frameId = requestAnimationFrame(initPlayer);
 
     return () => {
-      clearTimeout(timer);
+      cancelAnimationFrame(frameId);
       if (playerRef.current) {
         playerRef.current.dispose();
         playerRef.current = null;
@@ -104,7 +131,7 @@ const DialectExercisePage = () => {
     <div className="max-w-3xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">{media.title}</h2>
 
-      {/* ✅ Видео элемент гарантированно в DOM */}
+      {/* ✅ Видео с субтитрами */}
       <div data-vjs-player className="relative">
         <video
           ref={videoRef}
@@ -113,6 +140,7 @@ const DialectExercisePage = () => {
         />
       </div>
 
+      {/* ℹ️ Инфо */}
       <div className="mt-4 text-gray-600 text-sm">
         <p>Диалект ID: {media.dialectId}</p>
         {slug && (

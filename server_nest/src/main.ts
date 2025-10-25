@@ -33,12 +33,12 @@ async function bootstrap() {
   // ✅ Путь к папке с загрузками
   const uploadsPath = join(__dirname, '..', 'uploads');
 
+  // ✅ Потом кастомные middleware для потокового видео и субтитров
+  app.use('/uploads/dialect/:dialect/subtitles/:filename', subtitlesMiddleware);
+  app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
+
   // ✅ Сначала обычная статика (для изображений, pdf и т.п.)
   app.use('/uploads', express.static(uploadsPath));
-
-  // ✅ Потом кастомные middleware для потокового видео и субтитров
-  app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
-  app.use('/uploads/:dialect/subtitles/:filename', subtitlesMiddleware);
 
   // ✅ Префикс API
   app.setGlobalPrefix('api/v1');
