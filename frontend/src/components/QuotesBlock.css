@@ -7,59 +7,95 @@
   align-items: center;
   overflow: hidden;
   font-family: "Noto Sans", sans-serif;
-  background: url("/uploads/quotes-bg.png") center/contain no-repeat;
-  background-color: #f9f9f9;
+  background-color: transparent;
+}
+
+.quotes-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center; /* как background-position: center */
+  pointer-events: none; /* чтобы не мешать кликам */
+  filter: brightness(0.9) contrast(1.1);
 }
 
 .quote-item {
   width: 45%;
   max-width: 500px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(5px);
-  padding: 20px 25px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  background: rgba(255, 255, 255, 0.85); /* ⬆️ Увеличили прозрачность */
+  backdrop-filter: blur(8px); /* ⬆️ Усилили блюр для мягкости */
+  padding: 24px 28px; /* ⬆️ Немного увеличили отступы */
+  border-radius: 20px; /* ⬆️ Смягчили углы */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); /* ⬇️ Смягчили тень */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.6); /* Добавили лёгкую обводку */
 }
 
 .quote-item:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); /* Усиливаем тень при ховере */
 }
 
 .quote-item-1 {
   position: absolute;
-  top: 10%;
-  left: 8%;
+  top: 12%;
+  left: 5%;
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .quote-item-2 {
   position: absolute;
-  bottom: 10%;
-  right: 8%;
+  bottom: 12%;
+  right: 5%;
+  animation: fadeInUp 0.8s ease-out 0.3s;
+}
+
+/* Анимация появления */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .quote-ar {
   direction: rtl;
   text-align: right;
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #222;
-  margin-bottom: 12px;
+  font-size: 3.45rem;
+  font-weight: 700; /* Усилили жирность */
+  color: #1a1a1a; /* Более глубокий чёрный */
+  margin-bottom: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
 }
 
 .quote-ru {
-  font-size: 1.1rem;
-  color: #333;
-  margin-bottom: 14px;
+  font-size: 1.75rem;
+  color: #2d2d2d; /* Не серый, а тёмно-серый */
+  margin-bottom: 16px;
+  line-height: 1.6;
 }
 
 .quote-author {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  color: #0077cc;
+  color: #555; /* Заменили ярко-синий на нейтральный */
   text-decoration: none;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .quote-author:hover {
-  text-decoration: underline;
+  color: #333;
+  background-color: rgba(200, 200, 200, 0.3);
+  text-decoration: none;
 }

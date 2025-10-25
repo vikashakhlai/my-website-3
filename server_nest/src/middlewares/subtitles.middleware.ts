@@ -3,7 +3,6 @@ import { createReadStream, statSync, readFileSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 
 export function subtitlesMiddleware(req: Request, res: Response) {
-  console.log("🎬 subtitlesMiddleware вызван для:", req.originalUrl);
   try {
     const { dialect, filename } = req.params;
 

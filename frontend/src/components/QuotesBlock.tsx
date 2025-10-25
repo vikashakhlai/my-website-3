@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./QuotesBlock.css";
+import quotesbg from "../assets/quotes-bg.png"
 
 export interface Quote {
   id: number;
@@ -19,7 +20,7 @@ const QuotesBlock = () => {
   useEffect(() => {
     const fetchQuotes = async () => {
       try {
-        const res = await fetch("/api-nest/quotes/random?count=2"); // 🔹 API-запрос к Nest
+        const res = await fetch("/api-nest/quotes/random?count=2");
         if (!res.ok) throw new Error("Ошибка загрузки цитат");
         const data = await res.json();
         setQuotes(data);
@@ -33,6 +34,14 @@ const QuotesBlock = () => {
 
   return (
     <div className="quotes-container">
+      {/* Фоновое изображение в разметке */}
+      <img
+        src={quotesbg}
+        alt=""
+        aria-hidden="true"
+        className="quotes-background"
+      />
+
       {quotes.map((quote, index) => (
         <div key={quote.id} className={`quote-item quote-item-${index + 1}`}>
           <p className="quote-ar">{quote.text_ar}</p>

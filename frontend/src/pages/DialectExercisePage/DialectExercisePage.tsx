@@ -4,10 +4,12 @@ import axios from "axios";
 import videojs from "video.js";
 import type Player from "video.js/dist/types/player";
 import "video.js/dist/video-js.css";
+import "./DialectExercisePage.css"; // ✅ Подключаем стили
 
 interface Media {
   id: number;
   title: string;
+  name?: string; // 👈 добавим имя диалекта
   mediaUrl: string;
   subtitlesLink?: string | null;
   dialectId: number;
@@ -16,14 +18,14 @@ interface Media {
 }
 
 const DialectExercisePage = () => {
-  const { slug, id } = useParams<{ slug: string; id: string }>();
+  const { id } = useParams<{ id: string }>();
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playerRef = useRef<Player | null>(null);
 
-  // 🎬 Загружаем данные о медиа
+  // 🎬 Загрузка данных
   useEffect(() => {
     const fetchMedia = async () => {
       if (!id) {
@@ -31,21 +33,17 @@ const DialectExercisePage = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
-        console.log("🔍 GET /api-nest/media/" + id);
         const response = await axios.get(`/api-nest/media/${id}`);
-        console.log("✅ Медиа:", response.data);
         setMedia(response.data);
       } catch (err) {
-        console.error("❌ Ошибка загрузки:", err);
+        console.error("Ошибка загрузки:", err);
         setError("Не удалось загрузить медиа");
       } finally {
         setLoading(false);
       }
     };
-
     fetchMedia();
   }, [id]);
 
@@ -58,7 +56,6 @@ const DialectExercisePage = () => {
     const initPlayer = () => {
       const el = videoRef.current;
       if (!el || !el.isConnected) {
-        // пробуем снова на следующем кадре
         frameId = requestAnimationFrame(initPlayer);
         return;
       }
@@ -73,21 +70,14 @@ const DialectExercisePage = () => {
         preload: "auto",
         fluid: true,
         playbackRates: [0.5, 1, 1.25, 1.5, 2],
-        sources: [
-          {
-            src: media.mediaUrl,
-            type: "video/mp4",
-          },
-        ],
-        controlBar: {
-          subsCapsButton: true, // оставить только кнопку субтитров
-        },
-        textTrackSettings: false, // 👈 полностью отключаем окно настроек субтитров
+        sources: [{ src: media.mediaUrl, type: "video/mp4" }],
+        controlBar: { subsCapsButton: true },
+        textTrackSettings: false,
       });
 
       player.ready(() => {
         if (media.subtitlesLink) {
-          const trackObj = player.addRemoteTextTrack(
+          player.addRemoteTextTrack(
             {
               kind: "subtitles",
               src: media.subtitlesLink,
@@ -97,14 +87,6 @@ const DialectExercisePage = () => {
             },
             false
           );
-
-          const realTrack = (trackObj as unknown as { track?: TextTrack })
-            ?.track;
-          if (realTrack) {
-            realTrack.addEventListener("error", () => {
-              console.warn("⚠ Ошибка загрузки субтитров:", media.subtitlesLink);
-            });
-          }
         }
       });
 
@@ -122,17 +104,15 @@ const DialectExercisePage = () => {
     };
   }, [media]);
 
-  // 🌀 Состояния загрузки
-  if (loading) return <p className="text-center mt-10">Загрузка...</p>;
-  if (error) return <p className="text-center text-red-500 mt-10">{error}</p>;
-  if (!media) return <p className="text-center mt-10">Медиа не найдено</p>;
+  // 🌀 Состояния
+  if (loading) return <p className="loading">Загрузка...</p>;
+  if (error) return <p className="error">{error}</p>;
+  if (!media) return <p className="loading">Медиа не найдено</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h2 className="text-xl font-semibold mb-4">{media.title}</h2>
-
-      {/* ✅ Видео с субтитрами */}
-      <div data-vjs-player className="relative">
+    <div className="dialect-exercise">
+      {/* 🎥 Видео */}
+      <div className="video-wrapper" data-vjs-player>
         <video
           ref={videoRef}
           className="video-js vjs-big-play-centered vjs-theme-city"
@@ -140,16 +120,14 @@ const DialectExercisePage = () => {
         />
       </div>
 
-      {/* ℹ️ Инфо */}
-      <div className="mt-4 text-gray-600 text-sm">
-        <p>Диалект ID: {media.dialectId}</p>
-        {slug && (
-          <p>
-            🌍 Диалект: <strong>{slug}</strong>
-          </p>
-        )}
+      {/* 📄 Заголовок и информация */}
+      <div className="video-info">
+        <h2 className="video-title">{media.title}</h2>
+
+        {media.name && <span className="dialect-tag">{media.name}</span>}
+
         {media.licenseType === "cc-by" && (
-          <p>
+          <p className="license">
             🔗 Видео предоставлено по лицензии CC-BY, автор:{" "}
             <strong>{media.licenseAuthor}</strong>
           </p>

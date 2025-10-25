@@ -87,7 +87,7 @@ const PersonalityPage = () => {
               src={
                 personality.imageUrl
                   ? `${BACKEND_URL}${personality.imageUrl}`
-                  : `${BACKEND_URL}/uploads/default-person.jpg`
+                  : `${BACKEND_URL}/uploads/personalities_photoes/default.webp`
               }
               alt={personality.name}
               className={styles.cover}
