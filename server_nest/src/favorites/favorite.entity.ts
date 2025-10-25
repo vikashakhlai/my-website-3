@@ -1,4 +1,3 @@
-// src/favorites/favorite.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -12,13 +11,13 @@ import { User } from 'src/user/user.entity';
 
 /**
  * Перечисление допустимых типов избранного.
- * Расширяй по мере необходимости: 'video', 'book', 'article', 'textbook', ...
+ * Расширяй по мере необходимости: 'media', 'book', 'article', 'textbook', ...
  */
 export enum FavoriteItemType {
   BOOK = 'book',
   ARTICLE = 'article',
   TEXTBOOK = 'textbook',
-  VIDEO = 'video',
+  MEDIA = 'media', // ✅ заменили video → media
 }
 
 @Index(['userId', 'itemType', 'itemId'], { unique: true })
@@ -31,7 +30,10 @@ export class Favorite {
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
 
-  // тип избранного: 'book' | 'article' | 'textbook' | 'video'
+  /**
+   * Тип избранного элемента
+   * 'book' | 'article' | 'textbook' | 'media'
+   */
   @Column({
     name: 'item_type',
     type: 'varchar',

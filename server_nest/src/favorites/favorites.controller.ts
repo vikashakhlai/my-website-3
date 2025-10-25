@@ -19,7 +19,7 @@ export const ALLOWED_TYPES = [
   'book',
   'textbook',
   'article',
-  'video',
+  'media',
   'personality',
 ] as const;
 export type FavoriteType = (typeof ALLOWED_TYPES)[number];

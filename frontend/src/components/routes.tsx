@@ -15,6 +15,7 @@ import PersonalityPage from "./PersonalityPage";
 import AuthPage from "../pages/Auth/AuthPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import AllPersonalitiesPage from "../pages/AllPersonalitiesPage";
+import DialectExercisePage from "../pages/DialectExercisePage/DialectExercisePage.js";
 
 const routes = [
   {
@@ -122,6 +123,14 @@ const routes = [
         element: (
           <ProtectedRoute>
             <AllPersonalitiesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/dialects/:slug/:id",
+        element: (
+          <ProtectedRoute>
+            <DialectExercisePage />
           </ProtectedRoute>
         ),
       },

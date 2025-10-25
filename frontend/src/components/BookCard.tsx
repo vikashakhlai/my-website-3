@@ -1,9 +1,10 @@
 import "./BookCard.css";
 import { Link } from "react-router-dom";
 import { Book } from "../types/Book";
+import { getMediaUrl } from "../utils/media";
 
 const BookCard = ({ id, title, cover_url, tags }: Book) => {
-  const displayImage = cover_url || "/default-book-cover.jpg";
+  const displayImage = getMediaUrl(cover_url);
 
   const displayTheme =
     tags && tags.length > 0

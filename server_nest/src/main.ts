@@ -4,33 +4,40 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
 import { join } from 'path';
+import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
+import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    // 💡 В продакшене полезно включить CORS и disable logs при нужде
     cors: {
-      origin: [
-        process.env.FRONTEND_URL || 'http://localhost:5173', // Vite dev
-      ],
+      origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
       credentials: true,
     },
   });
 
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+  // ✅ Раздаём все файлы (jpg, png, webp и т.п.)
+  // ✅ Раздача статических файлов (uploads)
+  const uploadsPath = join(__dirname, '..', 'uploads');
+  console.log('🗂  Serving static files from:', uploadsPath);
+  app.use('/uploads', express.static(uploadsPath));
 
-  // ✅ Глобальный префикс API
+  // ✅ Middleware для видео и субтитров
+  app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
+  app.use('/uploads/:dialect/subtitles/:filename', subtitlesMiddleware);
+
+  // ✅ Префикс API
   app.setGlobalPrefix('api/v1');
 
   // ✅ Валидация DTO
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // удаляет лишние поля из body
-      forbidNonWhitelisted: true, // выбрасывает ошибку при неизвестных полях
-      transform: true, // автоматически конвертирует типы
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // ✅ Swagger — только если не production
+  // ✅ Swagger (только dev)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('User Management API')
@@ -41,9 +48,9 @@ async function bootstrap() {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          in: 'header',
           name: 'JWT',
           description: 'Введите JWT токен',
-          in: 'header',
         },
         'access-token',
       )
@@ -51,16 +58,11 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
-
-    console.log(
-      '📘 Swagger UI доступен по адресу: http://localhost:3001/api/docs',
-    );
   }
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-
   console.log(`🚀 Сервер запущен на http://localhost:${port}/api/v1`);
+  console.log(`📁 Статические файлы: http://localhost:${port}/uploads/...`);
 }
-
 bootstrap();

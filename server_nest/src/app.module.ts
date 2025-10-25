@@ -12,11 +12,11 @@ import { TagsModule } from './tags/tags.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { TextbooksModule } from './textbooks/textbooks.module';
 import { ArticlesModule } from './articles/articles.module';
-import { VideosModule } from './videos/videos.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { PersonalitiesModule } from './personalities/personalities.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { SubtitlesModule } from './subtitles/subtitles.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -60,9 +60,9 @@ import { SubtitlesModule } from './subtitles/subtitles.module';
     FavoritesModule,
     TextbooksModule,
     ArticlesModule,
-    VideosModule,
     DictionaryModule,
     PersonalitiesModule,
+    MediaModule,
     QuotesModule,
     SubtitlesModule,
   ],

@@ -1,22 +1,21 @@
-// src/favorites/favorites.module.ts
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Favorite } from './favorite.entity';
 import { FavoritesService } from './favorites.service';
 import { FavoritesController } from './favorites.controller';
 
-// Импортируем типы контента
+// Импортируем сущности контента
 import { Book } from '../books/book.entity';
 import { Textbook } from '../textbooks/textbook.entity';
 import { Article } from '../articles/article.entity';
-import { Video } from '../videos/video.entity';
+import { Media } from '../media/media.entity';
 import { Personality } from '../personalities/personality.entity';
 
 // Модули, чтобы TypeORM корректно разрешил связи
 import { BookModule } from '../books/books.module';
 import { TextbooksModule } from '../textbooks/textbooks.module';
 import { ArticlesModule } from '../articles/articles.module';
-import { VideosModule } from '../videos/videos.module';
+import { MediaModule } from '../media/media.module';
 import { PersonalitiesModule } from 'src/personalities/personalities.module';
 
 @Module({
@@ -26,15 +25,15 @@ import { PersonalitiesModule } from 'src/personalities/personalities.module';
       Book,
       Textbook,
       Article,
-      Video,
-      Personality, // ✅ добавлено сюда
+      Media,
+      Personality,
     ]),
 
     // forwardRef предотвращает циклические зависимости
     forwardRef(() => BookModule),
     forwardRef(() => TextbooksModule),
     forwardRef(() => ArticlesModule),
-    forwardRef(() => VideosModule),
+    forwardRef(() => MediaModule),
     forwardRef(() => PersonalitiesModule),
   ],
   controllers: [FavoritesController],
