@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import videojs from "video.js";
+import type Player from "video.js/dist/types/player";
+import "video.js/dist/video-js.css";
 
 interface Media {
   id: number;
@@ -17,16 +20,21 @@ const DialectExercisePage = () => {
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playerRef = useRef<Player | null>(null);
 
+  // 🎬 Загружаем данные о медиа
   useEffect(() => {
     const fetchMedia = async () => {
-      if (!id) return;
+      if (!id) {
+        setError("ID не указан");
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
-        console.log("🔍 GET /api-nest/media/", id);
-
-        // ⚡ тот же стиль запроса, что в DialectPage
+        console.log("🔍 Запрос: /api-nest/media/" + id);
         const response = await axios.get(`/api-nest/media/${id}`);
         console.log("✅ Ответ:", response.data);
         setMedia(response.data);
@@ -41,48 +49,70 @@ const DialectExercisePage = () => {
     fetchMedia();
   }, [id]);
 
+  // ⚙️ Инициализация Video.js — только когда media и videoRef в DOM
+  useEffect(() => {
+    if (!media) return;
+
+    const timer = setTimeout(() => {
+      const videoEl = videoRef.current;
+      if (!videoEl || !videoEl.isConnected) {
+        console.warn("❌ videoRef всё ещё не в DOM — инициализация невозможна");
+        return;
+      }
+
+      if (playerRef.current) {
+        playerRef.current.dispose();
+      }
+
+      playerRef.current = videojs(videoEl, {
+        controls: true,
+        preload: "auto",
+        fluid: true,
+        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+        sources: [{ src: media.mediaUrl, type: "video/mp4" }],
+      });
+
+      if (media.subtitlesLink) {
+        playerRef.current.addRemoteTextTrack(
+          {
+            kind: "subtitles",
+            src: media.subtitlesLink,
+            srclang: "ar",
+            label: "Арабский (египетский)",
+            default: true,
+          },
+          false
+        );
+      }
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      if (playerRef.current) {
+        playerRef.current.dispose();
+        playerRef.current = null;
+      }
+    };
+  }, [media]);
+
+  // 🌀 Состояния загрузки
   if (loading) return <p className="text-center mt-10">Загрузка...</p>;
   if (error) return <p className="text-center text-red-500 mt-10">{error}</p>;
   if (!media) return <p className="text-center mt-10">Медиа не найдено</p>;
-
-  const videoUrl = media.mediaUrl?.trim();
-  const subtitlesUrl = media.subtitlesLink?.trim();
-
-  console.log("🎬 videoUrl:", videoUrl);
-  console.log("💬 subtitlesUrl:", subtitlesUrl);
 
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">{media.title}</h2>
 
-      {/* 🎥 Видео */}
-      <div className="relative w-full bg-black rounded-lg overflow-hidden">
-        {videoUrl ? (
-          <video
-            key={videoUrl}
-            src={videoUrl}
-            controls
-            preload="auto"
-            crossOrigin="anonymous"
-            style={{ width: "100%", borderRadius: "12px" }}
-          >
-            {subtitlesUrl && (
-              <track
-                src={subtitlesUrl}
-                kind="subtitles"
-                srcLang="ar"
-                label="Арабский (египетский)"
-                default
-              />
-            )}
-            Ваш браузер не поддерживает тег <code>video</code>.
-          </video>
-        ) : (
-          <p className="text-white text-center p-6">Видео не найдено</p>
-        )}
+      {/* ✅ Видео элемент гарантированно в DOM */}
+      <div data-vjs-player className="relative">
+        <video
+          ref={videoRef}
+          className="video-js vjs-big-play-centered vjs-theme-city"
+          controls
+        />
       </div>
 
-      {/* ℹ️ Информация */}
       <div className="mt-4 text-gray-600 text-sm">
         <p>Диалект ID: {media.dialectId}</p>
         {slug && (
