@@ -1,19 +1,23 @@
 // src/components/exercises/OpenQuestionExercise/OpenQuestionExercise.tsx
-import React, { useState } from 'react';
-import type { OpenQuestionExercise } from '../../types/article';
-import styles from './OpenQuestionExercise.module.css';
+import React, { useState } from "react";
+import type { OpenQuestionExercise } from "../../pages/types/article";
+import styles from "./OpenQuestionExercise.module.css";
 
 interface OpenQuestionExerciseProps {
   exercise: OpenQuestionExercise;
 }
 
-const OpenQuestionExercise: React.FC<OpenQuestionExerciseProps> = ({ exercise }) => {
-  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
+const OpenQuestionExercise: React.FC<OpenQuestionExerciseProps> = ({
+  exercise,
+}) => {
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>(
+    {}
+  );
 
   const toggleAnswer = (itemId: number) => {
-    setExpandedItems(prev => ({
+    setExpandedItems((prev) => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [itemId]: !prev[itemId],
     }));
   };
 
@@ -26,9 +30,7 @@ const OpenQuestionExercise: React.FC<OpenQuestionExerciseProps> = ({ exercise })
           </p>
         )}
         {exercise.instructionRu && (
-          <p className={styles.instructionRu}>
-            {exercise.instructionRu}
-          </p>
+          <p className={styles.instructionRu}>{exercise.instructionRu}</p>
         )}
       </div>
 
@@ -41,9 +43,7 @@ const OpenQuestionExercise: React.FC<OpenQuestionExerciseProps> = ({ exercise })
               </h3>
             )}
             {item.questionRu && (
-              <h3 className={styles.questionRu}>
-                {item.questionRu}
-              </h3>
+              <h3 className={styles.questionRu}>{item.questionRu}</h3>
             )}
 
             <button
@@ -53,7 +53,7 @@ const OpenQuestionExercise: React.FC<OpenQuestionExerciseProps> = ({ exercise })
               aria-expanded={expandedItems[item.id]}
               dir="ltr"
             >
-              {expandedItems[item.id] ? '▲ Скрыть ответ' : '▼ Показать ответ'}
+              {expandedItems[item.id] ? "▲ Скрыть ответ" : "▼ Показать ответ"}
             </button>
 
             {expandedItems[item.id] && (

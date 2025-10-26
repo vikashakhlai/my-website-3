@@ -8,7 +8,12 @@ import {
   Delete,
   ParseIntPipe,
   NotFoundException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { MediaService } from './media.service';
 import { Media } from './media.entity';
 
@@ -30,13 +35,40 @@ export class MediaController {
     return media;
   }
 
-  /** ➕ Создать новую запись медиа */
-  @Post()
-  async create(@Body() data: Partial<Media>): Promise<Media> {
-    return this.mediaService.create(data);
+  /** 🧩 Загрузка видео и автоматическая генерация превью */
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/videos',
+        filename: (
+          req: Express.Request,
+          file: Express.Multer.File,
+          cb: (error: Error | null, filename: string) => void,
+        ) => {
+          const uniqueName = `${Date.now()}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+    }),
+  )
+  async uploadVideo(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: Partial<Media>,
+  ): Promise<Media> {
+    const videoPath = file.path.split('\\').join('/');
+    const previewPath = await this.mediaService.generatePreview(videoPath);
+
+    const media = await this.mediaService.create({
+      ...body,
+      mediaUrl: videoPath,
+      previewUrl: previewPath,
+    });
+
+    return media;
   }
 
-  /** ♻️ Обновить существующую запись */
+  /** ♻️ Обновить запись */
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,

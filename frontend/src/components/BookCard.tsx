@@ -1,6 +1,6 @@
 import "./BookCard.css";
 import { Link } from "react-router-dom";
-import { Book } from "../types/Book";
+import { Book } from "../pages/types/Book";
 import { getMediaUrl } from "../utils/media";
 
 const BookCard = ({ id, title, cover_url, tags }: Book) => {

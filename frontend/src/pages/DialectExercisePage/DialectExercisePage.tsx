@@ -1,15 +1,16 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import videojs from "video.js";
 import type Player from "video.js/dist/types/player";
 import "video.js/dist/video-js.css";
-import "./DialectExercisePage.css"; // ✅ Подключаем стили
+import "./DialectExercisePage.css";
 
 interface Media {
   id: number;
   title: string;
-  name?: string; // 👈 добавим имя диалекта
+  name?: string;
+  previewUrl?: string;
   mediaUrl: string;
   subtitlesLink?: string | null;
   dialectId: number;
@@ -48,33 +49,35 @@ const DialectExercisePage = () => {
   }, [id]);
 
   // ⚙️ Инициализация Video.js
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!media) return;
 
-    let frameId: number;
+    // Если плеер уже инициализирован — удаляем
+    if (playerRef.current) {
+      playerRef.current.dispose();
+      playerRef.current = null;
+    }
 
-    const initPlayer = () => {
-      const el = videoRef.current;
-      if (!el || !el.isConnected) {
-        frameId = requestAnimationFrame(initPlayer);
-        return;
-      }
+    const el = videoRef.current;
+    if (!el) return;
 
-      if (playerRef.current) {
-        playerRef.current.dispose();
-        playerRef.current = null;
-      }
-
+    // 🕒 Ждём пока элемент реально в DOM (даже после анимаций React Router)
+    const timer = setTimeout(() => {
       const player = videojs(el, {
         controls: true,
         preload: "auto",
-        fluid: true,
+        fluid: false, // ❌ отключаем резиновый режим
+        responsive: false,
+        width: 480,
+        height: 270,
         playbackRates: [0.5, 1, 1.25, 1.5, 2],
         sources: [{ src: media.mediaUrl, type: "video/mp4" }],
         controlBar: { subsCapsButton: true },
         textTrackSettings: false,
+        poster: media.previewUrl || "", // ✅ вот так правильно
       });
 
+      // ✅ Добавляем дорожку субтитров, если есть
       player.ready(() => {
         if (media.subtitlesLink) {
           player.addRemoteTextTrack(
@@ -91,12 +94,10 @@ const DialectExercisePage = () => {
       });
 
       playerRef.current = player;
-    };
-
-    frameId = requestAnimationFrame(initPlayer);
+    }, 200); // ⏱️ небольшая задержка гарантирует, что React уже вставил video
 
     return () => {
-      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
       if (playerRef.current) {
         playerRef.current.dispose();
         playerRef.current = null;

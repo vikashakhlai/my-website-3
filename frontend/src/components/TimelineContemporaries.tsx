@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/auth";
-import { PersonalityPreview } from "../types/Personality";
+import { PersonalityPreview } from "../pages/types/Personality";
 import styles from "./TimelineContemporaries.module.css";
 
 interface TimelineContemporariesProps {

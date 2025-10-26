@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./PersonCard.module.css";
-import { PersonalityPreview } from "../types/Personality";
+import { PersonalityPreview } from "../pages/types/Personality";
 
 const PersonCard = ({ person }: { person: PersonalityPreview }) => {
   const factsArray = Array.isArray(person.facts)

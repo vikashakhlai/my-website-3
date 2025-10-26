@@ -1,7 +1,7 @@
 // src/pages/ArticlesPage.tsx
 import { useEffect, useState } from "react";
 import ArticleCard from "../components/ArticleCard";
-import { Article } from "../types/article";
+import { Article } from "./types/article";
 import { Box, Container, Heading } from "@chakra-ui/react";
 
 const ArticlesPage = () => {

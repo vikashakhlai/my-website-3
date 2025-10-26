@@ -1,6 +1,6 @@
 // src/components/exercises/FlashcardsExercise/FlashcardsExercise.tsx
 import React, { useState } from "react";
-import type { FlashcardsExercise } from "../../types/article";
+import type { FlashcardsExercise } from "../../pages/types/article";
 import styles from "./FlashcardsExercise.module.css";
 
 interface FlashcardsExerciseProps {

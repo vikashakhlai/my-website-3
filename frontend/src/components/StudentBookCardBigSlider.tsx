@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./StudentBookCardBigSlider.module.css";
-import { TextBookProps } from "../types/TextBook";
+import { TextBookProps } from "../pages/types/TextBook";
 
 interface Props {
   books: TextBookProps[];

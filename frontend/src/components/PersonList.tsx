@@ -1,5 +1,5 @@
 import PersonCard from "./PersonCard";
-import { PersonalityPreview } from "../types/Personality";
+import { PersonalityPreview } from "../pages/types/Personality";
 import { Box, GridItem, Grid } from "@chakra-ui/react";
 
 interface PersonsProps {
@@ -17,7 +17,12 @@ const PersonList = ({ persons }: PersonsProps) => {
       padding="20px"
       // backgroundColor="rgba(0, 0, 0, 0.05)"
     >
-      <Grid templateColumns="repeat(3, 1fr)" gap={4} width="100%" marginTop="20px">
+      <Grid
+        templateColumns="repeat(3, 1fr)"
+        gap={4}
+        width="100%"
+        marginTop="20px"
+      >
         {persons.map((person) => (
           <GridItem key={person.id}>
             <PersonCard person={person} />

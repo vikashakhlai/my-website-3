@@ -11,34 +11,41 @@
   position: relative;
 }
 
-/* 📺 Основной контейнер для видео */
+/* 📺 Компактный контейнер под видео */
 .video-wrapper {
-  width: min(50vw, 520px);
-  max-width: 520px; /* 👈 Максимум 520px */
-  aspect-ratio: 16 / 9; /* 👈 Соотношение сторон — 16:9 */
+  width: 480px;
+  height: auto;
+  margin: 2rem auto;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  background: #f1f1f1; /* 🟢 Фон как у страницы */
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeInUp 0.7s ease-out forwards;
-  margin-top: 2rem;
-  position: relative;
-  z-index: 1;
+  background: #000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* ✅ Стили для Video.js — КРИТИЧЕСКИ ВАЖНО */
+/* 🎞️ Сам плеер Video.js */
 .video-js {
   width: 100% !important;
   height: 100% !important;
+  object-fit: contain !important;
   border-radius: 16px !important;
   overflow: hidden !important;
-  background: transparent !important;
+  background-color: black !important; /* без красного */
   box-shadow: none !important;
-  background: red !important; /* 🔴 Покажет, где находится блок */
 }
 
+/* Контролы — чуть прозрачнее */
+.video-js .vjs-control-bar {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 0 0 16px 16px !important;
+}
+
+/* 📱 Адаптив */
+@media (max-width: 768px) {
+  .video-wrapper {
+    max-width: 90%;
+    margin: 1.5rem auto;
+  }
+}
 /* 🎞️ Видео-элемент внутри Video.js */
 .video-js .vjs-tech {
   width: 100% !important;
@@ -174,4 +181,12 @@
   .license {
     font-size: 0.8rem;
   }
+}
+
+.video-js {
+  width: 885px !important;
+  height: 510px !important; /* 16:9 */
+  min-height: 270px !important;
+  display: block !important;
+  background-color: #000 !important;
 }

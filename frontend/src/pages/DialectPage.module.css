@@ -1,0 +1,47 @@
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.loading {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  color: #374151;
+}
+
+.empty {
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* 2 карточки в ряд на ноутбуке, 1 — на мобиле */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Когда карточка одна — половина ширины и слева */
+.gridSingle {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}

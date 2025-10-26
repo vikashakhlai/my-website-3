@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TextbookPage.css";
-import { TextBookProps } from "../types/TextBook";
+import { TextBookProps } from "../pages/types/TextBook";
 import BackZone from "./BackZone";
 import useScrollToTop from "../hooks/useScrollToTop";
 import { useFavorites } from "../hooks/useFavorites";

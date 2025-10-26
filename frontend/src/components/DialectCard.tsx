@@ -1,58 +1,92 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { getMediaUrl } from "../utils/media";
+import defaultAudio from "../assets/default-audio.png";
+import defaultVideo from "../assets/default-video.png";
+import { CheckCircle } from "lucide-react";
+import styles from "./DialectCard.module.css"; // ✅ импортируем CSS-модуль
 
 interface DialectCardProps {
   id: number;
   slug: string;
   title: string;
-  mediaUrl?: string;
+  previewUrl?: string;
   mediaType?: "video" | "audio";
   dialectName?: string;
+  licenseType?: string;
+  licenseAuthor?: string;
+  hasSubtitles?: boolean;
+  isSingle?: boolean; // ← добавим флаг, если карточка одна
 }
 
 const DialectCard: React.FC<DialectCardProps> = ({
   id,
   slug,
   title,
-  mediaUrl,
+  previewUrl,
   mediaType = "video",
   dialectName,
+  licenseType,
+  licenseAuthor,
+  hasSubtitles,
+  isSingle = false,
 }) => {
-  const preview =
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  const previewSrc =
     mediaType === "audio"
-      ? "/images/default-audio.jpg"
-      : getMediaUrl(mediaUrl || "/images/default-video.jpg");
+      ? defaultAudio
+      : hasError
+      ? defaultVideo
+      : getMediaUrl(previewUrl || "");
 
   return (
     <Link
       to={`/dialects/${slug}/media/${id}`}
-      className="block bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300"
+      className={`${styles.card} ${isSingle ? styles.single : ""}`}
     >
-      {/* Превью видео / аудио */}
-      <div className="relative w-full h-52 overflow-hidden">
-        <img
-          src={preview}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-        />
-        {/* Диалект поверх картинки */}
-        {dialectName && (
-          <div
-            className="absolute bottom-2 left-2 px-3 py-1 rounded-full text-white text-sm font-semibold"
-            style={{ backgroundColor: "#686cdf" }}
-          >
-            {dialectName}
+      {/* 🔹 Превью */}
+      <div className={styles.previewWrapper}>
+        {!isLoaded && (
+          <div className={styles.spinnerWrapper}>
+            <div className={styles.spinner}></div>
           </div>
+        )}
+
+        <img
+          src={previewSrc}
+          alt={title}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+          className={`${styles.preview} ${isLoaded ? styles.visible : ""}`}
+          loading="lazy"
+        />
+
+        {dialectName && (
+          <div className={styles.badge}>{dialectName}</div>
         )}
       </div>
 
-      {/* Контент карточки */}
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2">
-          Узнай больше о диалекте {dialectName || "арабского языка"} и
-          потренируй понимание речи.
+      {/* 🔹 Контент */}
+      <div className={styles.content}>
+        <h3 className={styles.title}>{title}</h3>
+
+        {licenseType && (
+          <p className={styles.license}>
+            © {licenseAuthor || "Автор"} — {licenseType}
+          </p>
+        )}
+
+        {mediaType === "video" && hasSubtitles && (
+          <div className={styles.subtitles}>
+            <CheckCircle className={styles.icon} />
+            Субтитры есть
+          </div>
+        )}
+
+        <p className={styles.fusha}>
+          Включает литературный арабский (فصحى)
         </p>
       </div>
     </Link>

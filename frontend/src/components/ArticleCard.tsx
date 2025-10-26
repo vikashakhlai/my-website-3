@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styles from "./ArticleCard.module.css";
-import { Article } from "../types/article";
+import { Article } from "../pages/types/article";
 
 const ArticleCard: React.FC<{ article: Article | undefined }> = ({
   article,

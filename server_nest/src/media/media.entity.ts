@@ -25,6 +25,9 @@ export class Media {
   @Column({ type: 'varchar', length: 300 })
   title!: string;
 
+  @Column({ nullable: true })
+  previewUrl?: string;
+
   @Column({
     name: 'subtitles_link',
     type: 'varchar',

@@ -1,10 +1,8 @@
-// pages/StudentBookPage/StudentBooksPage.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import StudentBookCard from "./StudentBookCard";
-// import { layoutConfig } from "./layoutConfig";
-import { TextBookProps } from "../../types/TextBook";
-import styles from "./StudentBooksPage.module.css"; // ← меняем на import styles
+import { TextBookProps } from "../types/TextBook";
+import styles from "./StudentBooksPage.module.css";
 
 const shuffleArray = <T,>(arr: T[]): T[] =>
   [...arr].sort(() => Math.random() - 0.5);
@@ -14,22 +12,36 @@ const StudentBooksPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setBooks([]); // ⬅️ очищаем перед новой загрузкой
+
     const fetchBooks = async () => {
       try {
         const { data } = await axios.get("/api-nest/textbooks");
-        if (Array.isArray(data)) {
-          setBooks(shuffleArray(data));
+        if (isMounted && Array.isArray(data)) {
+          const shuffled = shuffleArray(data);
+          setBooks(shuffled);
         }
       } catch (err) {
         console.error("Ошибка загрузки учебников:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchBooks();
+    return () => {
+      isMounted = false; // предотвращаем setState после размонтирования
+    };
   }, []);
 
-  if (loading) return <div className={styles.pageContainer}>Загрузка...</div>;
+  if (loading)
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loader}>Загрузка учебников...</div>
+      </div>
+    );
 
   if (books.length === 0)
     return <div className={styles.pageContainer}>Учебники не найдены</div>;
@@ -38,13 +50,11 @@ const StudentBooksPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Верхняя секция */}
       <div className={styles.topSection}>
         <StudentBookCard type="big" book={bigBook} />
         <StudentBookCard type="small" book={smallBook} />
       </div>
 
-      {/* Остальные книги */}
       {middleBooks.length > 0 && (
         <div className={styles.remainingSection}>
           <h2 className={styles.sectionTitle}>Остальные учебники</h2>

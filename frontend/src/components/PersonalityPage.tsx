@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import BackZone from "../components/BackZone";
 import styles from "./BookPage/BookPage.module.css";
 import useScrollToTop from "../hooks/useScrollToTop";
-import { Personality } from "../types/Personality";
+import { Personality } from "../pages/types/Personality";
 import ArticleCard from "./ArticleCard";
 import { BACKEND_URL } from "../api/config";
 import TimelineContemporaries from "./TimelineContemporaries";

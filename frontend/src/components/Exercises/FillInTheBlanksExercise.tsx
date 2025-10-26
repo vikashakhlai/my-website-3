@@ -4,7 +4,7 @@ import styles from "./FillInTheBlanksExercise.module.css";
 import {
   FillInTheBlanksExercise as FillInTheBlanksExerciseType,
   FillInTheBlanksItem,
-} from "../../types/article";
+} from "../../pages/types/article";
 
 interface WordOptionProps {
   word: string;

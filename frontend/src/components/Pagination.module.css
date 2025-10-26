@@ -1,0 +1,58 @@
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Кнопки страниц */
+.pagination button {
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f3f6ff;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+/* Активная страница */
+.activePage {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Отключенные кнопки */
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Эллипс (...) */
+.pagination span {
+  color: #888;
+  padding: 0 0.3rem;
+  user-select: none;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .pagination {
+    gap: 0.3rem;
+    margin-top: 1.5rem;
+  }
+
+  .pagination button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+  }
+}
