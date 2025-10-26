@@ -1,4 +1,4 @@
-import { Personality } from "../pages/types/Personality";
+import { Personality } from "../types/Personality";
 import PersonCard from "./PersonCard";
 import styles from "../pages/AllPersonalitiesPage.module.css";
 

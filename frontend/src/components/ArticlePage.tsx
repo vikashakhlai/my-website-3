@@ -1,7 +1,7 @@
 // src/components/ArticlePage.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Article } from "../pages/types/article";
+import type { Article } from "../types/article";
 
 import {
   isFillInTheBlanksExercise,

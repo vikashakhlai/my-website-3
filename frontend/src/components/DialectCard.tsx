@@ -4,7 +4,12 @@ import { getMediaUrl } from "../utils/media";
 import defaultAudio from "../assets/default-audio.png";
 import defaultVideo from "../assets/default-video.png";
 import { CheckCircle } from "lucide-react";
-import styles from "./DialectCard.module.css"; // ✅ импортируем CSS-модуль
+import styles from "./DialectCard.module.css";
+
+interface Topic {
+  id: number;
+  name: string;
+}
 
 interface DialectCardProps {
   id: number;
@@ -16,7 +21,9 @@ interface DialectCardProps {
   licenseType?: string;
   licenseAuthor?: string;
   hasSubtitles?: boolean;
-  isSingle?: boolean; // ← добавим флаг, если карточка одна
+  level?: "beginner" | "intermediate" | "advanced";
+  topics?: Topic[];
+  isSingle?: boolean;
 }
 
 const DialectCard: React.FC<DialectCardProps> = ({
@@ -29,6 +36,8 @@ const DialectCard: React.FC<DialectCardProps> = ({
   licenseType,
   licenseAuthor,
   hasSubtitles,
+  level,
+  topics = [],
   isSingle = false,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -41,18 +50,23 @@ const DialectCard: React.FC<DialectCardProps> = ({
       ? defaultVideo
       : getMediaUrl(previewUrl || "");
 
+  const levelLabel =
+    level === "beginner"
+      ? "Начинающий"
+      : level === "intermediate"
+      ? "Средний"
+      : level === "advanced"
+      ? "Продвинутый"
+      : null;
+
   return (
     <Link
       to={`/dialects/${slug}/media/${id}`}
       className={`${styles.card} ${isSingle ? styles.single : ""}`}
     >
-      {/* 🔹 Превью */}
+      {/* === Превью === */}
       <div className={styles.previewWrapper}>
-        {!isLoaded && (
-          <div className={styles.spinnerWrapper}>
-            <div className={styles.spinner}></div>
-          </div>
-        )}
+        {!isLoaded && <div className={styles.skeleton}></div>}
 
         <img
           src={previewSrc}
@@ -63,14 +77,30 @@ const DialectCard: React.FC<DialectCardProps> = ({
           loading="lazy"
         />
 
-        {dialectName && (
-          <div className={styles.badge}>{dialectName}</div>
+        {dialectName && <div className={styles.badge}>{dialectName}</div>}
+
+        {levelLabel && (
+          <div
+            className={`${styles.levelBadge} ${styles[level || "beginner"]}`}
+          >
+            {levelLabel}
+          </div>
         )}
       </div>
 
-      {/* 🔹 Контент */}
+      {/* === Контент === */}
       <div className={styles.content}>
         <h3 className={styles.title}>{title}</h3>
+
+        {topics.length > 0 && (
+          <div className={styles.topics}>
+            {topics.map((t) => (
+              <span key={t.id} className={styles.topic}>
+                {t.name}
+              </span>
+            ))}
+          </div>
+        )}
 
         {licenseType && (
           <p className={styles.license}>
@@ -85,9 +115,7 @@ const DialectCard: React.FC<DialectCardProps> = ({
           </div>
         )}
 
-        <p className={styles.fusha}>
-          Включает литературный арабский (فصحى)
-        </p>
+        <p className={styles.fusha}>Включает литературный арабский (فصحى)</p>
       </div>
     </Link>
   );

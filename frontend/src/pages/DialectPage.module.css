@@ -4,6 +4,7 @@
   padding: 1rem;
 }
 
+/* === Заголовок === */
 .title {
   font-size: 1.75rem;
   font-weight: 700;
@@ -11,11 +12,15 @@
   color: #1f2937;
 }
 
+/* === Состояния === */
 .loading {
   max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1rem;
   color: #374151;
+  text-align: center;
+  font-size: 1.1rem;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .empty {
@@ -25,23 +30,104 @@
   text-align: center;
 }
 
-/* 2 карточки в ряд на ноутбуке, 1 — на мобиле */
+/* === Сетка карточек === */
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
   margin-top: 1rem;
+  opacity: 0;
+  animation: fadeInGrid 0.6s ease-out forwards;
+  animation-delay: 0.2s;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
   .grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* Когда карточка одна — половина ширины и слева */
+/* Одна карточка */
 .gridSingle {
   display: flex;
   justify-content: flex-start;
   margin-top: 1rem;
+}
+
+/* === Скелетоны === */
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .skeletonGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .skeletonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.skeletonCard {
+  width: 100%;
+  height: 320px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s infinite linear, fadeInGrid 0.6s ease-out;
+}
+
+/* === Анимации === */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@keyframes fadeInGrid {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeItem {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeItemUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeItemUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

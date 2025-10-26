@@ -1,6 +1,6 @@
 // src/components/exercises/OpenQuestionExercise/OpenQuestionExercise.tsx
 import React, { useState } from "react";
-import type { OpenQuestionExercise } from "../../pages/types/article";
+import type { OpenQuestionExercise } from "../../types/article";
 import styles from "./OpenQuestionExercise.module.css";
 
 interface OpenQuestionExerciseProps {

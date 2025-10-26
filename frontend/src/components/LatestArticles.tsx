@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react";
 import ArticleCard from "./ArticleCard";
-import { Article } from "../pages/types/article";
+import { Article } from "../types/article";
 
 export interface Articles {
   articles: Article[];

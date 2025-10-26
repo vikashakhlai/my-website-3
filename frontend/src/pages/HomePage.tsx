@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import CenteredBlock from "../components/CenteredBlock";
 import BookList from "../components/BookList";
 import QuotesBlock from "../components/QuotesBlock";
-import { Book } from "./types/Book";
+import { Book } from "../types/Book";
 import ArticleCard from "../components/ArticleCard";
-import { Article } from "./types/article";
+import { Article } from "../types/article";
 import StudentBookCardBigSlider from "../components/StudentBookCardBigSlider";
-import { PersonalityPreview } from "./types/Personality";
+import { PersonalityPreview } from "../types/Personality";
 import PersonCard from "../components/PersonCard";
-import { TextBookProps } from "./types/TextBook";
+import { TextBookProps } from "../types/TextBook";
 import "./HomePage.css";
 import { api } from "../api/auth";
 

@@ -1,5 +1,5 @@
 import PersonCard from "./PersonCard";
-import { PersonalityPreview } from "../pages/types/Personality";
+import { PersonalityPreview } from "../types/Personality";
 import { Box, GridItem, Grid } from "@chakra-ui/react";
 
 interface PersonsProps {

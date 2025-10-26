@@ -1,11 +1,11 @@
-import type { Exercise } from "../pages/types/article";
+import type { Exercise } from "../types/article";
 import type {
   FillInTheBlanksExercise,
   MultipleChoiceExercise,
   OpenQuestionExercise,
   FlashcardsExercise,
   MatchingPairsExercise,
-} from "../pages/types/article";
+} from "../types/article";
 
 export function isFillInTheBlanksExercise(
   exercise: Exercise

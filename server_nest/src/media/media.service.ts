@@ -25,30 +25,36 @@ export class MediaService {
 
   /** 📜 Получить все медиа */
   async findAll(): Promise<Media[]> {
-    return this.mediaRepository.find({
-      relations: ['dialect'],
+    const medias = await this.mediaRepository.find({
+      relations: ['dialect', 'topics'], // ✅ добавили связь
       order: { createdAt: 'DESC' },
     });
+
+    // 🧭 Преобразуем пути в абсолютные URL
+    return medias.map((media) => this.normalizeMediaPaths(media));
   }
 
   /** 🎬 Получить одно медиа по ID */
   async findOne(id: number): Promise<Media> {
     const media = await this.mediaRepository.findOne({
       where: { id },
-      relations: ['exercises', 'exercises.items'],
+      relations: ['dialect', 'topics', 'exercises', 'exercises.items'], // ✅ добавили topics
     });
 
     if (!media) {
       throw new NotFoundException(`Медиа с ID ${id} не найдено`);
     }
 
-    // ✅ Конвертируем относительные пути в абсолютные URL
+    return this.normalizeMediaPaths(media);
+  }
+
+  /** 🔧 Преобразует относительные пути в абсолютные */
+  private normalizeMediaPaths(media: Media): Media {
     media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);
     media.subtitlesLink = makeAbsoluteUrl(media.subtitlesLink);
     if (media.previewUrl) {
       media.previewUrl = makeAbsoluteUrl(media.previewUrl);
     }
-
     return media;
   }
 
@@ -68,14 +74,15 @@ export class MediaService {
       }
     }
 
-    return saved;
+    return this.normalizeMediaPaths(saved);
   }
 
   /** ♻️ Обновить запись */
   async update(id: number, data: Partial<Media>): Promise<Media> {
     const media = await this.findOne(id);
     Object.assign(media, data);
-    return this.mediaRepository.save(media);
+    const updated = await this.mediaRepository.save(media);
+    return this.normalizeMediaPaths(updated);
   }
 
   /** 🗑 Удалить запись */

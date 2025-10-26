@@ -1,26 +1,24 @@
 import { Grid, GridItem } from "@chakra-ui/react";
 import BookCard from "./BookCard";
-import { Book } from "../pages/types/Book";
+import { Book } from "../types/Book";
 
 interface BookListProps {
   books?: Book[];
 }
 
 const BookList = ({ books = [] }: BookListProps) => {
-  console.log("📚 Books data:", books);
   return (
     <Grid
       templateColumns={{
-        base: "1fr",
-        sm: "repeat(2, 1fr)",
+        base: "repeat(2, 1fr)",
         md: "repeat(3, 1fr)",
         lg: "repeat(5, 1fr)",
-        xl: "repeat(auto-fit, minmax(230px, 1fr))",
       }}
-      gap="6"
+      gap={6}
+      justifyContent="center"
     >
       {books.map((book) => (
-        <GridItem key={book.id}>
+        <GridItem key={book.id} display="flex" justifyContent="center">
           <BookCard {...book} />
         </GridItem>
       ))}

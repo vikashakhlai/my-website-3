@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styles from "./BooksPage.module.css";
 import BookList from "../components/BookList";
 import Filters from "../components/Filters";
 import Pagination from "../components/Pagination";
-import { Book } from "./types/Book";
+import { Book } from "../types/Book";
 
 const BooksPage = () => {
   const [filters, setFilters] = useState({ tag: "", author: "", title: "" });
@@ -12,15 +12,19 @@ const BooksPage = () => {
   const [authors, setAuthors] = useState<{ id: number; full_name: string }[]>(
     []
   );
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+  });
 
   const limit = 20;
 
-  // === Загрузка тегов и авторов ===
+  // === Загрузка фильтров (теги, авторы) ===
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -38,17 +42,22 @@ const BooksPage = () => {
         console.error("Ошибка загрузки фильтров:", err);
       }
     };
-
     fetchFilters();
   }, []);
 
   // === Загрузка книг ===
-  useEffect(() => {
-    const fetchBooks = async () => {
-      setLoading(true);
+  const loadBooks = useCallback(
+    async (page = 1, fullLoad = false) => {
       try {
+        if (fullLoad) {
+          setLoading(true);
+          setBooks([]);
+        } else {
+          setIsFetching(true);
+        }
+
         const params = new URLSearchParams({
-          page: currentPage.toString(),
+          page: page.toString(),
           limit: limit.toString(),
         });
 
@@ -59,35 +68,65 @@ const BooksPage = () => {
         const res = await fetch(`/api-nest/books/search?${params}`);
         const data = await res.json();
 
-        setBooks(Array.isArray(data.books) ? data.books : []);
-        setTotalCount(Number(data.totalCount) || 0);
-        setTotalPages(Number(data.totalPages) || 1);
+        if (Array.isArray(data.books)) {
+          setBooks(data.books);
+          setPagination({
+            currentPage: page,
+            totalPages: data.totalPages || 1,
+            totalCount: data.totalCount || 0,
+          });
+        } else {
+          setBooks([]);
+          setPagination({ currentPage: 1, totalPages: 1, totalCount: 0 });
+        }
+
+        setError(null);
       } catch (err) {
         console.error("Ошибка загрузки книг:", err);
+        setError("Не удалось загрузить книги.");
         setBooks([]);
       } finally {
         setLoading(false);
+        setIsFetching(false);
       }
-    };
+    },
+    [filters]
+  );
 
-    fetchBooks();
-  }, [filters, currentPage]);
+  useEffect(() => {
+    loadBooks(1, true);
+  }, []);
 
-  // === Сброс фильтров ===
+  useEffect(() => {
+    loadBooks(1);
+  }, [filters, loadBooks]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      loadBooks(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleReset = () => {
     setFilters({ tag: "", author: "", title: "" });
-    setCurrentPage(1);
+    loadBooks(1, true);
   };
 
   return (
     <div className={styles.page}>
+      <h1 className={styles.title}>Библиотека</h1>
+
       <Filters
         fields={[
           {
             type: "select",
             key: "tag",
             label: "Теги",
-            options: tags.map((t) => ({ label: t.name, value: t.name })),
+            options: [
+              { label: "Все теги", value: "" },
+              ...tags.map((t) => ({ label: t.name, value: t.name })),
+            ],
           },
           {
             type: "autocomplete",
@@ -105,26 +144,45 @@ const BooksPage = () => {
         ]}
         onChange={(values) => {
           setFilters(values);
-          setCurrentPage(1);
+          setPagination((prev) => ({ ...prev, currentPage: 1 }));
         }}
         onReset={handleReset}
-        totalCount={totalCount}
+        totalCount={pagination.totalCount}
       />
 
-      {loading ? (
-        <div className={styles.loading}>Загрузка...</div>
-      ) : (
-        <>
-          <div className={(books?.length ?? 0) === 1 ? styles.leftAlign : ""}>
-            <BookList books={books ?? []} />
+      <div className={styles.booksWrapper}>
+        {error ? (
+          <p className={styles.error}>{error}</p>
+        ) : loading || (!books.length && !error) ? (
+          <div className={styles.gridPlaceholder}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="skeletonCard">
+                <div className="skeletonCover">
+                  <div className="skeletonTheme"></div>
+                </div>
+                <div className="skeletonTitle"></div>
+                <div className="skeletonTitleShort"></div>
+              </div>
+            ))}
           </div>
+        ) : (
+          <div className={styles.fadeIn}>
+            <BookList books={books} />
+          </div>
+        )}
+        {isFetching && !loading && (
+          <div className={styles.overlay}>
+            <div className={styles.spinner}></div>
+          </div>
+        )}
+      </div>
 
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </>
+      {!loading && pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

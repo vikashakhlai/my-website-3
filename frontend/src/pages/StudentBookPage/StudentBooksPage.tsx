@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import StudentBookCard from "./StudentBookCard";
-import { TextBookProps } from "../types/TextBook";
+import { TextBookProps } from "../../types/TextBook";
 import styles from "./StudentBooksPage.module.css";
 
 const shuffleArray = <T,>(arr: T[]): T[] =>

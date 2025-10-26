@@ -7,9 +7,12 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { Exercise } from 'src/articles/entities/exercise.entity';
 import { Dialect } from 'src/dialect/dialect.entity';
+import { DialectTopic } from 'src/dialect_topics/dialect_topics.entity';
 
 @Entity('media')
 export class Media {
@@ -43,6 +46,13 @@ export class Media {
     nullable: true,
   })
   grammarLink?: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['beginner', 'intermediate', 'advanced'],
+    default: 'beginner',
+  })
+  level!: 'beginner' | 'intermediate' | 'advanced';
 
   @Column({ type: 'jsonb', nullable: true })
   resources?: Record<string, any>;
@@ -85,4 +95,14 @@ export class Media {
   /** 🧩 Связанные упражнения */
   @OneToMany(() => Exercise, (exercise) => exercise.media)
   exercises?: Exercise[];
+
+  @ManyToMany(() => DialectTopic, (topic) => topic.medias, {
+    cascade: true,
+  })
+  @JoinTable({
+    name: 'media_topics',
+    joinColumn: { name: 'media_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'topic_id', referencedColumnName: 'id' },
+  })
+  topics?: DialectTopic[];
 }

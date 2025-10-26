@@ -3,25 +3,7 @@ import axios from "axios";
 import DialectCard from "../components/DialectCard";
 import Filters from "../components/Filters";
 import styles from "./DialectPage.module.css";
-
-interface Dialect {
-  id: number;
-  name: string;
-  slug: string;
-  region?: string;
-}
-
-interface Media {
-  id: number;
-  title: string;
-  mediaUrl: string;
-  previewUrl?: string;
-  type: "audio" | "video";
-  licenseType?: string;
-  licenseAuthor?: string;
-  subtitlesLink?: string;
-  dialect?: Dialect; // связь по dialect_id
-}
+import { Media } from "../types/media";
 
 const DialectPage = () => {
   const [mediaList, setMediaList] = useState<Media[]>([]);
@@ -41,8 +23,6 @@ const DialectPage = () => {
         if (region) params.region = region;
 
         const response = await axios.get("/api-nest/media", { params });
-
-        // безопасный разбор ответа (и массив, и {data, total})
         const payload = response?.data ?? [];
         const data: Media[] = Array.isArray(payload)
           ? payload
@@ -67,10 +47,6 @@ const DialectPage = () => {
   }, [filters]);
 
   const handleReset = () => setFilters({ name: "", region: "" });
-
-  if (loading && !loadedOnce)
-    return <p className={styles.loading}>Загрузка...</p>;
-
   const isSingle = mediaList.length === 1;
 
   return (
@@ -97,42 +73,71 @@ const DialectPage = () => {
         totalCount={totalCount}
       />
 
+      {/* === 🌀 Скелетоны === */}
+      {loading && !loadedOnce && (
+        <div className={styles.skeletonGrid}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={styles.skeletonCard}></div>
+          ))}
+        </div>
+      )}
+
+      {/* === 🧩 Пусто === */}
       {!loading && loadedOnce && mediaList.length === 0 && (
         <p className={styles.empty}>Нет упражнений, удовлетворяющих фильтру.</p>
       )}
 
-      {isSingle ? (
-        <div className={styles.gridSingle}>
-          <DialectCard
-            id={mediaList[0].id}
-            slug={mediaList[0].dialect?.slug || ""}
-            title={mediaList[0].title}
-            previewUrl={mediaList[0].previewUrl}
-            mediaType={mediaList[0].type}
-            dialectName={mediaList[0].dialect?.name || "Неизвестный диалект"}
-            licenseType={mediaList[0].licenseType}
-            licenseAuthor={mediaList[0].licenseAuthor}
-            hasSubtitles={!!mediaList[0].subtitlesLink}
-            isSingle
-          />
-        </div>
-      ) : (
-        <div className={styles.grid}>
-          {mediaList.map((m) => (
-            <DialectCard
-              key={m.id}
-              id={m.id}
-              slug={m.dialect?.slug || ""}
-              title={m.title}
-              previewUrl={m.previewUrl}
-              mediaType={m.type}
-              dialectName={m.dialect?.name || "Неизвестный диалект"}
-              licenseType={m.licenseType}
-              licenseAuthor={m.licenseAuthor}
-              hasSubtitles={!!m.subtitlesLink}
-            />
-          ))}
-        </div>
+      {/* === 🪄 Сетка карточек === */}
+      {!loading && mediaList.length > 0 && (
+        <>
+          {isSingle ? (
+            <div className={`${styles.gridSingle} ${styles.fadeIn}`}>
+              <DialectCard
+                id={mediaList[0].id}
+                slug={mediaList[0].dialect?.slug || ""}
+                title={mediaList[0].title}
+                previewUrl={mediaList[0].previewUrl}
+                mediaType={mediaList[0].type}
+                dialectName={
+                  mediaList[0].dialect?.name || "Неизвестный диалект"
+                }
+                licenseType={mediaList[0].licenseType}
+                licenseAuthor={mediaList[0].licenseAuthor}
+                hasSubtitles={!!mediaList[0].subtitlesLink}
+                level={mediaList[0].level}
+                topics={mediaList[0].topics}
+                isSingle
+              />
+            </div>
+          ) : (
+            <div className={`${styles.grid} ${styles.fadeIn}`}>
+              {mediaList.map((m, index) => (
+                <div
+                  key={m.id}
+                  style={{
+                    animationDelay: `${index * 0.05}s`,
+                    animationFillMode: "forwards",
+                  }}
+                  className={styles.fadeItem}
+                >
+                  <DialectCard
+                    id={m.id}
+                    slug={m.dialect?.slug || ""}
+                    title={m.title}
+                    previewUrl={m.previewUrl}
+                    mediaType={m.type}
+                    dialectName={m.dialect?.name || "Неизвестный диалект"}
+                    licenseType={m.licenseType}
+                    licenseAuthor={m.licenseAuthor}
+                    hasSubtitles={!!m.subtitlesLink}
+                    level={m.level}
+                    topics={m.topics}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,169 +1,148 @@
-@import url("https://fonts.googleapis.com/css?family=Poppins");
+@import url("https://fonts.googleapis.com/css?family=Poppins:400,600&display=swap");
 
 body {
   font-family: "Poppins", sans-serif;
-  font-size: 16px;
-  background-color: #f1f1f1;
+  background-color: #f7f8fa;
 }
 
-.container {
+/* === ССЫЛКА-КОНТЕЙНЕР === */
+.bookLink {
+  text-decoration: none;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px; 
 }
 
-.profileCard {
-  width: 250px;
-  min-height: 320px;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  position: relative;
-  background-color: white;
+/* === КАРТОЧКА === */
+.bookCard {
+  width: 220px;
+  height: 340px;
+  border-radius: 16px;
+  background-color: #fff;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-}
-
-.profileCard:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
-/* === Front: Обложка === */
-.profileImage {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f0f0f0; /* фон под изображением */
-}
-
-.profileImage img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* ← уместить ВСЁ изображение, сохраняя пропорции */
-  object-position: center; /* центрировать */
-  border-radius: 4px;
-}
-
-.theme {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background-color: white;
-  border: 2px solid #008000;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  z-index: 2;
-}
-
-.info {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  z-index: 2;
-}
-
-.info button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
   cursor: pointer;
-  transition: background 0.2s;
-}
-
-.info button:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-/* === Back: Информация о книге === */
-.profileInfo {
-  width: 100%;
-  padding: 20px;
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
-  background-color: white;
-  transform: rotateY(180deg); /* изначально "спрятано" */
-  opacity: 0;
-  visibility: hidden;
-  z-index: 0;
-  transition: all 0.5s ease;
-  overflow-y: auto;
-  max-height: 100%;
+  justify-content: flex-start;
+  align-items: stretch;
+  animation: cardWave 0.6s ease forwards;
+  will-change: transform, box-shadow;
 }
 
-/* === Состояние: активная карточка === */
-.profileCard.active .profileImage {
-  transform: rotateY(180deg);
-  opacity: 0;
-  visibility: hidden;
-  z-index: 0;
+.bookCard:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.15);
 }
 
-.profileCard.active .profileInfo {
-  transform: rotateY(0);
+/* === ЭФФЕКТ МЯГКОГО СВЕТА === */
+.bookCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    rgba(255, 255, 255, 0.35),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease, background-position 0.2s ease;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.bookCard:hover::after {
   opacity: 1;
-  visibility: visible;
-  z-index: 2;
 }
 
-/* === Стили контента === */
-.name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  line-height: 1.3;
+/* === ОБЛОЖКА === */
+.bookImage {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f5f5f5 0%, #eaeaea 100%);
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.publisher {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
+.bookImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 16px;
+  transition: opacity 0.4s ease;
 }
 
-.description {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 16px;
-  line-height: 1.5;
-  text-align: justify;
+.bookCard:hover img {
+  opacity: 0.95;
 }
 
-.follow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #212121;
-  margin: 12px 0;
+/* === ПЛАВНОЕ ПОЯВЛЕНИЕ === */
+@keyframes cardWave {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.backBtn {
-  padding: 8px 16px;
-  background-color: #212121;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-family: "Poppins", sans-serif;
-  cursor: pointer;
-  font-size: 14px;
-  align-self: flex-start;
-  transition: background 0.2s;
+/* “волновая” задержка появления */
+.bookCard:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.bookCard:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.bookCard:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.bookCard:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.bookCard:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.bookCard:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.bookCard:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.bookCard:nth-child(8) {
+  animation-delay: 0.4s;
 }
 
-.backBtn:hover {
-  background-color: #333;
+/* === СКЕЛЕТОН === */
+.skeletonCard {
+  width: 220px;
+  height: 340px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #ececec 25%, #f7f7f7 37%, #ececec 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s infinite linear;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* === АДАПТИВ === */
+@media (max-width: 600px) {
+  .bookCard,
+  .skeletonCard {
+    width: 180px;
+    height: 280px;
+  }
 }

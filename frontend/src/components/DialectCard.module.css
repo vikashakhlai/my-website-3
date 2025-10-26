@@ -2,18 +2,20 @@
   display: block;
   background: #fff;
   border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
+  position: relative;
 }
 
 .card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* === Превью === */
 .previewWrapper {
   position: relative;
   width: 100%;
@@ -24,74 +26,123 @@
   border-top-right-radius: 20px;
 }
 
+/* 🩶 Скелетон */
+.skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s infinite linear;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
 .preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-
-.preview:hover {
-  transform: scale(1.05);
+  transition: opacity 0.6s ease;
+  transform: scale(1);
 }
 
 .visible {
   opacity: 1;
 }
 
-.spinnerWrapper {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.card:hover .preview {
+  transform: scale(1.03);
 }
 
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #c7d2fe;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
   }
 }
 
+/* === Бейджи === */
 .badge {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  bottom: 10px;
+  right: 10px;
   background: rgba(99, 102, 241, 0.9);
   color: white;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 3;
 }
 
+.levelBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 10px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  z-index: 3;
+}
+
+.beginner {
+  background: #16a34a;
+}
+.intermediate {
+  background: #f59e0b;
+}
+.advanced {
+  background: #2563eb;
+}
+
+/* === Контент === */
 .content {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .title {
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 4px;
-  line-height: 1.3;
+  margin: 0;
+}
+
+.topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.topic {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.topic:hover {
+  background: #e5e7eb;
+  transform: scale(1.05);
 }
 
 .license {
   font-size: 0.8rem;
   color: #6b7280;
-  margin-bottom: 6px;
 }
 
 .subtitles {
@@ -111,11 +162,43 @@
 .fusha {
   font-size: 0.9rem;
   color: #4b5563;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
-/* Если карточка одна — половина ширины контейнера */
 .single {
   max-width: 50%;
-  margin-left: 0;
+}
+
+/* === Анимации === */
+@keyframes fadeInCard {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === 📱 Адаптив === */
+@media (max-width: 680px) {
+  .previewWrapper {
+    height: 180px;
+  }
+
+  .title {
+    font-size: 0.95rem;
+  }
+
+  .badge,
+  .levelBadge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .topic {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
 }

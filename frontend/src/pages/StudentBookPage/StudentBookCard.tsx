@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styles from "./StudentBookCard.module.css";
-import { TextBookProps } from "../types/TextBook";
+import { TextBookProps } from "../../types/TextBook";
 
 interface StudentBookCardProps {
   book: TextBookProps;

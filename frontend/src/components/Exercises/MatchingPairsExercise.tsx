@@ -1,6 +1,6 @@
 // src/components/exercises/MatchingPairsExercise/MatchingPairsExercise.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import type { MatchingPairsExercise } from "../../pages/types/article";
+import type { MatchingPairsExercise } from "../../types/article";
 import { shuffleArray } from "../../utils/shuffleArray";
 import styles from "./MatchingPairsExercise.module.css";
 

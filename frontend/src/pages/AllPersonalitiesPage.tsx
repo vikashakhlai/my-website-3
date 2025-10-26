@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../api/auth";
-import { Personality } from "./types/Personality";
+import { Personality } from "../types/Personality";
 import styles from "./AllPersonalitiesPage.module.css";
 import PersonalityGrid from "../components/PersonalityGrid";
 import Filters from "../components/Filters";
 import Pagination from "../components/Pagination";
 import useScrollToTop from "../hooks/useScrollToTop";
-import { Era } from "./types/era";
+import { Era } from "../types/era";
 
 interface PaginationState {
   currentPage: number;
@@ -39,15 +39,17 @@ const AllPersonalitiesPage = () => {
 
   useScrollToTop();
 
-  // === Загрузка личностей ===
   const loadPersonalities = useCallback(
     async (page = 1, showFullLoader = false) => {
       try {
-        if (showFullLoader) setLoading(true);
-        else setIsFetching(true);
+        if (showFullLoader) {
+          setLoading(true);
+          setPersonalities([]); // очищаем список, чтобы избежать “мигания”
+        } else {
+          setIsFetching(true);
+        }
 
         const params: Record<string, string | number> = { page, limit };
-
         const searchTerm = filters.search?.trim() || "";
         if (searchTerm) params.search = searchTerm;
         if (filters.era) params.era = filters.era;
@@ -69,12 +71,10 @@ const AllPersonalitiesPage = () => {
     [filters]
   );
 
-  // === Первичная загрузка ===
   useEffect(() => {
     loadPersonalities(1, true);
   }, []);
 
-  // === Перезагрузка при изменении фильтров ===
   useEffect(() => {
     loadPersonalities(1);
   }, [filters, loadPersonalities]);
@@ -90,20 +90,6 @@ const AllPersonalitiesPage = () => {
     setFilters({ search: "", era: "" });
     loadPersonalities(1, true);
   };
-
-  if (loading)
-    return (
-      <div className={styles.container}>
-        <div className={styles.fullLoader}>Загрузка...</div>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className={styles.container}>
-        <p className={styles.error}>{error}</p>
-      </div>
-    );
 
   return (
     <div className={styles.container}>
@@ -139,29 +125,31 @@ const AllPersonalitiesPage = () => {
       />
 
       <div className={styles.gridWrapper}>
-        {/* 💀 Скелетоны вместо "Загрузка..." */}
-        {loading ? (
+        {error ? (
+          <p className={styles.error}>{error}</p>
+        ) : loading || (!personalities.length && !error) ? (
           <div className={styles.gridPlaceholder}>
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className={styles.skeletonCard}></div>
             ))}
           </div>
         ) : (
-          <PersonalityGrid
-            personalities={personalities}
-            isFetching={isFetching}
-          />
+          <div className={`${styles.fadeIn}`}>
+            <PersonalityGrid
+              personalities={personalities}
+              isFetching={isFetching}
+            />
+          </div>
         )}
 
-        {/* 🌀 Оверлей при фильтрации или пагинации */}
-        {isFetching && (
+        {isFetching && !loading && (
           <div className={styles.overlay}>
             <div className={styles.spinner}></div>
           </div>
         )}
       </div>
 
-      {!loading && (
+      {!loading && pagination.totalPages > 1 && (
         <Pagination
           currentPage={pagination.currentPage}
           totalPages={pagination.totalPages}

@@ -18,6 +18,7 @@ import { QuotesModule } from './quotes/quotes.module';
 import { SubtitlesModule } from './subtitles/subtitles.module';
 import { MediaModule } from './media/media.module';
 import { DialectsModule } from './dialect/dialects.module';
+import { DialectTopicsModule } from './dialect_topics/dialect_topics.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { DialectsModule } from './dialect/dialects.module';
     QuotesModule,
     SubtitlesModule,
     DialectsModule,
+    DialectTopicsModule,
   ],
 
   controllers: [AppController],

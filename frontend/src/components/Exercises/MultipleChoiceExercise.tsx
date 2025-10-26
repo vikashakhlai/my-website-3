@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import type {
   MultipleChoiceExercise,
   MultipleChoiceItem,
-} from "../../pages/types/article";
+} from "../../types/article";
 import { shuffleArray } from "../../utils/shuffleArray";
 import styles from "./MultipleChoiceExercise.module.css";
 
