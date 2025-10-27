@@ -30,55 +30,70 @@ const DialectPage = () => {
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
-  // === Загрузка тем и регионов ===
+  // === 1. Загрузка тем ===
   useEffect(() => {
-    const fetchMeta = async () => {
+    const fetchTopics = async () => {
       try {
-        const [topicsRes, mediaRes] = await Promise.all([
-          axios.get("/api-nest/dialect-topics"),
-          axios.get("/api-nest/media"),
-        ]);
-
-        setTopics((topicsRes.data || []) as Topic[]);
-
-        // Уникальные регионы. Жёстко приводим к string[].
-        const allRegions = [
-          ...new Set<string>(
-            ((mediaRes.data || []) as Media[])
-              .map((m) => m.dialect?.region)
-              .filter((r): r is string => Boolean(r))
-          ),
-        ];
-        setRegions(allRegions);
+        const res = await axios.get("/api-nest/dialect-topics");
+        setTopics((res.data || []) as Topic[]);
       } catch (e) {
-        console.error("Ошибка при загрузке тем/регионов", e);
+        console.error("Ошибка при загрузке тем", e);
       }
     };
-    fetchMeta();
+    fetchTopics();
   }, []);
 
-  // === Загрузка упражнений ===
+  // === 2. Загрузка медиа ===
   useEffect(() => {
+    let isMounted = true;
+
     const fetchMedia = async () => {
+      setLoading(true);
+      const start = Date.now();
+
       try {
-        setLoading(true);
         const params: Record<string, string> = {};
         if (filters.name) params.name = filters.name;
         if (filters.region) params.region = filters.region;
         if (filters.topics.length > 0) params.topics = filters.topics.join(",");
 
         const response = await axios.get("/api-nest/media", { params });
-        setMediaList((response.data || []) as Media[]);
+
+        const elapsed = Date.now() - start;
+        const minDelay = 400; // минимальное время показа скелета
+        const delay = Math.max(0, minDelay - elapsed);
+
+        setTimeout(() => {
+          if (!isMounted) return;
+          const data = (response.data || []) as Media[];
+          setMediaList(data);
+          setLoading(false);
+          setLoadedOnce(true);
+
+          // === Вычисляем регионы динамически на основе пришедших данных ===
+          const uniqueRegions = [
+            ...new Set(
+              data
+                .map((m) => m.dialect?.region)
+                .filter((r): r is string => Boolean(r))
+            ),
+          ];
+          setRegions(uniqueRegions);
+        }, delay);
       } catch (error) {
-        console.error("Ошибка при загрузке медиа:", error);
-        setMediaList([]);
-      } finally {
-        setLoading(false);
-        setLoadedOnce(true);
+        if (isMounted) {
+          console.error("Ошибка при загрузке медиа:", error);
+          setMediaList([]);
+          setLoading(false);
+          setLoadedOnce(true);
+        }
       }
     };
 
     fetchMedia();
+    return () => {
+      isMounted = false;
+    };
   }, [filters]);
 
   // === Управление фильтрами ===
@@ -93,9 +108,6 @@ const DialectPage = () => {
 
   const handleReset = () => setFilters({ name: "", region: "", topics: [] });
 
-  const isSingle = mediaList.length === 1;
-
-  // Адаптер для Filters.onChange (поддерживает только строковые поля)
   const handleBaseFiltersChange = (vals: Record<string, string>) => {
     setFilters((prev) => ({
       ...prev,
@@ -104,11 +116,16 @@ const DialectPage = () => {
     }));
   };
 
+  // === Фильтруем медиа по наличию диалекта ===
+  const filteredMedia = mediaList.filter((m) => m.dialect && m.dialect.id);
+  const visibleCount = filteredMedia.length;
+  const isSingleFiltered = visibleCount === 1;
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Все упражнения по диалектам</h1>
 
-      {/* === Базовые фильтры (имя + регион как select) === */}
+      {/* === Фильтры === */}
       <Filters
         fields={[
           {
@@ -124,12 +141,12 @@ const DialectPage = () => {
             options: regions.map((r) => ({ label: r, value: r })),
           },
         ]}
-        onChange={handleBaseFiltersChange} // ✅ адаптер
+        onChange={handleBaseFiltersChange}
         onReset={handleReset}
-        totalCount={mediaList.length}
+        totalCount={visibleCount}
       />
 
-      {/* === Фильтр по темам === */}
+      {/* === Темы === */}
       <div className={styles.topicsFilter}>
         <div className={styles.topicsHeaderRow}>
           <p className={styles.filterLabel}>Темы:</p>
@@ -157,6 +174,7 @@ const DialectPage = () => {
             )}
           </div>
         </div>
+
         {showAllTopics && (
           <div className={styles.allTopicsExpanded}>
             {topics.slice(5).map((t) => (
@@ -173,7 +191,7 @@ const DialectPage = () => {
           </div>
         )}
 
-        {/* Выбранные темы */}
+        {/* Активные темы */}
         {filters.topics.length > 0 && (
           <div className={styles.activeFilters}>
             {filters.topics.map((id) => {
@@ -202,13 +220,13 @@ const DialectPage = () => {
         </div>
       )}
 
-      {!loading && loadedOnce && mediaList.length === 0 && (
+      {!loading && loadedOnce && visibleCount === 0 && (
         <p className={styles.empty}>Нет упражнений, удовлетворяющих фильтру.</p>
       )}
 
-      {!loading && mediaList.length > 0 && (
-        <div className={isSingle ? styles.gridSingle : styles.grid}>
-          {mediaList.map((m) => (
+      {!loading && visibleCount > 0 && (
+        <div className={isSingleFiltered ? styles.gridSingle : styles.grid}>
+          {filteredMedia.map((m) => (
             <DialectCard
               key={m.id}
               id={m.id}
@@ -223,6 +241,9 @@ const DialectPage = () => {
               level={m.level}
               topics={m.topics}
               activeTopics={filters.topics}
+              duration={m.duration}
+              speaker={m.speaker}
+              sourceRole={m.sourceRole}
             />
           ))}
         </div>

@@ -1,3 +1,4 @@
+import { string } from "zod";
 import { Dialect } from "./dialect";
 
 export interface Media {
@@ -12,4 +13,7 @@ export interface Media {
   dialect?: Dialect;
   level?: "beginner" | "intermediate" | "advanced";
   topics?: { id: number; name: string }[];
+  duration?: string;
+  speaker?: string;
+  sourceRole?: string;
 }

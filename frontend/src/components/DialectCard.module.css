@@ -26,34 +26,14 @@
   border-top-right-radius: 20px;
 }
 
-/* 🩶 Скелетон */
+/* Скелетон */
 .skeleton {
   position: absolute;
   inset: 0;
-  border-radius: 0;
   background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
   background-size: 400% 100%;
   animation: shimmer 1.5s infinite linear;
   z-index: 1;
-  opacity: 1;
-  transition: opacity 0.4s ease;
-}
-
-.preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  transform: scale(1);
-}
-
-.visible {
-  opacity: 1;
-}
-
-.card:hover .preview {
-  transform: scale(1.03);
 }
 
 @keyframes shimmer {
@@ -65,42 +45,33 @@
   }
 }
 
+.preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.4s ease;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.card:hover .preview {
+  transform: scale(1.03);
+}
+
 /* === Бейджи === */
 .badge {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background: rgba(99, 102, 241, 0.9);
   color: white;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 12px;
   z-index: 3;
-}
-
-.levelBadge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 10px;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  z-index: 3;
-}
-
-.beginner {
-  background: #16a34a;
-}
-.intermediate {
-  background: #f59e0b;
-}
-.advanced {
-  background: #2563eb;
 }
 
 /* === Контент === */
@@ -146,45 +117,73 @@
   font-weight: 600;
 }
 
-.license {
-  font-size: 0.8rem;
-  color: #6b7280;
+/* === Источник и метаданные === */
+.exclusive {
+  color: #7c3aed;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: linear-gradient(90deg, #c084fc, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.subtitles {
-  display: flex;
-  align-items: center;
-  color: #059669;
-  font-size: 0.9rem;
+.source {
+  font-size: 0.85rem;
+  color: #4b5563;
   font-weight: 500;
 }
 
-.icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
+.metaInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  color: #374151;
+  font-size: 0.85rem;
 }
 
+.metaInfo span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* === Уровень === */
+.levelTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* === Fusha === */
 .fusha {
   font-size: 0.9rem;
   color: #4b5563;
   margin-top: 4px;
 }
 
-.single {
-  max-width: 50%;
+.partner {
+  font-size: 0.85rem;
+  color: #4b5563;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
 }
 
-/* === Анимации === */
-@keyframes fadeInCard {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.partner svg {
+  color: #6366f1;
 }
 
 /* === 📱 Адаптив === */
@@ -197,9 +196,8 @@
     font-size: 0.95rem;
   }
 
-  .badge,
-  .levelBadge {
-    font-size: 0.7rem;
+  .badge {
+    font-size: 0.75rem;
     padding: 3px 8px;
   }
 

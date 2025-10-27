@@ -19,6 +19,7 @@ import { SubtitlesModule } from './subtitles/subtitles.module';
 import { MediaModule } from './media/media.module';
 import { DialectsModule } from './dialect/dialects.module';
 import { DialectTopicsModule } from './dialect_topics/dialect_topics.module';
+import { DialogueModule } from './dialogue/dialogue.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { DialectTopicsModule } from './dialect_topics/dialect_topics.module';
     SubtitlesModule,
     DialectsModule,
     DialectTopicsModule,
+    DialogueModule,
   ],
 
   controllers: [AppController],

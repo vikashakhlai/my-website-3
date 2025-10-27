@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { getMediaUrl } from "../utils/media";
 import defaultAudio from "../assets/default-audio.png";
 import defaultVideo from "../assets/default-video.png";
-import { CheckCircle } from "lucide-react";
+import { Captions, Mic, Clock, Handshake } from "lucide-react";
 import styles from "./DialectCard.module.css";
 
 interface Topic {
@@ -23,8 +23,11 @@ interface DialectCardProps {
   hasSubtitles?: boolean;
   level?: "beginner" | "intermediate" | "advanced";
   topics?: Topic[];
-  isSingle?: boolean;
-  activeTopics?: number[]; // ✅ выбранные темы из фильтра
+  region?: string;
+  duration?: string;
+  speaker?: string;
+  sourceRole?: string;
+  activeTopics?: number[];
 }
 
 const DialectCard: React.FC<DialectCardProps> = ({
@@ -39,7 +42,9 @@ const DialectCard: React.FC<DialectCardProps> = ({
   hasSubtitles,
   level,
   topics = [],
-  isSingle = false,
+  duration,
+  speaker,
+  sourceRole,
   activeTopics = [],
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -61,12 +66,34 @@ const DialectCard: React.FC<DialectCardProps> = ({
       ? "Продвинутый"
       : null;
 
+  // 🎨 Цветовая тема по диалекту
+  const dialectColors: Record<string, string> = {
+    "Египетский арабский": "#6366F1",
+    "Палестинский арабский": "#10B981",
+    "Марокканский арабский": "#F59E0B",
+    "Саудовский арабский": "#3B82F6",
+    "Суданский арабский": "#8B5CF6",
+  };
+
+  const regionColor = dialectColors[dialectName || ""] || "#6B7280";
+  const isExclusive = licenseType?.toLowerCase() === "original";
+
+  const renderSource = () => {
+    if (isExclusive) {
+      return <p className={styles.exclusive}>🔥 Эксклюзив Oasis</p>;
+    }
+    if (licenseAuthor) {
+      return (
+        <p className={styles.source}>
+          🎥 Видео предоставлено: <strong>{licenseAuthor}</strong>
+        </p>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Link
-      to={`/dialects/${slug}/media/${id}`}
-      className={`${styles.card} ${isSingle ? styles.single : ""}`}
-    >
-      {/* === Превью === */}
+    <Link to={`/dialects/${slug}/media/${id}`} className={styles.card}>
       <div className={styles.previewWrapper}>
         {!isLoaded && <div className={styles.skeleton}></div>}
 
@@ -79,13 +106,12 @@ const DialectCard: React.FC<DialectCardProps> = ({
           loading="lazy"
         />
 
-        {dialectName && <div className={styles.badge}>{dialectName}</div>}
-
-        {levelLabel && (
+        {dialectName && (
           <div
-            className={`${styles.levelBadge} ${styles[level || "beginner"]}`}
+            className={styles.badge}
+            style={{ backgroundColor: regionColor }}
           >
-            {levelLabel}
+            {dialectName}
           </div>
         )}
       </div>
@@ -94,6 +120,7 @@ const DialectCard: React.FC<DialectCardProps> = ({
       <div className={styles.content}>
         <h3 className={styles.title}>{title}</h3>
 
+        {/* === Темы === */}
         {topics.length > 0 && (
           <div className={styles.topics}>
             {topics.map((t) => (
@@ -109,20 +136,45 @@ const DialectCard: React.FC<DialectCardProps> = ({
           </div>
         )}
 
-        {licenseType && (
-          <p className={styles.license}>
-            © {licenseAuthor || "Автор"} — {licenseType}
+        {renderSource()}
+
+        {/* === Партнёр проекта === */}
+        {sourceRole && (
+          <p className={styles.partner}>
+            <Handshake size={14} /> {sourceRole}
           </p>
         )}
 
-        {mediaType === "video" && hasSubtitles && (
-          <div className={styles.subtitles}>
-            <CheckCircle className={styles.icon} />
-            Субтитры есть
-          </div>
-        )}
+        {/* === Информация === */}
+        <div className={styles.metaInfo}>
+          {speaker && (
+            <span>
+              <Mic size={14} /> {speaker}
+            </span>
+          )}
+          {duration && (
+            <span>
+              <Clock size={14} /> {duration}
+            </span>
+          )}
+          {mediaType === "video" && hasSubtitles && (
+            <span>
+              <Captions size={14} /> Субтитры
+            </span>
+          )}
+          {levelLabel && (
+            <span
+              className={styles.levelTag}
+              style={{ backgroundColor: regionColor }}
+            >
+              {levelLabel}
+            </span>
+          )}
+        </div>
 
-        <p className={styles.fusha}>Включает литературный арабский (فصحى)</p>
+        <p className={styles.fusha}>
+          🗣 Есть полная версия на литературном арабском (فصحى)
+        </p>
       </div>
     </Link>
   );
