@@ -139,3 +139,115 @@
     align-self: flex-start;
   }
 }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  position: relative;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.3rem;
+}
+
+input,
+select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.select {
+  cursor: pointer;
+}
+
+/* === Автокомплит === */
+.autocompleteField {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+  margin-top: 4px;
+  list-style: none;
+  padding: 4px 0;
+  animation: fadeIn 0.15s ease-in;
+}
+
+.suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.suggestions li:hover {
+  background: #f3f4f6;
+}
+
+/* === Кнопки === */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.resetButton {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.resetButton:hover {
+  background: #e5e7eb;
+}
+
+.count {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* === Анимация === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -140,6 +140,12 @@
   transform: scale(1.05);
 }
 
+.topicActive {
+  background: #ede9fe;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
 .license {
   font-size: 0.8rem;
   color: #6b7280;

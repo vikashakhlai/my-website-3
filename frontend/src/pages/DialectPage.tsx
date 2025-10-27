@@ -5,38 +5,73 @@ import Filters from "../components/Filters";
 import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
 
+interface Topic {
+  id: number;
+  name: string;
+}
+
+interface FiltersState {
+  name: string;
+  region: string;
+  topics: number[];
+}
+
 const DialectPage = () => {
   const [mediaList, setMediaList] = useState<Media[]>([]);
-  const [filters, setFilters] = useState({ name: "", region: "" });
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
+  const [filters, setFilters] = useState<FiltersState>({
+    name: "",
+    region: "",
+    topics: [],
+  });
+
   const [loading, setLoading] = useState(true);
   const [loadedOnce, setLoadedOnce] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
+  // === Загрузка тем и регионов ===
+  useEffect(() => {
+    const fetchMeta = async () => {
+      try {
+        const [topicsRes, mediaRes] = await Promise.all([
+          axios.get("/api-nest/dialect-topics"),
+          axios.get("/api-nest/media"),
+        ]);
+
+        setTopics((topicsRes.data || []) as Topic[]);
+
+        // Уникальные регионы. Жёстко приводим к string[].
+        const allRegions = [
+          ...new Set<string>(
+            ((mediaRes.data || []) as Media[])
+              .map((m) => m.dialect?.region)
+              .filter((r): r is string => Boolean(r))
+          ),
+        ];
+        setRegions(allRegions);
+      } catch (e) {
+        console.error("Ошибка при загрузке тем/регионов", e);
+      }
+    };
+    fetchMeta();
+  }, []);
+
+  // === Загрузка упражнений ===
   useEffect(() => {
     const fetchMedia = async () => {
       try {
         setLoading(true);
         const params: Record<string, string> = {};
-        const name = filters.name?.trim() || "";
-        const region = filters.region?.trim() || "";
-        if (name) params.name = name;
-        if (region) params.region = region;
+        if (filters.name) params.name = filters.name;
+        if (filters.region) params.region = filters.region;
+        if (filters.topics.length > 0) params.topics = filters.topics.join(",");
 
         const response = await axios.get("/api-nest/media", { params });
-        const payload = response?.data ?? [];
-        const data: Media[] = Array.isArray(payload)
-          ? payload
-          : payload.data ?? [];
-        const total = !Array.isArray(payload)
-          ? payload.total ?? data.length
-          : data.length;
-
-        setMediaList(data);
-        setTotalCount(total);
+        setMediaList((response.data || []) as Media[]);
       } catch (error) {
         console.error("Ошибка при загрузке медиа:", error);
         setMediaList([]);
-        setTotalCount(0);
       } finally {
         setLoading(false);
         setLoadedOnce(true);
@@ -46,13 +81,34 @@ const DialectPage = () => {
     fetchMedia();
   }, [filters]);
 
-  const handleReset = () => setFilters({ name: "", region: "" });
+  // === Управление фильтрами ===
+  const toggleTopic = (id: number) => {
+    setFilters((prev) => {
+      const topics = prev.topics.includes(id)
+        ? prev.topics.filter((t) => t !== id)
+        : [...prev.topics, id];
+      return { ...prev, topics };
+    });
+  };
+
+  const handleReset = () => setFilters({ name: "", region: "", topics: [] });
+
   const isSingle = mediaList.length === 1;
+
+  // Адаптер для Filters.onChange (поддерживает только строковые поля)
+  const handleBaseFiltersChange = (vals: Record<string, string>) => {
+    setFilters((prev) => ({
+      ...prev,
+      name: vals.name ?? "",
+      region: vals.region ?? "",
+    }));
+  };
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Все упражнения по диалектам</h1>
 
+      {/* === Базовые фильтры (имя + регион как select) === */}
       <Filters
         fields={[
           {
@@ -62,18 +118,82 @@ const DialectPage = () => {
             placeholder: "Поиск по имени...",
           },
           {
-            type: "text",
+            type: "select",
             key: "region",
             label: "Регион",
-            placeholder: "Фильтр по региону...",
+            options: regions.map((r) => ({ label: r, value: r })),
           },
         ]}
-        onChange={setFilters}
+        onChange={handleBaseFiltersChange} // ✅ адаптер
         onReset={handleReset}
-        totalCount={totalCount}
+        totalCount={mediaList.length}
       />
 
-      {/* === 🌀 Скелетоны === */}
+      {/* === Фильтр по темам === */}
+      <div className={styles.topicsFilter}>
+        <div className={styles.topicsHeaderRow}>
+          <p className={styles.filterLabel}>Темы:</p>
+
+          <div className={styles.topicsRow}>
+            {topics.slice(0, 5).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => toggleTopic(t.id)}
+                className={`${styles.topicBtn} ${
+                  filters.topics.includes(t.id) ? styles.topicActive : ""
+                }`}
+              >
+                {t.name}
+              </button>
+            ))}
+
+            {topics.length > 5 && (
+              <button
+                className={styles.toggleTopicsBtnInline}
+                onClick={() => setShowAllTopics((prev) => !prev)}
+              >
+                {showAllTopics ? "Скрыть ▲" : "Все темы ▼"}
+              </button>
+            )}
+          </div>
+        </div>
+        {showAllTopics && (
+          <div className={styles.allTopicsExpanded}>
+            {topics.slice(5).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => toggleTopic(t.id)}
+                className={`${styles.topicBtn} ${
+                  filters.topics.includes(t.id) ? styles.topicActive : ""
+                }`}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Выбранные темы */}
+        {filters.topics.length > 0 && (
+          <div className={styles.activeFilters}>
+            {filters.topics.map((id) => {
+              const topic = topics.find((t) => t.id === id);
+              if (!topic) return null;
+              return (
+                <span
+                  key={id}
+                  className={styles.activeFilter}
+                  onClick={() => toggleTopic(id)}
+                >
+                  {topic.name} ✕
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* === Контент === */}
       {loading && !loadedOnce && (
         <div className={styles.skeletonGrid}>
           {Array.from({ length: 6 }).map((_, i) => (
@@ -82,62 +202,30 @@ const DialectPage = () => {
         </div>
       )}
 
-      {/* === 🧩 Пусто === */}
       {!loading && loadedOnce && mediaList.length === 0 && (
         <p className={styles.empty}>Нет упражнений, удовлетворяющих фильтру.</p>
       )}
 
-      {/* === 🪄 Сетка карточек === */}
       {!loading && mediaList.length > 0 && (
-        <>
-          {isSingle ? (
-            <div className={`${styles.gridSingle} ${styles.fadeIn}`}>
-              <DialectCard
-                id={mediaList[0].id}
-                slug={mediaList[0].dialect?.slug || ""}
-                title={mediaList[0].title}
-                previewUrl={mediaList[0].previewUrl}
-                mediaType={mediaList[0].type}
-                dialectName={
-                  mediaList[0].dialect?.name || "Неизвестный диалект"
-                }
-                licenseType={mediaList[0].licenseType}
-                licenseAuthor={mediaList[0].licenseAuthor}
-                hasSubtitles={!!mediaList[0].subtitlesLink}
-                level={mediaList[0].level}
-                topics={mediaList[0].topics}
-                isSingle
-              />
-            </div>
-          ) : (
-            <div className={`${styles.grid} ${styles.fadeIn}`}>
-              {mediaList.map((m, index) => (
-                <div
-                  key={m.id}
-                  style={{
-                    animationDelay: `${index * 0.05}s`,
-                    animationFillMode: "forwards",
-                  }}
-                  className={styles.fadeItem}
-                >
-                  <DialectCard
-                    id={m.id}
-                    slug={m.dialect?.slug || ""}
-                    title={m.title}
-                    previewUrl={m.previewUrl}
-                    mediaType={m.type}
-                    dialectName={m.dialect?.name || "Неизвестный диалект"}
-                    licenseType={m.licenseType}
-                    licenseAuthor={m.licenseAuthor}
-                    hasSubtitles={!!m.subtitlesLink}
-                    level={m.level}
-                    topics={m.topics}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+        <div className={isSingle ? styles.gridSingle : styles.grid}>
+          {mediaList.map((m) => (
+            <DialectCard
+              key={m.id}
+              id={m.id}
+              slug={m.dialect?.slug || ""}
+              title={m.title}
+              previewUrl={m.previewUrl}
+              mediaType={m.type}
+              dialectName={m.dialect?.name || "Неизвестный диалект"}
+              licenseType={m.licenseType}
+              licenseAuthor={m.licenseAuthor}
+              hasSubtitles={!!m.subtitlesLink}
+              level={m.level}
+              topics={m.topics}
+              activeTopics={filters.topics}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

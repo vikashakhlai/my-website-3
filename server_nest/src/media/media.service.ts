@@ -48,6 +48,55 @@ export class MediaService {
     return this.normalizeMediaPaths(media);
   }
 
+  async findAllWithFilters(filters: {
+    name?: string;
+    region?: string;
+    topics?: number[];
+  }): Promise<Media[]> {
+    const query = this.mediaRepository
+      .createQueryBuilder('media')
+      .leftJoinAndSelect('media.dialect', 'dialect')
+      .leftJoinAndSelect('media.topics', 'topics')
+      .orderBy('media.createdAt', 'DESC');
+
+    // === фильтр по названию ===
+    if (filters.name) {
+      query.andWhere('LOWER(media.title) LIKE LOWER(:name)', {
+        name: `%${filters.name}%`,
+      });
+    }
+
+    // === фильтр по региону ===
+    if (filters.region) {
+      query.andWhere('LOWER(dialect.region) LIKE LOWER(:region)', {
+        region: `%${filters.region}%`,
+      });
+    }
+
+    // === фильтр по темам (логика AND через подзапрос) ===
+    const topics = filters.topics ?? [];
+
+    if (topics.length > 0) {
+      query.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('mt.media_id')
+          .from('media_topics', 'mt')
+          .where('mt.topic_id IN (:...topics)', { topics })
+          .groupBy('mt.media_id')
+          .having('COUNT(DISTINCT mt.topic_id) = :topicsCount', {
+            topicsCount: topics.length,
+          })
+          .getQuery();
+
+        return 'media.id IN ' + subQuery;
+      });
+    }
+
+    const medias = await query.getMany();
+    return medias.map((m) => this.normalizeMediaPaths(m));
+  }
+
   /** 🔧 Преобразует относительные пути в абсолютные */
   private normalizeMediaPaths(media: Media): Media {
     media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);

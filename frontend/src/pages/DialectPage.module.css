@@ -110,19 +110,6 @@
   }
 }
 
-.fadeItem {
-  opacity: 0;
-  transform: translateY(8px);
-  animation: fadeItemUp 0.4s ease-out forwards;
-}
-
-@keyframes fadeItemUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -130,4 +117,114 @@
   to {
     opacity: 1;
   }
+}
+
+/* === Фильтр тем === */
+.topicsFilter {
+  margin-top: 1rem;
+}
+
+.filterLabel {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.topicsHeaderRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.topicsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.topicsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+  overflow: hidden;
+}
+
+.collapsed {
+  max-height: 80px;
+  opacity: 0.85;
+}
+
+.expanded {
+  max-height: 800px;
+  opacity: 1;
+}
+
+/* Кнопки тем */
+.topicBtn {
+  border: none;
+  background: #f3f4f6;
+  color: #111827;
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.topicBtn:hover {
+  background: #e5e7eb;
+}
+
+.topicActive {
+  background: #6366f1;
+  color: white;
+}
+
+/* Кнопка "Показать все темы" */
+.toggleTopicsBtnInline {
+  border: none;
+  background: none;
+  color: #4f46e5;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.toggleTopicsBtnInline:hover {
+  color: #3730a3;
+}
+
+/* Дополнительные блоки */
+.allTopicsExpanded {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+/* Активные фильтры */
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.activeFilter {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.activeFilter:hover {
+  background: #c7d2fe;
 }

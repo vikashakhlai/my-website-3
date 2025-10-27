@@ -24,6 +24,7 @@ interface DialectCardProps {
   level?: "beginner" | "intermediate" | "advanced";
   topics?: Topic[];
   isSingle?: boolean;
+  activeTopics?: number[]; // ✅ выбранные темы из фильтра
 }
 
 const DialectCard: React.FC<DialectCardProps> = ({
@@ -39,6 +40,7 @@ const DialectCard: React.FC<DialectCardProps> = ({
   level,
   topics = [],
   isSingle = false,
+  activeTopics = [],
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -95,7 +97,12 @@ const DialectCard: React.FC<DialectCardProps> = ({
         {topics.length > 0 && (
           <div className={styles.topics}>
             {topics.map((t) => (
-              <span key={t.id} className={styles.topic}>
+              <span
+                key={t.id}
+                className={`${styles.topic} ${
+                  activeTopics.includes(t.id) ? styles.topicActive : ""
+                }`}
+              >
                 {t.name}
               </span>
             ))}

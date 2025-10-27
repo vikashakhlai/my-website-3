@@ -10,6 +10,7 @@ import {
   NotFoundException,
   UploadedFile,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -21,10 +22,27 @@ import { Media } from './media.entity';
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
-  /** 📜 Получить все медиа */
+  /** 📜 Получить все медиа с фильтрацией */
   @Get()
-  async findAll(): Promise<Media[]> {
-    return this.mediaService.findAll();
+  async findAll(
+    @Query('name') name?: string,
+    @Query('region') region?: string,
+    @Query('topics') topics?: string, // "1,2,3"
+  ): Promise<Media[]> {
+    // Преобразуем строку "1,2,3" → [1, 2, 3]
+    const topicIds = topics
+      ? topics
+          .split(',')
+          .map((id) => parseInt(id.trim(), 10))
+          .filter((id) => !isNaN(id))
+      : [];
+
+    // Используем новый метод с фильтрами
+    return this.mediaService.findAllWithFilters({
+      name,
+      region,
+      topics: topicIds,
+    });
   }
 
   /** 🎬 Получить одно медиа по ID */
@@ -57,15 +75,16 @@ export class MediaController {
     @Body() body: Partial<Media>,
   ): Promise<Media> {
     const videoPath = file.path.split('\\').join('/');
+
+    // 🧠 Генерация превью
     const previewPath = await this.mediaService.generatePreview(videoPath);
 
-    const media = await this.mediaService.create({
+    // ✅ Сохранение новой записи
+    return this.mediaService.create({
       ...body,
       mediaUrl: videoPath,
       previewUrl: previewPath,
     });
-
-    return media;
   }
 
   /** ♻️ Обновить запись */

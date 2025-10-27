@@ -70,7 +70,7 @@ const Filters = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // === обработка ввода ===
+  // === обработка изменений ===
   const handleChange = (key: string, value: string, field: FilterField) => {
     setValues((prev) => ({ ...prev, [key]: value }));
 
@@ -108,6 +108,7 @@ const Filters = ({
             <div key={field.key} className={styles.filterItem}>
               <label>{field.label}</label>
               <select
+                className={styles.select}
                 value={values[field.key] || ""}
                 onChange={(e) => handleChange(field.key, e.target.value, field)}
               >
@@ -126,7 +127,7 @@ const Filters = ({
           return (
             <div
               key={field.key}
-              className={`${styles.filterItem} ${styles.authorField}`}
+              className={`${styles.filterItem} ${styles.autocompleteField}`}
               ref={(el) => (inputRefs.current[field.key] = el)}
             >
               <label>{field.label}</label>
@@ -136,15 +137,15 @@ const Filters = ({
                 value={values[field.key] || ""}
                 onChange={(e) => handleChange(field.key, e.target.value, field)}
                 onFocus={() =>
-                  values[field.key] &&
-                  setShowSuggestions((prev) => ({ ...prev, [field.key]: true }))
+                  setShowSuggestions((prev) => ({
+                    ...prev,
+                    [field.key]: !!suggestions[field.key]?.length,
+                  }))
                 }
               />
               {showSuggestions[field.key] &&
                 suggestions[field.key]?.length > 0 && (
-                  <ul
-                    className={`${styles.suggestions} ${styles.suggestionsVisible}`}
-                  >
+                  <ul className={styles.suggestions}>
                     {suggestions[field.key].map((s, i) => (
                       <li
                         key={i}
@@ -176,13 +177,14 @@ const Filters = ({
         return null;
       })}
 
-      <button className={styles.resetButton} onClick={resetFilters}>
-        Сбросить
-      </button>
-
-      {typeof totalCount === "number" && (
-        <div className={styles.count}>Найдено: {totalCount}</div>
-      )}
+      <div className={styles.actions}>
+        <button className={styles.resetButton} onClick={resetFilters}>
+          Сбросить
+        </button>
+        {typeof totalCount === "number" && (
+          <div className={styles.count}>Найдено: {totalCount}</div>
+        )}
+      </div>
     </div>
   );
 };
