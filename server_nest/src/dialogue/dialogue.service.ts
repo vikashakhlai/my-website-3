@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DialogueGroup } from './dialogue_group.entity';
 import { DialogueScript } from './dialogue_script.entity';
+import { Media } from 'src/media/media.entity';
 
 @Injectable()
 export class DialogueService {
@@ -12,6 +13,9 @@ export class DialogueService {
 
     @InjectRepository(DialogueScript)
     private readonly scriptRepo: Repository<DialogueScript>,
+
+    @InjectRepository(Media)
+    private readonly mediaRepo: Repository<Media>,
   ) {}
 
   async findAllGroups(): Promise<DialogueGroup[]> {
@@ -26,21 +30,31 @@ export class DialogueService {
       where: { id },
       relations: ['medias', 'medias.dialect', 'medias.scripts'],
     });
-
     if (!group) throw new NotFoundException('Диалог-группа не найдена');
     return group;
   }
 
+  /** ✍️ Создать новую реплику */
   async createScript(
     mediaId: number,
     textOriginal: string,
-    textTranslated?: string,
+    speakerName?: string,
+    orderIndex?: number,
   ) {
-    const script = this.scriptRepo.create({
-      media: { id: mediaId } as any,
-      textOriginal,
-      textTranslated,
-    });
-    return this.scriptRepo.save(script);
+    const media = await this.mediaRepo.findOne({ where: { id: mediaId } });
+    if (!media) throw new NotFoundException('Media не найдено');
+
+    // ✅ создаём вручную объект, а не через create()
+    const script = new DialogueScript();
+    script.media = media;
+    script.textOriginal = textOriginal;
+    script.speakerName = speakerName || null;
+    script.orderIndex = orderIndex ?? null;
+
+    return await this.scriptRepo.save(script);
+  }
+
+  async clearScriptsByMedia(mediaId: number): Promise<void> {
+    await this.scriptRepo.delete({ media: { id: mediaId } as any });
   }
 }

@@ -213,7 +213,9 @@ const DialectPage = () => {
 
       {/* === Контент === */}
       {loading && !loadedOnce && (
-        <div className={styles.skeletonGrid}>
+        <div
+          className={`${styles.skeletonGrid} ${!loading ? styles.hidden : ""}`}
+        >
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={styles.skeletonCard}></div>
           ))}

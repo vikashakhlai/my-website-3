@@ -21,8 +21,18 @@ export class DialogueScript {
   @Column({ name: 'text_original', type: 'text', nullable: false })
   textOriginal!: string;
 
-  @Column({ name: 'text_translated', type: 'text', nullable: true })
-  textTranslated?: string;
+  /** 🗣 Имя говорящего (может быть null) */
+  @Column({
+    name: 'speaker_name',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  speakerName?: string | null;
+
+  /** 🔢 Порядок реплики (может быть null) */
+  @Column({ name: 'order_index', type: 'int', nullable: true })
+  orderIndex?: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
