@@ -1,10 +1,10 @@
-import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import videojs from "video.js";
-import type Player from "video.js/dist/types/player";
-import "video.js/dist/video-js.css";
 import "./DialectExercisePage.css";
+import MediaPlayer from "../../components/MediaPlayer";
+import AudioWithBackground from "../../components/AudioWithBackground";
+import DialogueCompare from "../../components/DialogueCompare";
 
 interface Media {
   id: number;
@@ -13,127 +13,117 @@ interface Media {
   previewUrl?: string;
   mediaUrl: string;
   subtitlesLink?: string | null;
-  dialectId: number;
+  dialectId: number | null;
   licenseType?: string;
   licenseAuthor?: string;
+  type: "video" | "audio" | "text";
+  tags?: string[];
+  dialogueGroupId?: number | null;
+  dialect?: { name: string };
+  duration?: string;
+  level?: string;
+  speaker?: string;
+}
+
+interface Dialogue {
+  id: number;
+  title: string;
+  description?: string;
+  medias: any[];
 }
 
 const DialectExercisePage = () => {
   const { id } = useParams<{ id: string }>();
   const [media, setMedia] = useState<Media | null>(null);
+  const [dialogue, setDialogue] = useState<Dialogue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const playerRef = useRef<Player | null>(null);
 
-  // 🎬 Загрузка данных
+  const dialectColors: Record<string, string> = {
+    "Египетский арабский": "#6366F1",
+    "Палестинский арабский": "#10B981",
+    "Марокканский арабский": "#F59E0B",
+    "Саудовский арабский": "#3B82F6",
+    "Суданский арабский": "#8B5CF6",
+  };
+
   useEffect(() => {
-    const fetchMedia = async () => {
-      if (!id) {
-        setError("ID не указан");
-        setLoading(false);
-        return;
-      }
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get(`/api-nest/media/${id}`);
-        setMedia(response.data);
+        const { data: mediaData } = await axios.get(`/api-nest/media/${id}`);
+        setMedia(mediaData);
+
+        if (mediaData.dialogueGroupId) {
+          const { data: dialogues } = await axios.get(`/api-nest/dialogues`);
+          const foundDialogue = dialogues.find(
+            (d: Dialogue) => d.id === mediaData.dialogueGroupId
+          );
+          if (foundDialogue) setDialogue(foundDialogue);
+        }
       } catch (err) {
-        console.error("Ошибка загрузки:", err);
-        setError("Не удалось загрузить медиа");
+        console.error("Ошибка при загрузке:", err);
+        setError("Не удалось загрузить данные");
       } finally {
         setLoading(false);
       }
     };
-    fetchMedia();
+    fetchData();
   }, [id]);
 
-  // ⚙️ Инициализация Video.js
-  useLayoutEffect(() => {
-    if (!media) return;
-
-    // Если плеер уже инициализирован — удаляем
-    if (playerRef.current) {
-      playerRef.current.dispose();
-      playerRef.current = null;
-    }
-
-    const el = videoRef.current;
-    if (!el) return;
-
-    // 🕒 Ждём пока элемент реально в DOM (даже после анимаций React Router)
-    const timer = setTimeout(() => {
-      const player = videojs(el, {
-        controls: true,
-        preload: "auto",
-        fluid: false, // ❌ отключаем резиновый режим
-        responsive: false,
-        width: 480,
-        height: 270,
-        playbackRates: [0.5, 1, 1.25, 1.5, 2],
-        sources: [{ src: media.mediaUrl, type: "video/mp4" }],
-        controlBar: { subsCapsButton: true },
-        textTrackSettings: false,
-        poster: media.previewUrl || "", // ✅ вот так правильно
-      });
-
-      // ✅ Добавляем дорожку субтитров, если есть
-      player.ready(() => {
-        if (media.subtitlesLink) {
-          player.addRemoteTextTrack(
-            {
-              kind: "subtitles",
-              src: media.subtitlesLink,
-              srclang: "ar",
-              label: "Арабский (египетский)",
-              default: true,
-            },
-            false
-          );
-        }
-      });
-
-      playerRef.current = player;
-    }, 200); // ⏱️ небольшая задержка гарантирует, что React уже вставил video
-
-    return () => {
-      clearTimeout(timer);
-      if (playerRef.current) {
-        playerRef.current.dispose();
-        playerRef.current = null;
-      }
-    };
-  }, [media]);
-
-  // 🌀 Состояния
   if (loading) return <p className="loading">Загрузка...</p>;
   if (error) return <p className="error">{error}</p>;
-  if (!media) return <p className="loading">Медиа не найдено</p>;
+  if (!media) return <p className="error">Медиа не найдено</p>;
+
+  const dialectName = media?.dialect?.name || media.name || "Арабский";
+  const dialectColor = dialectColors[dialectName] || "#6366F1";
+
+  const levelLabel =
+    media.level === "beginner"
+      ? "Начинающий"
+      : media.level === "intermediate"
+      ? "Средний"
+      : media.level === "advanced"
+      ? "Продвинутый"
+      : null;
 
   return (
     <div className="dialect-exercise">
-      {/* 🎥 Видео */}
-      <div className="video-wrapper" data-vjs-player>
-        <video
-          ref={videoRef}
-          className="video-js vjs-big-play-centered vjs-theme-city"
-          controls
-        />
+      {media.type === "audio" ? (
+        <AudioWithBackground key={media.id} media={media} />
+      ) : (
+        <MediaPlayer key={media.id} media={media} />
+      )}
+
+      {/* 🧾 Метаданные */}
+      <div className="exercise-meta">
+        <div className="meta-inline">
+          {media.licenseType === "original" && (
+            <div className="exclusive">Эксклюзив Oasis</div>
+          )}
+
+          <span
+            className="dialect-badge"
+            style={{ backgroundColor: dialectColor }}
+          >
+            {dialectName}
+          </span>
+
+          <span className="meta-item">
+            🎙 <strong>{media.speaker || "Партнёр проекта"}</strong>
+          </span>
+
+          {levelLabel && (
+            <span
+              className={`meta-item level ${media.level?.toLowerCase() || ""}`}
+            >
+              {levelLabel}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* 📄 Заголовок и информация */}
-      <div className="video-info">
-        <h2 className="video-title">{media.title}</h2>
-
-        {media.name && <span className="dialect-tag">{media.name}</span>}
-
-        {media.licenseType === "cc-by" && (
-          <p className="license">
-            🔗 Видео предоставлено по лицензии CC-BY, автор:{" "}
-            <strong>{media.licenseAuthor}</strong>
-          </p>
-        )}
-      </div>
+      {/* 🗣️ Таблица диалогов */}
+      {dialogue && <DialogueCompare dialogue={dialogue} />}
     </div>
   );
 };

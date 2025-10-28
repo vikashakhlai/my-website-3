@@ -1,0 +1,137 @@
+.dialogue-compare {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2.5rem auto;
+  padding: 1rem;
+}
+
+/* === Заголовок над таблицей === */
+.dialogue-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.dialogue-title .ru {
+  font-weight: 600;
+  color: #4f46e5;
+  font-size: 1.2rem;
+}
+
+.dialogue-title .divider {
+  color: #9ca3af; /* мягкий серый разделитель */
+  font-size: 1.3rem;
+}
+
+.dialogue-title .ar {
+  font-family: "Scheherazade New", serif;
+  direction: rtl;
+  font-size: 1.3rem;
+  color: #4338ca;
+  line-height: 1.5;
+}
+
+/* === Карточки === */
+.dialogue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.8rem;
+}
+
+.dialogue-box {
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.25);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dialogue-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.35);
+}
+
+/* === Заголовки карточек (вернули белый цвет) === */
+.dialogue-header {
+  background: #6366f1;
+  color: #ffffff; /* ✅ исправлено */
+  text-align: center;
+  padding: 1rem 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.dialogue-header h4 {
+  margin: 0;
+  line-height: 1.4;
+  font-size: 1.1rem;
+  color: #ffffff; /* ✅ фикс белого текста */
+}
+
+.dialogue-header h4 span {
+  display: block;
+  font-weight: 500;
+  opacity: 0.9;
+  font-size: 0.95rem;
+  color: #e0e7ff;
+}
+
+/* === Контент карточек === */
+.dialogue-content {
+  padding: 1.2rem 1rem;
+  font-size: 1.1rem;
+}
+
+.dialogue-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: start;
+  padding: 0.55rem 0.5rem;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+  color: #111827;
+}
+
+.dialogue-row:last-child {
+  border-bottom: none;
+}
+
+.dialogue-row .speaker {
+  font-weight: 600;
+  color: #4338ca;
+  text-align: right;
+  margin-left: 0.5rem;
+}
+
+.dialogue-row .text {
+  font-family: "Scheherazade New", serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+/* === Контекстная строка === */
+.dialogue-row.context {
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 4px solid #6366f1;
+  border-radius: 6px;
+  padding: 0.8rem 0.75rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 0.9rem;
+}
+
+.dialogue-row.context .text {
+  font-weight: 600;
+  color: #4f46e5;
+  text-align: center;
+  font-size: 1.1rem;
+}

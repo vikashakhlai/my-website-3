@@ -1,0 +1,140 @@
+/* 🎯 Универсальный контейнер */
+.media-wrapper {
+  width: 480px;
+  height: auto;
+  /* margin: 1.5rem auto 0; */
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+/* 🎥 Видеорежим */
+.media-wrapper.video {
+  background: #000;
+  height: 270px;
+}
+
+/* 🎧 Аудиорежим */
+.media-wrapper.audio {
+  background: transparent;
+  height: auto;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* 🎧 Аудио-плеер — узкая полоса */
+.media-wrapper.audio .video-js {
+  width: 100% !important;
+  height: 60px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Скрываем технический элемент */
+.media-wrapper.audio .vjs-tech {
+  display: none !important;
+}
+
+/* 🎛 Контрольная панель — белая, с рамкой */
+.media-wrapper.audio .vjs-control-bar {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  height: 48px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 8px !important;
+  margin: 0 !important;
+  color: #111 !important;
+}
+
+/* Кнопки управления */
+.media-wrapper.audio .vjs-button {
+  padding: 0 8px !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+  color: #111 !important;
+  fill: #111 !important; /* SVG-иконки */
+}
+
+.media-wrapper.audio .vjs-button:hover {
+  filter: brightness(0.8);
+  transition: all 0.15s ease-in-out;
+}
+
+/* 🔘 Ползунок прогресса */
+.media-wrapper.audio .vjs-progress-control .vjs-progress-holder {
+  background-color: #e5e7eb !important;
+  height: 4px !important;
+  border-radius: 2px !important;
+}
+
+/* 🟢 Прогресс воспроизведения */
+.media-wrapper.audio .vjs-progress-control .vjs-play-progress {
+  background-color: #3b82f6 !important; /* синий акцент */
+  height: 4px !important;
+}
+
+/* ⚪ Бегунок (ручка) */
+.media-wrapper.audio .vjs-slider-handle {
+  background-color: #3b82f6 !important;
+  border: 2px solid #fff !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  top: -4px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Текст времени и скорости */
+.media-wrapper.audio .vjs-current-time,
+.media-wrapper.audio .vjs-duration,
+.media-wrapper.audio .vjs-playback-rate-value {
+  color: #111 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* Убираем большую кнопку воспроизведения */
+.media-wrapper.audio .vjs-big-play-button {
+  display: none !important;
+}
+
+/* 📱 Адаптивность */
+@media (max-width: 1024px) {
+  .media-wrapper {
+    max-width: 460px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .media-wrapper {
+    max-width: 90% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .media-wrapper {
+    max-width: 100% !important;
+  }
+}
+
+/* ✅ Финальный сброс — ТОЛЬКО для видеорежима */
+.media-wrapper.video .video-js {
+  width: 885px !important;
+  height: 510px !important;
+  min-height: 270px !important;
+  display: block !important;
+  background-color: #000 !important;
+}
