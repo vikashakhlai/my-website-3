@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface User {
   id: number;
   email: string;
+  role?: "USER" | "ADMIN" | "SUPER_ADMIN"; // ✅ добавили поле роли
 }
 
 interface AuthContextType {
@@ -23,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const API_URL = "http://localhost:3001/api/v1/auth";
 
-  // 🔁 Проверка токена при старте
+  // 🔁 Проверяем токен при старте
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -39,13 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!res.ok) {
           console.warn("Ошибка проверки токена:", res.status);
-          // ❌ НЕ удаляем токен сразу
           setUser(null);
           return;
         }
 
         const data = await res.json();
-        setUser(data);
+
+        // ✅ убедимся, что роль приходит (на бэкенде нужно добавить её в /auth/me)
+        setUser({
+          id: data.id,
+          email: data.email,
+          role: data.role || "USER", // fallback
+        });
       } catch (err) {
         console.error("Ошибка авторизации:", err);
       } finally {
@@ -65,12 +71,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) {
-        throw new Error("Ошибка при получении данных пользователя");
-      }
+      if (!res.ok) throw new Error("Ошибка при получении данных пользователя");
 
       const userData = await res.json();
-      setUser(userData); // ✅ теперь контекст сразу знает, что пользователь вошёл
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        role: userData.role || "USER",
+      });
     } catch (err) {
       console.error("Ошибка входа:", err);
       localStorage.removeItem("token");

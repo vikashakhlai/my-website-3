@@ -1,28 +1,38 @@
 .tagsSection {
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .tagsSection strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 1.1em;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.6rem;
 }
 
 .tag {
-  background-color: #e2e8f0;
-  color: #2d3748;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.9em;
+  background: #5b67f1;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(91, 103, 241, 0.25);
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background: #4a54d1;
+  transform: translateY(-1px);
 }
 
 .noTags {
-  color: #888;
+  color: #aaa;
   font-style: italic;
 }

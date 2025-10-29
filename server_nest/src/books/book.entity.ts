@@ -4,15 +4,12 @@ import {
   Column,
   ManyToMany,
   ManyToOne,
-  OneToMany,
   JoinTable,
   JoinColumn,
   CreateDateColumn,
 } from 'typeorm';
 import { Author } from '../authors/authors.entity';
 import { Tag } from '../tags/tags.entity';
-import { BookComment } from './book-comment.entity';
-import { BookRating } from './book-rating.entity';
 import { Publisher } from '../publishers/publisher.entity';
 import { Personality } from 'src/personalities/personality.entity';
 
@@ -60,21 +57,14 @@ export class Book {
   })
   tags!: Tag[];
 
-  // 💬 Комментарии
-  @OneToMany(() => BookComment, (comment) => comment.book)
-  comments!: BookComment[];
-
-  // ⭐ Оценки
-  @OneToMany(() => BookRating, (rating) => rating.book)
-  ratings!: BookRating[];
-
   // 🏢 Издательство (многие книги могут иметь одно издательство)
   @ManyToOne(() => Publisher, (publisher) => publisher.books, {
-    onDelete: 'SET NULL', // ✅ если издательство удалят, книга не пропадёт
+    onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'publisher_id' })
   publisher!: Publisher | null;
 
+  // 🧠 Личности, связанные с книгой
   @ManyToMany(() => Personality, (p) => p.books)
   personalities!: Personality[];
 }

@@ -20,6 +20,9 @@ import { MediaModule } from './media/media.module';
 import { DialectsModule } from './dialect/dialects.module';
 import { DialectTopicsModule } from './dialect_topics/dialect_topics.module';
 import { DialogueModule } from './dialogue/dialogue.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { CommentsModule } from './comments/comments.module';
+import { RatingsModule } from './ratings/ratings.module';
 
 @Module({
   imports: [
@@ -71,6 +74,9 @@ import { DialogueModule } from './dialogue/dialogue.module';
     DialectsModule,
     DialectTopicsModule,
     DialogueModule,
+    NotificationsModule,
+    CommentsModule,
+    RatingsModule,
   ],
 
   controllers: [AppController],

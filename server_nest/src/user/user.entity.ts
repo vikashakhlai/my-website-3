@@ -1,4 +1,3 @@
-// src/user/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,8 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { BookComment } from 'src/books/book-comment.entity';
-import { BookRating } from 'src/books/book-rating.entity';
+import { Comment } from 'src/comments/comment.entity';
+import { Rating } from 'src/ratings/rating.entity';
 
 export enum UserRole {
   USER = 'USER',
@@ -22,7 +21,7 @@ export enum AccessLevel {
   PREMIUM = 'PREMIUM',
 }
 
-@Entity('user')
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -57,9 +56,9 @@ export class User {
   updatedAt!: Date;
 
   // === Связи ===
-  @OneToMany(() => BookComment, (comment) => comment.user)
-  comments!: BookComment[];
+  @OneToMany(() => Comment, (comment) => comment.user, { cascade: true })
+  comments!: Comment[];
 
-  @OneToMany(() => BookRating, (rating) => rating.user)
-  ratings!: BookRating[];
+  @OneToMany(() => Rating, (rating) => rating.user, { cascade: true })
+  ratings!: Rating[];
 }

@@ -1,289 +1,134 @@
-/* src/pages/BookPage.module.css */
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative; /* ключ для абсолютного позиционирования стрелки */
 }
 
-.error {
-  color: #e53e3e;
-  font-size: 1.1em;
+/* --- Блок книги и стрелка --- */
+.bookSection {
+  position: relative;
 }
 
-.mainContent {
+.bookContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* 📍 Стрелка "парит" слева от обложки */
+.floatingBack {
+  position: absolute;
+  top: 40px; /* отступ сверху */
+  left: -60px; /* вынесена за пределы контейнера */
+  z-index: 5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.floatingBack:hover {
+  transform: scale(1.08);
+  opacity: 0.85;
+}
+
+/* --- Заголовок и избранное --- */
+.header {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 30px;
-  margin-bottom: 40px;
+  margin-bottom: 1.5rem;
 }
 
-.coverWrapper {
-  flex: 0 0 280px;
-}
-
-.cover {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.info {
+.titleBlock {
   flex: 1;
   min-width: 300px;
 }
 
-.title {
-  font-size: 2.2em;
-  margin: 0 0 20px 0;
-  color: #1a202c;
+.favoriteButtonWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.property {
-  margin-bottom: 12px;
-  font-size: 1.1em;
-  line-height: 1.5;
+/* --- Теги + рейтинг в одну линию --- */
+.metaBlock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin: 1.5rem 0 2rem;
 }
 
-.publisherLink {
-  color: #3182ce;
-  text-decoration: none;
-  border-bottom: 1px dashed #3182ce;
-}
-
-.publisherLink:hover {
-  color: #2c5282;
-  border-bottom-style: solid;
-}
-
-.description {
-  margin: 20px 0;
-  line-height: 1.6;
-  color: #4a5568;
-  font-size: 1.05em;
-}
-
-/* 📘 Добавим визуальное объединение тегов и рейтинга с описанием */
-.tagsSection,
-.ratingSection {
-  margin-top: 16px; /* чуть ближе к описанию */
-}
-
-/* Чтобы выглядело как единый блок */
+/* --- Теги --- */
 .tagsSection {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ratingSection {
-  margin-bottom: 32px; /* чуть воздуха до комментариев */
-}
-
-/* Небольшое выравнивание звёзд */
-.stars {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .tagsSection strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 1.1em;
+  font-size: 1rem;
+  color: #333;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .tag {
-  background-color: #e2e8f0;
-  color: #2d3748;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.9em;
-}
-
-/* Блок с другими книгами автора */
-.similarSection {
-  margin-top: 40px;
-}
-
-.similarTitle {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-/* Контейнер для карточек — используем flex-wrap */
-.similarBooks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: flex-start;
-}
-
-/* Карточка книги */
-.similarBook {
-  display: flex;
-  flex-direction: column;
-  width: 200px; /* можно сделать responsive */
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-}
-
-/* Обложка — фиксированная высота */
-.similarCover {
-  width: 100%;
-  height: 280px; /* или 300px — подбери под свои обложки */
-  object-fit: cover;
-  object-position: top;
-  background: #f5f5f5;
-}
-
-/* Блок с названием — фиксированная высота + ellipsis */
-.similarTitleText {
-  padding: 12px 16px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #333;
-  word-break: break-word;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* максимум 3 строки */
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-  min-height: 42px; /* чтобы не схлопывался при коротком тексте */
-}
-
-.authorLink {
-  color: #1a73e8;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.authorLink:hover {
-  text-decoration: underline;
-}
-
-.invalidAuthor {
-  color: #999;
-  font-style: italic;
-}
-
-.coverWrapper {
-  flex: 0 0 280px;
-  position: relative;
-}
-
-.ratingSection {
-  margin-top: 20px;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.stars {
-  display: flex;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.star {
-  cursor: pointer;
-  font-size: 2rem;
-  color: #ddd;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.star:hover {
-  transform: scale(1.2);
-  color: #ffd700;
-}
-
-.star.filled {
-  color: #ffd700;
-}
-
-.average {
-  margin-top: 8px;
-  font-size: 0.95rem;
-  color: #666;
-}
-
-.commentsSection {
-  margin-top: 40px;
-}
-
-.commentForm {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.commentForm textarea {
-  min-height: 80px;
-  resize: vertical;
-  padding: 8px;
-  font-size: 1rem;
-}
-
-.commentForm button {
-  align-self: flex-end;
-  background-color: #4a90e2;
+  background: #5b67f1;
   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(91, 103, 241, 0.25);
+  transition: all 0.2s ease;
 }
 
-.commentForm button:hover {
-  background-color: #357ab7;
+.tag:hover {
+  background: #4a54d1;
+  transform: translateY(-1px);
 }
 
-.comment {
-  border-bottom: 1px solid #ddd;
-  padding: 10px 0;
+/* --- Рейтинг справа --- */
+.ratingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
 }
 
-.commentMeta {
-  font-size: 0.9rem;
-  color: #888;
-  margin-bottom: 4px;
+/* --- Адаптив --- */
+@media (max-width: 1024px) {
+  .floatingBack {
+    left: -40px;
+  }
 }
 
-.commentUser {
-  font-weight: bold;
-}
-
-.noComments {
-  color: #888;
-  font-style: italic;
-}
-
-/* Адаптив */
 @media (max-width: 768px) {
-  .mainContent {
-    flex-direction: column;
+  .floatingBack {
+    position: absolute;
+    left: 10px;
+    top: 10px;
   }
 
-  .coverWrapper {
-    flex: 0 0 280px;
-    position: relative;
+  .metaBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .ratingWrapper {
+    justify-content: flex-start;
   }
 }

@@ -43,30 +43,25 @@ export class BooksController {
   // === 📚 Все книги ===
   @Get()
   async findAll() {
-    console.log('📡 [BooksController] GET /books вызван');
     return this.bookService.findAll();
   }
 
   // === 📚 Похожие книги ===
   @Get(':id/similar')
   async getSimilarBooks(@Param('id', ParseIntPipe) id: number) {
-    console.log(`🔗 [BooksController] GET /books/${id}/similar`);
     return this.bookService.getSimilarBooks(id);
   }
 
   // === 👩‍💻 Другие книги автора ===
   @Get(':id/other')
   async getOtherBooksByAuthor(@Param('id', ParseIntPipe) id: number) {
-    console.log(`👩‍💻 [BooksController] GET /books/${id}/other`);
     return this.bookService.getOtherBooksByAuthor(id);
   }
 
   // === 🕐 Последние добавленные книги ===
   @Get('latest')
   async getLatest(@Query() query: any) {
-    console.log('🔥 query =', query);
     const safeLimit = Number(query.limit) || 10;
-    console.log(`📚 [BooksController] /books/latest (limit=${safeLimit})`);
     return this.bookService.findLatest(safeLimit);
   }
 
@@ -79,23 +74,17 @@ export class BooksController {
     let userId: string | undefined;
 
     const authHeader = req.headers['authorization'];
-    console.log('🟦 AUTH HEADER:', authHeader);
-
     if (authHeader?.startsWith('Bearer ')) {
       try {
         const token = authHeader.split(' ')[1];
         const decoded: any = this.jwtService.verify(token);
-        console.log('🟩 TOKEN PAYLOAD:', decoded);
-
         userId = decoded.sub || decoded.id;
       } catch (err: any) {
         console.log('❌ Ошибка проверки токена:', err.message);
       }
     }
 
-    const result = await this.bookService.findOneWithRelated(id, userId);
-    console.log('🟧 userId из токена:', userId);
-    return result;
+    return this.bookService.findOneWithRelated(id, userId);
   }
 
   // === 💬 Комментарии книги ===
@@ -110,10 +99,11 @@ export class BooksController {
   async addComment(
     @Param('id', ParseIntPipe) id: number,
     @Body('content') content: string,
-    @Body('parentId') parentId: number,
+    @Body('parentId') parentId: number | null,
     @Req() req: any,
   ) {
     const userId = req.user.sub;
+    // теперь логика универсальная
     return this.bookService.addComment(id, userId, content, parentId);
   }
 
@@ -128,11 +118,11 @@ export class BooksController {
   @Post(':id/ratings')
   async rateBook(
     @Param('id', ParseIntPipe) id: number,
-    @Body('rating') rating: number,
+    @Body('value') value: number,
     @Req() req: any,
   ) {
     const userId = req.user.sub;
-    return this.bookService.rateBook(id, userId, rating);
+    return this.bookService.rateBook(id, userId, value);
   }
 
   // === ➕ Создать книгу ===
