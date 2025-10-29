@@ -5,10 +5,14 @@ import {
   Param,
   ParseIntPipe,
   DefaultValuePipe,
+  Post,
+  Body,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { Article } from './article.entity';
 import { ArticleWithExercises } from './interfaces/article-with-exercises.interface';
+import { CreateExerciseDto } from './dto/create-exercise.dto';
+import { Exercise } from './entities/exercise.entity';
 
 @Controller('articles')
 export class ArticlesController {
@@ -37,5 +41,13 @@ export class ArticlesController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ArticleWithExercises> {
     return this.articlesService.getById(id);
+  }
+
+  @Post(':id/exercises')
+  async addExerciseToArticle(
+    @Param('id', ParseIntPipe) articleId: number,
+    @Body() dto: CreateExerciseDto,
+  ): Promise<Exercise> {
+    return this.articlesService.addExerciseToArticle(articleId, dto);
   }
 }

@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import MediaPlayer from "./MediaPlayer";
 
-// 🖼️ Импорт фонов
 import bgCity from "../assets/bg_city_work.png";
 import bgFamily from "../assets/bg_family_and_house.png";
 import bgFood from "../assets/bg_food_market.png";
@@ -24,18 +23,21 @@ interface Media {
   topics?: Topic[];
 }
 
-/**
- * 🎧 Компонент, который подставляет фоновое изображение
- * в зависимости от темы (topics), если тип media = "audio".
- */
 const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const prevId = useRef<number | null>(null);
 
-  if (media.type !== "audio") return <MediaPlayer media={media} />;
+  // Если сменилось медиа — сбрасываем состояние
+  useEffect(() => {
+    if (prevId.current !== media.id) {
+      setIsPlaying(false);
+      prevId.current = media.id;
+    }
+  }, [media.id]);
 
   const topics = (media.topics || []).map((t) => t.name.toLowerCase());
 
-  const getBackground = (): string | null => {
+  const getBackground = (): string => {
     if (topics.some((t) => ["еда", "покупки еды", "в магазине"].includes(t)))
       return bgFood;
     if (topics.some((t) => ["путешествия", "транспорт"].includes(t)))
@@ -48,31 +50,23 @@ const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
       return bgStudy;
     if (topics.some((t) => ["семья", "дом", "дети"].includes(t)))
       return bgFamily;
-    return null;
+    return bgNature;
   };
 
   const background = getBackground();
-  if (!background) return <MediaPlayer media={media} />;
 
   return (
     <div className={`audio-scene ${isPlaying ? "playing" : ""}`}>
       <div
-        className="scene-background"
+        className="scene-background fade-in"
         style={{ backgroundImage: `url(${background})` }}
       />
 
       <div className="scene-player">
         <MediaPlayer
-          media={{
-            ...media,
-            // прокидываем "фейковый" коллбек для отслеживания проигрывания
-          }}
-        />
-        <audio
-          src={media.mediaUrl}
+          media={media}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          style={{ display: "none" }}
         />
       </div>
     </div>

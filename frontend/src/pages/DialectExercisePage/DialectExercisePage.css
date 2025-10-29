@@ -27,6 +27,15 @@
   line-height: 1.5;
 }
 
+.exercise-topbar {
+  width: 100%;
+  max-width: 720px; /* ширина как у плеера */
+  margin: 0 auto 0.5rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 /* === Заголовок === */
 .exercise-title {
   font-size: 1.05rem;

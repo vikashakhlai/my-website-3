@@ -5,7 +5,7 @@ export type FavoriteItemType =
   | "book"
   | "textbook"
   | "article"
-  | "video"
+  | "media"
   | "exercise"
   | "personality";
 

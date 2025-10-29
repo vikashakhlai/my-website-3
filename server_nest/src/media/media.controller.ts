@@ -17,6 +17,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { MediaService } from './media.service';
 import { Media } from './media.entity';
+import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 
 @Controller('media')
 export class MediaController {
@@ -106,5 +107,14 @@ export class MediaController {
   @Get(':id/exercises')
   async findExercises(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.findExercisesByMedia(id);
+  }
+
+  /** ➕ Создать упражнение, связанное с медиа */
+  @Post(':id/exercises')
+  async addExerciseToMedia(
+    @Param('id', ParseIntPipe) mediaId: number,
+    @Body() dto: CreateExerciseDto,
+  ) {
+    return this.mediaService.addExerciseToMedia(mediaId, dto);
   }
 }

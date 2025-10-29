@@ -4,6 +4,7 @@ import DialectCard from "../components/DialectCard";
 import Filters from "../components/Filters";
 import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
+import useScrollToTop from "../hooks/useScrollToTop";
 
 interface Topic {
   id: number;
@@ -17,6 +18,8 @@ interface FiltersState {
 }
 
 const DialectPage = () => {
+  useScrollToTop();
+
   const [mediaList, setMediaList] = useState<Media[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [regions, setRegions] = useState<string[]>([]);

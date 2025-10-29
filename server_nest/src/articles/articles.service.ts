@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { Article } from './article.entity';
 import { Theme } from './themes/theme.entity';
 import { Exercise } from './entities/exercise.entity';
 import { ExerciseItem } from './entities/exercise-item.entity';
 import { Distractor } from './entities/distractor.entity';
+import { CreateExerciseDto } from './dto/create-exercise.dto';
+import { ExerciseType } from './entities/exercise-type.enum';
 
 interface ExerciseItemWithOptions extends ExerciseItem {
   options?: string[];
@@ -99,7 +101,10 @@ export class ArticlesService {
         order: { position: 'ASC' },
       });
 
-      if (ex.type === 'fill_in_the_blanks') {
+      // 🔹 приводим к enum-типу
+      const exType = ex.type as ExerciseType;
+
+      if (exType === ExerciseType.FILL_IN_THE_BLANKS) {
         // Для "fill_in_the_blanks": distractors + correctAnswer
         const processed = items.map((item) => {
           const distractors =
@@ -114,10 +119,11 @@ export class ArticlesService {
         });
         enrichedExercises.push({ ...ex, items: processed });
       } else if (
-        ex.type === 'multiple_choice' ||
-        ex.type === 'matching_pairs'
+        exType === ExerciseType.MULTIPLE_CHOICE ||
+        exType === ExerciseType.MATCHING_PAIRS
       ) {
         let poolWords: string[] = [];
+
         if (ex.distractorPoolId) {
           const distractors = await this.distractorRepo.find({
             where: { distractorPool: { id: ex.distractorPoolId } },
@@ -131,12 +137,12 @@ export class ArticlesService {
           let options: string[] = [];
           const correct = item.correctAnswer ?? '';
 
-          if (ex.type === 'multiple_choice') {
+          if (exType === ExerciseType.MULTIPLE_CHOICE) {
             const all = [...new Set([...poolWords, correct])].filter(
               (opt): opt is string => !!opt,
             );
             options = all;
-          } else if (ex.type === 'matching_pairs') {
+          } else if (exType === ExerciseType.MATCHING_PAIRS) {
             options = poolWords;
           }
 
@@ -155,5 +161,49 @@ export class ArticlesService {
       themeRu: article.theme?.name_ru || null,
       exercises: enrichedExercises,
     };
+  }
+
+  async addExerciseToArticle(
+    articleId: number,
+    dto: CreateExerciseDto,
+  ): Promise<Exercise> {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+    });
+    if (!article) {
+      throw new NotFoundException(`Статья с ID ${articleId} не найдена`);
+    }
+
+    // удаляем дубли по questionRu (если есть)
+    if (dto.items) {
+      dto.items = dto.items.filter(
+        (v, i, arr) =>
+          i === arr.findIndex((t) => t.questionRu === v.questionRu),
+      );
+    }
+
+    const exercise: DeepPartial<Exercise> = {
+      type: dto.type,
+      instructionRu: dto.instructionRu,
+      instructionAr: dto.instructionAr,
+      article,
+      distractorPoolId: dto.distractorPoolId,
+      items: dto.items?.map((item, index) => {
+        const entity = new ExerciseItem();
+        entity.position = index + 1;
+        entity.questionRu = item.questionRu ?? undefined;
+        entity.questionAr = item.questionAr ?? undefined;
+        entity.partBefore = item.partBefore ?? undefined;
+        entity.partAfter = item.partAfter ?? undefined;
+        entity.correctAnswer = item.correctAnswer ?? undefined;
+        entity.wordRu = item.wordRu ?? undefined;
+        entity.wordAr = item.wordAr ?? undefined;
+        entity.distractors = item.distractors ?? [];
+        return entity;
+      }) as DeepPartial<ExerciseItem>[],
+    };
+
+    const entity = this.exerciseRepo.create(exercise);
+    return await this.exerciseRepo.save(entity);
   }
 }

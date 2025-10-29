@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./DialectExercisePage.css";
 import MediaPlayer from "../../components/MediaPlayer";
 import AudioWithBackground from "../../components/AudioWithBackground";
 import DialogueCompare from "../../components/DialogueCompare";
+import BackZone from "../../components/BackZone";
+import FavoriteButton from "../../components/FavoriteButton";
+import { useFavorites } from "../../hooks/useFavorites"; // 🆕 хук избранного
+import { useAuth } from "../../context/AuthContext"; // 🆕 для проверки авторизации
 
 interface Media {
   id: number;
@@ -23,6 +27,7 @@ interface Media {
   duration?: string;
   level?: string;
   speaker?: string;
+  isFavorite?: boolean;
 }
 
 interface Dialogue {
@@ -34,10 +39,15 @@ interface Dialogue {
 
 const DialectExercisePage = () => {
   const { id } = useParams<{ id: string }>();
+  const { isAuthenticated } = useAuth(); // 🧾 для защиты действий
   const [media, setMedia] = useState<Media | null>(null);
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ❤️ избранное
+  const { favorites, toggleFavorite } = useFavorites("media");
+  const [localFavorite, setLocalFavorite] = useState(false);
 
   const dialectColors: Record<string, string> = {
     "Египетский арабский": "#6366F1",
@@ -47,10 +57,14 @@ const DialectExercisePage = () => {
     "Суданский арабский": "#8B5CF6",
   };
 
+  // 🔹 Загрузка данных
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: mediaData } = await axios.get(`/api-nest/media/${id}`);
+        const token = localStorage.getItem("token");
+        const { data: mediaData } = await axios.get(`/api-nest/media/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         setMedia(mediaData);
 
         if (mediaData.dialogueGroupId) {
@@ -70,6 +84,35 @@ const DialectExercisePage = () => {
     fetchData();
   }, [id]);
 
+  // 🔹 Синхронизация избранного при изменении списка
+  useEffect(() => {
+    if (media?.id) {
+      setLocalFavorite(favorites.some((f) => f.id === media.id));
+    }
+  }, [favorites, media?.id]);
+
+  const mediaPlayer = useMemo(() => {
+    if (!media) return null;
+    return media.type === "audio" ? (
+      <AudioWithBackground media={media} />
+    ) : (
+      <MediaPlayer media={media} />
+    );
+  }, [media?.id, media?.type]);
+
+  // ❤️ Обработчик избранного
+  const handleToggleFavorite = async () => {
+    if (!media) return;
+    if (!isAuthenticated) {
+      alert("Только авторизованные пользователи могут добавлять в избранное");
+      return;
+    }
+
+    const wasFavorite = favorites.some((f) => f.id === media.id);
+    await toggleFavorite(media);
+    setLocalFavorite(!wasFavorite);
+  };
+
   if (loading) return <p className="loading">Загрузка...</p>;
   if (error) return <p className="error">{error}</p>;
   if (!media) return <p className="error">Медиа не найдено</p>;
@@ -88,15 +131,12 @@ const DialectExercisePage = () => {
 
   return (
     <div className="dialect-exercise">
-      {media.type === "audio" ? (
-        <AudioWithBackground key={media.id} media={media} />
-      ) : (
-        <MediaPlayer key={media.id} media={media} />
-      )}
+      {mediaPlayer}
 
       {/* 🧾 Метаданные */}
       <div className="exercise-meta">
         <div className="meta-inline">
+          <BackZone to="/dialects" />
           {media.licenseType === "original" && (
             <div className="exclusive">Эксклюзив Oasis</div>
           )}
@@ -119,6 +159,12 @@ const DialectExercisePage = () => {
               {levelLabel}
             </span>
           )}
+
+          {/* ❤️ Кнопка избранного */}
+          <FavoriteButton
+            isFavorite={localFavorite}
+            onToggle={handleToggleFavorite}
+          />
         </div>
       </div>
 

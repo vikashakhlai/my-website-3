@@ -17,7 +17,7 @@ export enum FavoriteItemType {
   BOOK = 'book',
   ARTICLE = 'article',
   TEXTBOOK = 'textbook',
-  MEDIA = 'media', // ✅ заменили video → media
+  MEDIA = 'media',
 }
 
 @Index(['userId', 'itemType', 'itemId'], { unique: true })

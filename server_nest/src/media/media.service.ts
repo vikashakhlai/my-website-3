@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { Media } from './media.entity';
 import { Exercise } from 'src/articles/entities/exercise.entity';
 import { makeAbsoluteUrl } from 'src/utils/media-url.util';
@@ -12,6 +12,8 @@ import { spawn } from 'child_process';
 import ffmpegPath from 'ffmpeg-static';
 import { join, parse, dirname } from 'path';
 import { promises as fs } from 'fs';
+import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
+import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
 
 @Injectable()
 export class MediaService {
@@ -147,6 +149,48 @@ export class MediaService {
       relations: ['items'],
       order: { id: 'ASC' },
     });
+  }
+
+  async addExerciseToMedia(
+    mediaId: number,
+    dto: CreateExerciseDto,
+  ): Promise<Exercise> {
+    const media = await this.mediaRepository.findOne({
+      where: { id: mediaId },
+    });
+    if (!media) throw new NotFoundException(`Медиа с ID ${mediaId} не найдено`);
+
+    // 🧩 устраняем дубликаты по questionRu
+    if (dto.items) {
+      dto.items = dto.items.filter(
+        (v, i, arr) =>
+          i === arr.findIndex((t) => t.questionRu === v.questionRu),
+      );
+    }
+
+    const exercise: DeepPartial<Exercise> = {
+      type: dto.type,
+      instructionRu: dto.instructionRu,
+      instructionAr: dto.instructionAr,
+      media, // связь ManyToOne
+      distractorPoolId: dto.distractorPoolId,
+      items: dto.items?.map((item, index) => {
+        const entity = new ExerciseItem();
+        entity.position = index + 1;
+        entity.questionRu = item.questionRu ?? undefined;
+        entity.questionAr = item.questionAr ?? undefined;
+        entity.partBefore = item.partBefore ?? undefined;
+        entity.partAfter = item.partAfter ?? undefined;
+        entity.correctAnswer = item.correctAnswer ?? undefined;
+        entity.wordRu = item.wordRu ?? undefined;
+        entity.wordAr = item.wordAr ?? undefined;
+        entity.distractors = item.distractors ?? [];
+        return entity;
+      }) as DeepPartial<ExerciseItem>[],
+    };
+
+    const entity = this.exerciseRepository.create(exercise);
+    return await this.exerciseRepository.save(entity);
   }
 
   /** 🎞 Генерация превью с помощью ffmpeg */
