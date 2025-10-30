@@ -20,6 +20,8 @@ import MatchingPairsExercise from "./Exercises/MatchingPairsExercise";
 
 import useScrollToTop from "../hooks/useScrollToTop";
 import FavoriteButton from "../components/FavoriteButton";
+import { StarRating } from "../components/StarRating";
+import { CommentsSection } from "../components/CommentsSection";
 
 const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +45,11 @@ const ArticlePage = () => {
       return;
     }
 
-    fetch(`/api-nest/articles/${articleId}`)
+    const token = localStorage.getItem("token");
+
+    fetch(`/api-nest/articles/${articleId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) navigate("/");
@@ -57,10 +63,11 @@ const ArticlePage = () => {
       .catch((err) => {
         console.error("Ошибка загрузки статьи:", err);
         navigate("/");
-      });
+      })
+      .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  // 🔹 Проверяем, добавлена ли статья в избранное
+  // 🔹 Проверяем избранное
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
       try {
@@ -76,8 +83,6 @@ const ArticlePage = () => {
         setIsFavorite(favorites.some((f: any) => f.id === Number(id)));
       } catch (err) {
         console.error("Ошибка при загрузке избранного:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -100,27 +105,25 @@ const ArticlePage = () => {
       });
 
       if (!res.ok) throw new Error("Ошибка при изменении избранного");
-
       setIsFavorite(!isFavorite);
     } catch (err) {
       console.error("Ошибка избранного:", err);
     }
   };
 
-  if (!article) {
-    return <div className="article-page">Загрузка...</div>;
-  }
+  if (loading) return <div className="article-page">Загрузка...</div>;
+  if (!article) return <div className="article-page">Статья не найдена</div>;
 
   return (
     <div className="article-page">
-      {/* Картинка */}
+      {/* 🖼️ Картинка */}
       <img
         src={article.imageUrl}
         alt={article.titleRu}
         className="article-image"
       />
 
-      {/* Заголовок и избранное */}
+      {/* 🏷️ Заголовок и избранное */}
       <div
         style={{
           display: "flex",
@@ -135,23 +138,41 @@ const ArticlePage = () => {
 
       <h2 className="article-title-arabic">{article.titleAr}</h2>
 
-      {/* Тема */}
-      <div className="article-theme">
-        Тема: <span className="article-theme-label">{article.themeRu}</span>
+      {/* 📚 Тема и ⭐ рейтинг */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+          margin: "10px 0",
+        }}
+      >
+        <div className="article-theme">
+          Тема: <span className="article-theme-label">{article.themeRu}</span>
+        </div>
+
+        {/* ⭐ Универсальный рейтинг */}
+        <StarRating
+          targetType="article"
+          targetId={article.id}
+          average={article.averageRating ?? null}
+          userRating={article.userRating ?? null}
+        />
       </div>
 
-      {/* Описание */}
+      {/* 📝 Описание */}
       {article.description && (
         <p className="article-description">{article.description}</p>
       )}
 
-      {/* Текст статьи */}
+      {/* 📖 Основной текст */}
       <div
         className="article-content rtl"
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
 
-      {/* Упражнения */}
+      {/* 🧩 Упражнения */}
       {article.exercises && article.exercises.length > 0 && (
         <div className="article-exercises">
           <h3 className="article-exercises-title">Упражнения</h3>
@@ -193,6 +214,15 @@ const ArticlePage = () => {
           })}
         </div>
       )}
+
+      {/* 💬 Комментарии */}
+      <div style={{ marginTop: "50px" }}>
+        <CommentsSection
+          targetType="article"
+          targetId={article.id}
+          apiBase="/api-nest"
+        />
+      </div>
     </div>
   );
 };

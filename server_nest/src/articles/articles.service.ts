@@ -9,6 +9,10 @@ import { Distractor } from './entities/distractor.entity';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { ExerciseType } from './entities/exercise-type.enum';
 
+// 👇 Добавляем рейтинги и комментарии
+import { Rating } from 'src/ratings/rating.entity';
+import { Comment } from 'src/comments/comment.entity';
+
 interface ExerciseItemWithOptions extends ExerciseItem {
   options?: string[];
 }
@@ -17,9 +21,13 @@ interface ExerciseWithItems extends Exercise {
   items: ExerciseItemWithOptions[];
 }
 
-interface ArticleWithExercises extends Article {
+export interface ArticleWithExtras extends Article {
   exercises: ExerciseWithItems[];
   themeRu?: string | null;
+  averageRating?: number | null;
+  ratingCount?: number;
+  userRating?: number | null;
+  commentCount?: number;
 }
 
 @Injectable()
@@ -39,6 +47,13 @@ export class ArticlesService {
 
     @InjectRepository(Distractor)
     private readonly distractorRepo: Repository<Distractor>,
+
+    // ⭐ Новое
+    @InjectRepository(Rating)
+    private readonly ratingRepo: Repository<Rating>,
+
+    @InjectRepository(Comment)
+    private readonly commentRepo: Repository<Comment>,
   ) {}
 
   /** 📰 Получить последние N статей */
@@ -49,7 +64,6 @@ export class ArticlesService {
       take: limit,
     });
 
-    // ✅ добавляем themeRu
     return articles.map((a) => ({
       ...a,
       themeRu: a.theme?.name_ru || null,
@@ -64,21 +78,18 @@ export class ArticlesService {
       .orderBy('a.createdAt', 'DESC')
       .limit(limit);
 
-    if (themeSlug) {
-      qb.where('t.slug = :slug', { slug: themeSlug });
-    }
+    if (themeSlug) qb.where('t.slug = :slug', { slug: themeSlug });
 
     const articles = await qb.getMany();
 
-    // ✅ тоже добавляем themeRu
     return articles.map((a) => ({
       ...a,
       themeRu: a.theme?.name_ru || null,
     }));
   }
 
-  /** 🔍 Получить статью по ID (с упражнениями и заданиями) */
-  async getById(id: number): Promise<ArticleWithExercises> {
+  /** 🔍 Получить статью по ID (с упражнениями, рейтингом и комментариями) */
+  async getById(id: number, userId?: string): Promise<ArticleWithExtras> {
     const article = await this.articleRepo.findOne({
       where: { id },
       relations: ['theme'],
@@ -88,6 +99,7 @@ export class ArticlesService {
       throw new NotFoundException('Статья не найдена');
     }
 
+    // === 🧩 Загружаем упражнения ===
     const exercises = await this.exerciseRepo.find({
       where: { article: { id } },
       order: { id: 'ASC' },
@@ -101,20 +113,16 @@ export class ArticlesService {
         order: { position: 'ASC' },
       });
 
-      // 🔹 приводим к enum-типу
       const exType = ex.type as ExerciseType;
 
       if (exType === ExerciseType.FILL_IN_THE_BLANKS) {
-        // Для "fill_in_the_blanks": distractors + correctAnswer
         const processed = items.map((item) => {
           const distractors =
             item.distractors?.filter(
               (d): d is string => typeof d === 'string',
             ) ?? [];
           const correct = item.correctAnswer ?? '';
-          const options = [...distractors, correct].filter(
-            (opt): opt is string => !!opt,
-          );
+          const options = [...distractors, correct].filter(Boolean);
           return { ...item, options };
         });
         enrichedExercises.push({ ...ex, items: processed });
@@ -128,38 +136,58 @@ export class ArticlesService {
           const distractors = await this.distractorRepo.find({
             where: { distractorPool: { id: ex.distractorPoolId } },
           });
+
+          console.log(`🎯 Distractors for exercise ${ex.id}:`, distractors);
+
           poolWords = distractors
             .map((d) => d.word)
             .filter((w): w is string => !!w);
+        } else {
+          console.warn(`⚠️ У упражнения ${ex.id} нет distractorPoolId`);
         }
 
         const processed = items.map((item) => {
-          let options: string[] = [];
           const correct = item.correctAnswer ?? '';
-
-          if (exType === ExerciseType.MULTIPLE_CHOICE) {
-            const all = [...new Set([...poolWords, correct])].filter(
-              (opt): opt is string => !!opt,
-            );
-            options = all;
-          } else if (exType === ExerciseType.MATCHING_PAIRS) {
-            options = poolWords;
-          }
-
-          return { ...item, options };
+          const allOptions = [...new Set([...poolWords, correct])].filter(
+            Boolean,
+          );
+          return { ...item, options: allOptions };
         });
 
         enrichedExercises.push({ ...ex, items: processed });
       } else {
-        // open_question, flashcards и т.п.
+        // Все остальные типы — open_question, flashcards и т.п.
         enrichedExercises.push({ ...ex, items });
       }
     }
 
+    // === ⭐ Загружаем рейтинги и комментарии ===
+    const ratings = await this.ratingRepo.find({
+      where: { target_type: 'article', target_id: id },
+    });
+
+    const commentsCount = await this.commentRepo.count({
+      where: { target_type: 'article', target_id: id },
+    });
+
+    const average =
+      ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length
+        : null;
+
+    const userRating = userId
+      ? (ratings.find((r) => r.user_id === userId)?.value ?? null)
+      : null;
+
+    // ✅ Возвращаем статью со всем
     return {
       ...article,
       themeRu: article.theme?.name_ru || null,
       exercises: enrichedExercises,
+      averageRating: average,
+      ratingCount: ratings.length,
+      userRating,
+      commentCount: commentsCount,
     };
   }
 
@@ -174,7 +202,6 @@ export class ArticlesService {
       throw new NotFoundException(`Статья с ID ${articleId} не найдена`);
     }
 
-    // удаляем дубли по questionRu (если есть)
     if (dto.items) {
       dto.items = dto.items.filter(
         (v, i, arr) =>

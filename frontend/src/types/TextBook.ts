@@ -7,4 +7,6 @@ export interface TextBookProps {
   level: string | null;
   description: string | null;
   pdf_url: string | null;
+  averageRating: number | null;
+  userRating: number | null;
 }

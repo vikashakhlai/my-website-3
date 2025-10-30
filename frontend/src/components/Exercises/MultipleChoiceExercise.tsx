@@ -21,10 +21,11 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
     Record<number, string>
   >({});
 
-  // Генерируем по 4 варианта на каждый вопрос
+  // ✅ Безопасная генерация вариантов
   const itemsWithLimitedOptions = useMemo(() => {
     return exercise.items.map((item) => {
-      const { correctAnswer, options } = item;
+      const { correctAnswer } = item;
+      const options = Array.isArray(item.options) ? item.options : [];
 
       // Убираем правильный ответ из пула отвлекающих
       const distractors = options.filter((opt) => opt !== correctAnswer);
@@ -33,15 +34,15 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
       const shuffledDistractors = shuffleArray([...distractors]);
       const selectedDistractors = shuffledDistractors.slice(0, 3);
 
-      // Формируем финальные 4 варианта и перемешиваем
+      // ✅ Добавляем правильный ответ, даже если options пустой
       const finalOptions = shuffleArray([
         ...selectedDistractors,
-        correctAnswer,
+        ...(correctAnswer ? [correctAnswer] : []),
       ]);
 
       return {
         ...item,
-        options: finalOptions,
+        options: finalOptions.length > 0 ? finalOptions : [correctAnswer ?? ""],
       };
     });
   }, [exercise.items]);
@@ -86,7 +87,7 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
               )}
 
               <div className={styles.optionsGrid}>
-                {item.options.map((option, idx) => {
+                {(item.options ?? []).map((option, idx) => {
                   const isSelectedOption = selectedAnswers[item.id] === option;
                   let optionClass = styles.option;
 
@@ -107,7 +108,7 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
                       disabled={isSelected && !showFeedback}
                       dir="rtl"
                     >
-                      {option}
+                      {option || "—"}
                     </button>
                   );
                 })}

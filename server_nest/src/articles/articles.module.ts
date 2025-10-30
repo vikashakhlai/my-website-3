@@ -7,6 +7,8 @@ import { ExerciseItem } from './entities/exercise-item.entity';
 import { Distractor } from './entities/distractor.entity';
 import { ArticlesService } from './articles.service';
 import { ArticlesController } from './articles.controller';
+import { Rating } from 'src/ratings/rating.entity';
+import { Comment } from 'src/comments/comment.entity';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ArticlesController } from './articles.controller';
       Exercise,
       ExerciseItem,
       Distractor,
+      Rating,
+      Comment,
     ]),
   ],
   controllers: [ArticlesController],

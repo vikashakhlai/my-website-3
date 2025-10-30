@@ -20,6 +20,7 @@ interface Comment {
 interface CommentsSectionProps {
   targetType: "book" | "article" | "media" | "personality" | "textbook";
   targetId: number;
+  apiBase?: string;
 }
 
 // 🧩 Хелпер: строим дерево из плоского списка

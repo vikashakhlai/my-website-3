@@ -1,28 +1,51 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import StudentBookCard from "./StudentBookCard";
+import Pagination from "../../components/Pagination";
+import Filters from "../../components/Filters";
 import { TextBookProps } from "../../types/TextBook";
 import styles from "./StudentBooksPage.module.css";
-
-const shuffleArray = <T,>(arr: T[]): T[] =>
-  [...arr].sort(() => Math.random() - 0.5);
 
 const StudentBooksPage: React.FC = () => {
   const [books, setBooks] = useState<TextBookProps[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Пагинация
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+
+  // 🔹 Фильтры
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const limit = 6;
+
+  // ✅ Маппинг фильтров (чтобы совпадали с базой)
+  const LEVEL_MAP: Record<string, string> = {
+    начинающий: "Начинающий",
+    средний: "Средний",
+    продвинутый: "Продвинутый",
+  };
+
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    setBooks([]); // ⬅️ очищаем перед новой загрузкой
 
     const fetchBooks = async () => {
       try {
-        const { data } = await axios.get("/api-nest/textbooks");
-        if (isMounted && Array.isArray(data)) {
-          const shuffled = shuffleArray(data);
-          setBooks(shuffled);
-        }
+        const { data } = await axios.get("/api-nest/textbooks", {
+          params: {
+            page,
+            limit,
+            // ⚡ Преобразуем уровень к виду, как в БД
+            level: filters.level ? LEVEL_MAP[filters.level] : undefined,
+          },
+        });
+
+        if (!isMounted) return;
+
+        setBooks(data.data || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalCount(data.total || 0);
       } catch (err) {
         console.error("Ошибка загрузки учебников:", err);
       } finally {
@@ -32,38 +55,76 @@ const StudentBooksPage: React.FC = () => {
 
     fetchBooks();
     return () => {
-      isMounted = false; // предотвращаем setState после размонтирования
+      isMounted = false;
     };
-  }, []);
+  }, [page, JSON.stringify(filters)]);
 
-  if (loading)
-    return (
-      <div className={styles.pageContainer}>
-        <div className={styles.loader}>Загрузка учебников...</div>
-      </div>
-    );
+  // === Конфигурация фильтров ===
+  const filterFields = [
+    {
+      type: "select" as const,
+      key: "level",
+      label: "Уровень",
+      options: [
+        { label: "Начинающий", value: "начинающий" },
+        { label: "Средний", value: "средний" },
+        { label: "Продвинутый", value: "продвинутый" },
+      ],
+    },
+  ];
 
-  if (books.length === 0)
-    return <div className={styles.pageContainer}>Учебники не найдены</div>;
-
+  // === Отображение ===
   const [bigBook, smallBook, ...middleBooks] = books;
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.topSection}>
-        <StudentBookCard type="big" book={bigBook} />
-        <StudentBookCard type="small" book={smallBook} />
-      </div>
+      {/* ✅ Фильтры всегда видны */}
+      <Filters
+        fields={filterFields}
+        initialValues={filters}
+        suppressInitialOnChange
+        onChange={(vals) => {
+          setFilters(vals);
+          setPage(1);
+        }}
+        onReset={() => {
+          setFilters({});
+          setPage(1);
+        }}
+        totalCount={totalCount}
+      />
 
-      {middleBooks.length > 0 && (
-        <div className={styles.remainingSection}>
-          <h2 className={styles.sectionTitle}>Остальные учебники</h2>
-          <div className={styles.booksGrid}>
-            {middleBooks.map((book) => (
-              <StudentBookCard key={book.id} type="middle" book={book} />
-            ))}
-          </div>
+      {loading ? (
+        <div className={styles.loader}>Загрузка учебников...</div>
+      ) : books.length === 0 ? (
+        <div className={styles.noResults}>
+          Учебники не найдены{" "}
+          {filters.level ? `для уровня "${LEVEL_MAP[filters.level]}"` : ""}
         </div>
+      ) : (
+        <>
+          <div className={styles.topSection}>
+            {bigBook && <StudentBookCard type="big" book={bigBook} />}
+            {smallBook && <StudentBookCard type="small" book={smallBook} />}
+          </div>
+
+          {middleBooks.length > 0 && (
+            <div className={styles.remainingSection}>
+              <h2 className={styles.sectionTitle}>Остальные учебники</h2>
+              <div className={styles.booksGrid}>
+                {middleBooks.map((book) => (
+                  <StudentBookCard key={book.id} type="middle" book={book} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </div>
   );

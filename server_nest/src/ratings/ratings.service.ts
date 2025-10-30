@@ -75,6 +75,14 @@ export class RatingsService {
     return { average: Number(average), votes };
   }
 
+  // --- Получить только количество голосов (для SSE) ---
+  async getVotesCount(
+    target_type: 'book' | 'article' | 'media' | 'personality' | 'textbook',
+    target_id: number,
+  ): Promise<number> {
+    return this.ratingRepository.count({ where: { target_type, target_id } });
+  }
+
   // --- Удалить рейтинг (только автор или админ) ---
   async delete(id: number, user: User): Promise<void> {
     const rating = await this.ratingRepository.findOne({

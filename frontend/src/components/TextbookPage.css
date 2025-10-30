@@ -1,11 +1,26 @@
-/* TextbookPage.css */
 .textbook-page {
-  display: flex;
-  gap: 2rem;
-  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
+}
+
+/* 🔙 Фиксированная стрелка */
+.back-fixed {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 1000;
+}
+
+.textbook-header {
+  display: flex;
+  gap: 2rem;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .textbook-image {
@@ -14,53 +29,117 @@
 
 .textbook-image img {
   width: 100%;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  object-fit: cover;
 }
 
 .textbook-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .textbook-details h1 {
   font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #2d3748;
+  font-weight: 700;
+  color: #2d2d2d;
+  margin: 0;
 }
 
-.textbook-details p {
-  margin: 0.5rem 0;
+.book-meta p {
+  margin: 0.25rem 0;
+  color: #555;
+  font-size: 1rem;
+}
+
+.description {
+  color: #444;
   line-height: 1.6;
-  color: #4a5568;
+  margin-top: 0.5rem;
 }
 
+.rating-section {
+  margin-top: 0.5rem;
+}
+
+/* 🔹 Ограниченная кнопка */
 .download-btn {
   display: inline-block;
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color);
-  color: white;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1.8rem;
+  background-color: #6b46c1;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
   text-decoration: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(107, 70, 193, 0.3);
+  max-width: 300px; /* 👈 ограничение ширины */
+  text-align: center;
 }
 
 .download-btn:hover {
-  background-color: var(--primary-color);
+  background-color: #805ad5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(107, 70, 193, 0.4);
 }
 
 .no-pdf {
-  color: #a0aec0;
-  font-style: italic;
   margin-top: 1rem;
+  color: #aaa;
+  font-style: italic;
 }
 
+.comments-wrapper {
+  margin-top: 3rem;
+  border-top: 1px solid #eee;
+  padding-top: 2rem;
+}
+
+/* 🔹 Адаптив */
 @media (max-width: 768px) {
-  .textbook-page {
+  .textbook-header {
     flex-direction: column;
+    align-items: center;
   }
+
+  .back-fixed {
+    top: 1rem;
+    left: 1rem;
+  }
+
   .textbook-image {
     flex: 0 0 auto;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .textbook-details h1 {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .book-meta p {
+    text-align: center;
+  }
+
+  .download-btn {
+    align-self: center;
+  }
+
+  .comments-wrapper {
+    padding-top: 1rem;
   }
 }

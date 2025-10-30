@@ -76,9 +76,10 @@ export const StarRating: React.FC<StarRatingProps> = ({
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const connectSSE = () => {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/ratings/stream/${targetType}/${targetId}`;
+      const apiBase =
+        import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "/api-nest";
+
+      const url = `${apiBase}/ratings/stream/${targetType}/${targetId}`;
       eventSource = new EventSource(url);
 
       eventSource.onopen = () => {
@@ -99,7 +100,9 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
       eventSource.onerror = () => {
         if (!isUnmounted) {
-          console.warn("⚠️ SSE-соединение потеряно, пробуем переподключиться...");
+          console.warn(
+            "⚠️ SSE-соединение потеряно, пробуем переподключиться..."
+          );
           eventSource?.close();
           reconnectTimeout = setTimeout(connectSSE, 3000);
         }
