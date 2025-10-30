@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import BackZone from "../components/BackZone";
-import styles from "./BookPage/BookPage.module.css";
+import styles from "./PersonalityPage.module.css";
 import useScrollToTop from "../hooks/useScrollToTop";
 import { Personality } from "../types/Personality";
 import ArticleCard from "./ArticleCard";
@@ -10,7 +10,7 @@ import TimelineContemporaries from "./TimelineContemporaries";
 import { Quote } from "./QuotesBlock";
 import FavoriteButton from "../components/FavoriteButton";
 import { useFavorites } from "../hooks/useFavorites";
-
+import { CommentsSection } from "./CommentsSection";
 const PersonalityPage = () => {
   const { id } = useParams<{ id: string }>();
   const [personality, setPersonality] = useState<Personality | null>(null);
@@ -72,16 +72,17 @@ const PersonalityPage = () => {
   if (!personality)
     return <div className={styles.container}>Личность не найдена</div>;
 
-  // 💡 Проверяем избранное
   const isFavorite = favorites.some((f) => f.id === personality.id);
 
   return (
     <div className={styles.pageWrapper}>
-      <BackZone to="/personalities" />
+      <div className={styles.backFixed}>
+        <BackZone to="/personalities" />
+      </div>
 
-      <div className={styles.container} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.container}>
         <div className={styles.mainContent}>
-          {/* 📸 Фото личности с кнопкой избранного */}
+          {/* 📸 Фото + избранное */}
           <div className={styles.coverWrapper}>
             <img
               src={
@@ -103,45 +104,39 @@ const PersonalityPage = () => {
           {/* ℹ️ Информация */}
           <div className={styles.info}>
             <h1 className={styles.title}>
-              {personality.name} {personality.years && `(${personality.years})`}
+              {personality.name}{" "}
+              {personality.years && (
+                <span className={styles.years}>({personality.years})</span>
+              )}
             </h1>
 
             {personality.position && (
-              <div className={styles.property}>
+              <p className={styles.meta}>
                 <strong>Должность:</strong> {personality.position}
-              </div>
+              </p>
             )}
 
-            {/* 📚 Интересные факты */}
-            <div className={styles.property}>
-              <strong>Интересные факты:</strong>
-              {personality.facts?.length ? (
-                <ul style={{ marginTop: "8px", paddingLeft: "20px" }}>
+            {personality.facts?.length > 0 && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Интересные факты</h2>
+                <ul className={styles.factsList}>
                   {personality.facts.map((fact, i) => (
-                    <li key={i} style={{ marginBottom: "4px" }}>
-                      {fact}
-                    </li>
+                    <li key={i}>{fact}</li>
                   ))}
                 </ul>
-              ) : (
-                <p style={{ color: "#777" }}>Нет данных</p>
-              )}
-            </div>
-
-            {/* 🧾 Биография */}
-            {personality.biography && (
-              <div className={styles.property}>
-                <strong>Биография:</strong>
-                <p className={styles.description} style={{ marginTop: "8px" }}>
-                  {personality.biography}
-                </p>
               </div>
             )}
 
-            {/* 💬 Цитаты */}
+            {personality.biography && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Биография</h2>
+                <p className={styles.biography}>{personality.biography}</p>
+              </div>
+            )}
+
             {quotes.length > 0 && (
-              <div className={styles.property}>
-                <h2 className={styles.similarTitle}>Цитаты</h2>
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Цитаты</h2>
                 <div className={styles.quotesBlock}>
                   {quotes.map((q) => (
                     <div key={q.id} className={styles.quoteCard}>
@@ -155,21 +150,16 @@ const PersonalityPage = () => {
               </div>
             )}
 
-            {/* 📚 Книги личности */}
-            {personality.books && personality.books.length > 0 && (
-              <div className={styles.similarSection}>
-                <h2 className={styles.similarTitle}>Книги о личности</h2>
-                <div className={styles.similarBooks}>
+            {personality.books?.length > 0 && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Книги о личности</h2>
+                <div className={styles.booksGrid}>
                   {personality.books.map((book) => (
-                    <Link
-                      to={`/books/${book.id}`}
-                      key={book.id}
-                      className={styles.similarBook}
-                    >
+                    <Link to={`/books/${book.id}`} key={book.id}>
                       <img
                         src={book.cover_url || "/uploads/default-book.jpg"}
                         alt={book.title}
-                        className={styles.similarCover}
+                        className={styles.bookCover}
                       />
                     </Link>
                   ))}
@@ -177,14 +167,10 @@ const PersonalityPage = () => {
               </div>
             )}
 
-            {/* 📰 Статьи */}
-            {personality.articles && personality.articles.length > 0 && (
-              <div className={styles.property}>
-                <strong>Статьи о личности:</strong>
-                <div
-                  className={styles.articlesGrid}
-                  style={{ marginTop: "16px" }}
-                >
+            {personality.articles?.length > 0 && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Статьи</h2>
+                <div className={styles.articlesGrid}>
                   {personality.articles.map((article) => (
                     <ArticleCard key={article.id} article={article} />
                   ))}
@@ -199,6 +185,15 @@ const PersonalityPage = () => {
               />
             )}
           </div>
+        </div>
+
+        {/* 💬 Комментарии */}
+        <div className={styles.commentsWrapper}>
+          <CommentsSection
+            targetType="personality"
+            targetId={personality.id}
+            apiBase="/api-nest"
+          />
         </div>
       </div>
     </div>

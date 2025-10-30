@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../assets/Picsart_25-10-09_01-04-21-668.png";
 import Navigation from "./Navigation";
 import { useAuth } from "../context/AuthContext";
+import { FiLogOut } from "react-icons/fi";
 import "./Header.css";
 
 const Header = () => {
@@ -16,21 +16,27 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-container">
-        <Link to="/" className="logo-link">
-          <img src={Logo} alt="Оазис" className="logo" />
-          <span className="logo-text">Оазис</span>
+        {/* 🔹 ЛОГО */}
+        <Link to="/" className="brand">
+          <span className="brand-text">Оазис</span>
         </Link>
 
+        {/* 🔹 НАВИГАЦИЯ */}
         <Navigation />
 
+        {/* 🔹 АВТОРИЗАЦИЯ */}
         <div className="auth-buttons">
           {isAuthenticated ? (
             <>
-              <span className="user-name">
-                👋 {user?.email || "Пользователь"}
-              </span>
-              <button onClick={handleLogout} className="btn btn-logout">
-                Выйти
+              <Link to="/profile" className="user-email">
+                {user?.email || "Личный кабинет"}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="logout-icon"
+                title="Выйти"
+              >
+                <FiLogOut />
               </button>
             </>
           ) : (

@@ -33,7 +33,6 @@ export class TextbooksController {
 
   /**
    * 📚 Получить список учебников (с пагинацией, фильтром и сортировкой)
-   * Пример: GET /api-nest/textbooks?page=2&limit=10&sort=asc&level=A1
    */
   @Get()
   async getAll(
@@ -47,8 +46,9 @@ export class TextbooksController {
 
   /** 🔍 Получить учебник по ID (включая рейтинг и комментарии) */
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user?.id;
+    const userId = req.user ? req.user.id : null;
     return this.textbooksService.getById(id, userId);
   }
 

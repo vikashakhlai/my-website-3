@@ -30,9 +30,9 @@ const StudentBookCard: React.FC<StudentBookCardProps> = ({ book, type }) => {
               <p className={styles.meta}>
                 <strong>Год:</strong> {book.publication_year || "—"}
               </p>
-              <p className={styles.meta}>
-                <strong>Уровень:</strong> {book.level || "—"}
-              </p>
+              {book.level && (
+                <span className={styles.levelTag}>{book.level}</span>
+              )}
             </>
           )}
 

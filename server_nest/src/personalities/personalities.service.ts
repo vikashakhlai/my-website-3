@@ -2,12 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Personality, Era } from './personality.entity';
+import { Comment } from 'src/comments/comment.entity';
 
 @Injectable()
 export class PersonalitiesService {
   constructor(
     @InjectRepository(Personality)
     private readonly personalityRepo: Repository<Personality>,
+
+    @InjectRepository(Comment)
+    private readonly commentRepo: Repository<Comment>,
   ) {}
 
   // ✅ Получить всех (с фильтрацией и пагинацией)
@@ -54,11 +58,26 @@ export class PersonalitiesService {
   }
 
   // Получить одну личность
-  async findOne(id: number): Promise<Personality | null> {
-    return this.personalityRepo.findOne({
+  async findOne(id: number): Promise<any> {
+    const personality = await this.personalityRepo.findOne({
       where: { id },
       relations: ['articles', 'books'],
     });
+
+    if (!personality) return null;
+
+    // 🔹 Загружаем комментарии, привязанные к этой личности
+    const comments = await this.commentRepo.find({
+      where: { target_type: 'personality', target_id: id },
+      order: { created_at: 'DESC' },
+      relations: ['user'],
+    });
+
+    return {
+      ...personality,
+      comments,
+      commentCount: comments.length,
+    };
   }
 
   // Получить случайные личности

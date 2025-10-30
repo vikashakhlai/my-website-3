@@ -36,7 +36,7 @@ const BookGallery = ({ book }: BookGalleryProps) => {
         <div className={styles.section}>
           <h2 className={styles.title}>
             {authors.length === 1
-              ? `Другие книги автора: ${authors[0].full_name}`
+              ? `Другие книги автора: ${authors[0].fullName}`
               : "Другие книги авторов"}
           </h2>
           <div className={styles.list}>

@@ -1,3 +1,4 @@
+// src/media/media.controller.ts
 import {
   Controller,
   Get,
@@ -11,17 +12,29 @@ import {
   UploadedFile,
   UseInterceptors,
   Query,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { interval, Observable, switchMap } from 'rxjs';
+
 import { MediaService } from './media.service';
 import { Media } from './media.entity';
 import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 
+// ✅ добавляем сервисы для рейтингов и комментариев
+import { RatingsService } from 'src/ratings/ratings.service';
+import { CommentsService } from 'src/comments/comments.service';
+
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly ratingsService: RatingsService,
+    private readonly commentsService: CommentsService,
+  ) {}
 
   /** 📜 Получить все медиа с фильтрацией */
   @Get()
@@ -30,7 +43,6 @@ export class MediaController {
     @Query('region') region?: string,
     @Query('topics') topics?: string, // "1,2,3"
   ): Promise<Media[]> {
-    // Преобразуем строку "1,2,3" → [1, 2, 3]
     const topicIds = topics
       ? topics
           .split(',')
@@ -38,7 +50,6 @@ export class MediaController {
           .filter((id) => !isNaN(id))
       : [];
 
-    // Используем новый метод с фильтрами
     return this.mediaService.findAllWithFilters({
       name,
       region,
@@ -77,10 +88,8 @@ export class MediaController {
   ): Promise<Media> {
     const videoPath = file.path.split('\\').join('/');
 
-    // 🧠 Генерация превью
     const previewPath = await this.mediaService.generatePreview(videoPath);
 
-    // ✅ Сохранение новой записи
     return this.mediaService.create({
       ...body,
       mediaUrl: videoPath,
@@ -116,5 +125,30 @@ export class MediaController {
     @Body() dto: CreateExerciseDto,
   ) {
     return this.mediaService.addExerciseToMedia(mediaId, dto);
+  }
+
+  // =========================
+  // 🔔 РЕЙТИНГИ И КОММЕНТАРИИ
+  // =========================
+
+  /** ⭐ Средний рейтинг и количество голосов по медиа */
+  @Get(':id/rating')
+  async getRating(@Param('id', ParseIntPipe) id: number) {
+    // фронт использует targetType="media"
+    return this.ratingsService.getAverage('media', id);
+  }
+
+  /** 💬 SSE-стрим комментариев по медиа (реал-тайм) */
+  @Get('stream/:id/comments')
+  @Sse()
+  streamComments(
+    @Param('id', ParseIntPipe) id: number,
+  ): Observable<MessageEvent> {
+    return interval(5000).pipe(
+      switchMap(async () => {
+        const comments = await this.commentsService.findByTarget('media', id);
+        return { data: comments };
+      }),
+    );
   }
 }

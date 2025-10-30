@@ -9,27 +9,23 @@ interface Props {
 const StudentBookCardBigSlider: React.FC<Props> = ({ books }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [books]);
+  useEffect(() => setCurrentIndex(0), [books]);
 
-  const nextBook = () => {
-    setCurrentIndex((prev) => (prev + 1) % books.length);
-  };
+  if (!books || books.length === 0) return null;
 
-  const prevBook = () => {
+  const nextBook = () => setCurrentIndex((prev) => (prev + 1) % books.length);
+
+  const prevBook = () =>
     setCurrentIndex((prev) => (prev - 1 + books.length) % books.length);
-  };
 
   const currentBook = books[currentIndex];
-  if (!currentBook) return null;
 
   return (
     <div className={styles.wrapper}>
-      {/* Стрелки теперь находятся в wrapper, а не внутри card */}
+      {/* Навигация */}
       {books.length > 1 && (
         <>
-          {currentIndex !== 0 && (
+          {currentIndex > 0 && (
             <button
               className={`${styles.navBtn} ${styles.prev}`}
               onClick={prevBook}
@@ -63,39 +59,45 @@ const StudentBookCardBigSlider: React.FC<Props> = ({ books }) => {
         </>
       )}
 
-      {/* Основной карточный блок без стрелок внутри */}
+      {/* Карточка */}
       <div className={styles.card}>
-        {/* Левая часть с изображением */}
         <div className={styles.imageContainer}>
           <img
-            src={currentBook.cover_image_url}
+            src={
+              currentBook.cover_image_url ||
+              "https://via.placeholder.com/300x400?text=No+Cover"
+            }
             alt={currentBook.title}
             className={styles.image}
-            onError={(e) =>
-              (e.currentTarget.src =
-                "https://via.placeholder.com/300x400?text=No+Cover")
-            }
           />
         </div>
 
-        {/* Правая часть с контентом */}
         <div className={styles.content}>
           <h2 className={styles.title}>{currentBook.title}</h2>
-          <p>
-            <strong>Авторы:</strong> {currentBook.authors}
-          </p>
-          <p>
-            <strong>Год издания:</strong> {currentBook.publication_year}
-          </p>
-          <p>
-            <strong>Уровень:</strong> {currentBook.level}
-          </p>
-          <p>
-            <strong>Описание:</strong>{" "}
-            <span className={styles.description}>
-              {currentBook.description}
-            </span>
-          </p>
+
+          <div className={styles.metaBlock}>
+            {currentBook.authors && (
+              <p>
+                <strong>Авторы:</strong> {currentBook.authors}
+              </p>
+            )}
+            {currentBook.publication_year && (
+              <p>
+                <strong>Год издания:</strong> {currentBook.publication_year}
+              </p>
+            )}
+            {currentBook.level && (
+              <span className={styles.levelTag}>{currentBook.level}</span>
+            )}
+          </div>
+
+          {currentBook.description && (
+            <p className={styles.description}>
+              {currentBook.description.length > 300
+                ? currentBook.description.slice(0, 300) + "..."
+                : currentBook.description}
+            </p>
+          )}
         </div>
       </div>
     </div>

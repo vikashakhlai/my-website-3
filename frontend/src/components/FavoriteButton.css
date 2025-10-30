@@ -1,27 +1,50 @@
-.button {
-  background: none;
+.favorite-btn {
+  width: 42px;
+  height: 42px;
   border: none;
+  outline: none;
   cursor: pointer;
-  padding: 6px;
   border-radius: 50%;
-  transition: transform 0.2s ease, background-color 0.3s ease;
+  background-color: #6366f1; /* насыщенный фиолетовый */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(107, 33, 168, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.3s ease,
+    background-color 0.3s ease;
 }
 
-.button:hover {
-  transform: scale(1.1);
-  background-color: rgba(255, 215, 0, 0.1);
+.favorite-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(107, 33, 168, 0.4);
 }
 
 .icon {
-  width: 24px;
-  height: 24px;
-  color: #caa94d; /* песочно-золотой */
-  transition: color 0.3s ease, fill 0.3s ease, filter 0.3s ease;
-  fill: none;
+  width: 22px;
+  height: 22px;
+  color: #ffffff;
+  transition: transform 0.3s ease, fill 0.3s ease, color 0.3s ease;
 }
 
-.active .icon {
-  color: #ffb400;
-  fill: #ffb400;
-  filter: drop-shadow(0 0 4px rgba(255, 176, 0, 0.6));
+.favorite-btn.active {
+  background-color: #6c70d7; /* чуть ярче при активации */
+  box-shadow: 0 6px 14px rgba(121, 113, 242, 0.4);
+}
+
+.favorite-btn.active .icon {
+  color: #ffffff;
+  fill: #ffffff;
+  transform: scale(1.1);
+}
+
+/* Адаптив — чуть меньше на мобильных */
+@media (max-width: 600px) {
+  .favorite-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .icon {
+    width: 20px;
+    height: 20px;
+  }
 }

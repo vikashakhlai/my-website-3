@@ -9,6 +9,8 @@ import BackZone from "../../components/BackZone";
 import FavoriteButton from "../../components/FavoriteButton";
 import { useFavorites } from "../../hooks/useFavorites"; // 🆕 хук избранного
 import { useAuth } from "../../context/AuthContext"; // 🆕 для проверки авторизации
+import { StarRating } from "../../components/StarRating";
+import { CommentsSection } from "../../components/CommentsSection";
 
 interface Media {
   id: number;
@@ -170,6 +172,23 @@ const DialectExercisePage = () => {
 
       {/* 🗣️ Таблица диалогов */}
       {dialogue && <DialogueCompare dialogue={dialogue} />}
+      {/* 💬 Комментарии и ⭐ Рейтинг */}
+      <div className="feedback-section">
+        <h2 className="feedback-title">Обратная связь</h2>
+
+        {/* ⭐ Рейтинг */}
+        <div className="rating-block">
+          <h3>Оцените материал</h3>
+          <div className="rating-wrapper">
+            <StarRating targetType="media" targetId={media.id} />
+          </div>
+        </div>
+
+        {/* 💬 Комментарии */}
+        <div className="comments-block">
+          <CommentsSection targetType="media" targetId={media.id} />
+        </div>
+      </div>
     </div>
   );
 };

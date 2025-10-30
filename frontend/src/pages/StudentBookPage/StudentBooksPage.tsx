@@ -17,7 +17,7 @@ const StudentBooksPage: React.FC = () => {
 
   // 🔹 Фильтры
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const limit = 6;
+  const limit = 7;
 
   // ✅ Маппинг фильтров (чтобы совпадали с базой)
   const LEVEL_MAP: Record<string, string> = {

@@ -42,48 +42,32 @@ export class TextbooksService {
     const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
     const levelFilter = options?.level?.trim();
 
+    // 🔹 Основной запрос с подзапросами
     const qb = this.textbookRepo
       .createQueryBuilder('t')
-      .leftJoin(
-        'ratings',
-        'r',
-        'r.target_id = t.id AND r.target_type = :type',
-        {
-          type: 'textbook',
-        },
-      )
-      .leftJoin(
-        'comments',
-        'c',
-        'c.target_id = t.id AND c.target_type = :type2',
-        {
-          type2: 'textbook',
-        },
-      )
       .select([
         't.id AS id',
         't.title AS title',
+        't.authors AS authors',
+        't.publication_year AS publication_year',
         't.cover_image_url AS cover_image_url',
         't.description AS description',
         't.level AS level',
         't.pdf_url AS pdf_url',
-        'AVG(r.value) AS averageRating',
-        'COUNT(DISTINCT r.id) AS ratingCount',
-        'COUNT(DISTINCT c.id) AS commentCount',
+        "(SELECT AVG(r.value) FROM ratings r WHERE r.target_id = t.id AND r.target_type = 'textbook') AS averageRating",
+        "(SELECT COUNT(*) FROM ratings r WHERE r.target_id = t.id AND r.target_type = 'textbook') AS ratingCount",
+        "(SELECT COUNT(*) FROM comments c WHERE c.target_id = t.id AND c.target_type = 'textbook') AS commentCount",
       ])
-      .groupBy(
-        't.id, t.title, t.cover_image_url, t.description, t.level, t.pdf_url',
-      )
-      .orderBy('t.level', sortOrder)
+      .orderBy('t.id', sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
 
-    // 🔹 Фильтр по уровню
     if (levelFilter) {
       qb.where('t.level = :level', { level: levelFilter });
     }
 
-    const [rawData, totalCount] = await Promise.all([
+    // 🔹 Получаем данные и общее количество
+    const [data, total] = await Promise.all([
       qb.getRawMany(),
       this.textbookRepo.count(
         levelFilter ? { where: { level: levelFilter } } : {},
@@ -91,9 +75,13 @@ export class TextbooksService {
     ]);
 
     // 🔹 Приведение типов
-    const data = rawData.map((t) => ({
+    const formatted = data.map((t) => ({
       id: Number(t.id),
       title: t.title,
+      authors: t.authors,
+      publication_year: t.publication_year
+        ? Number(t.publication_year)
+        : undefined,
       cover_image_url: t.cover_image_url,
       description: t.description,
       level: t.level,
@@ -104,10 +92,10 @@ export class TextbooksService {
     }));
 
     return {
-      data,
-      total: totalCount,
+      data: formatted,
+      total,
       page,
-      totalPages: Math.ceil(totalCount / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 

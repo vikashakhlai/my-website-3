@@ -29,7 +29,7 @@ const HomePage = () => {
             api.get("/books/latest?limit=10"),
             api.get("/articles/latest"),
             api.get("/personalities/random?limit=3"),
-            api.get("/textbooks"),
+            api.get("/textbooks", { params: { limit: 10 } }),
           ]);
 
         setLatestBooks(Array.isArray(booksRes.data) ? booksRes.data : []);
@@ -37,7 +37,7 @@ const HomePage = () => {
         setPersonalities(
           Array.isArray(personalitiesRes.data) ? personalitiesRes.data : []
         );
-        setTextbooks(Array.isArray(textbooksRes.data) ? textbooksRes.data : []);
+        setTextbooks(textbooksRes.data?.data ?? []);
       } catch (err) {
         console.error("Ошибка при загрузке:", err);
         setError("Не удалось загрузить данные");

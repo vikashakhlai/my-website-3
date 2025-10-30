@@ -1,59 +1,49 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
 import "./Navigation.css";
 
 const Navigation = () => {
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const isActive = (path: string): boolean => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
+
+  const handleToggle = () => setMenuOpen((prev) => !prev);
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <nav className="navigation">
-      <Link
-        to="/DictionaryPage"
-        className={isActive("/DictionaryPage") ? "nav-link active" : "nav-link"}
-      >
-        Словарь
-      </Link>
-      <Link
-        to="/CoursesPage"
-        className={isActive("/CoursesPage") ? "nav-link active" : "nav-link"}
-      >
-        Курсы
-      </Link>
-      <Link
-        to="/BooksPage"
-        className={isActive("/BooksPage") ? "nav-link active" : "nav-link"}
-      >
-        Книги
-      </Link>
-      <Link
-        to="/ArticlesPage"
-        className={isActive("/ArticlesPage") ? "nav-link active" : "nav-link"}
-      >
-        Статьи
-      </Link>
-      <Link
-        to="/dialects"
-        className={isActive("/dialects") ? "nav-link active" : "nav-link"}
-      >
-        Диалект
-      </Link>
-      <Link
-        to="/StudentBooksPage"
-        className={
-          isActive("/StudentBooksPage") ? "nav-link active" : "nav-link"
-        }
-      >
-        Учебники
-      </Link>
-      <Link
-        to="/personalities"
-        className={
-          isActive("/AllPersonalitiesPage") ? "nav-link active" : "nav-link"
-        }
-      >
-        Личности
-      </Link>
+      <div className="nav-container">
+        <button
+          className={`burger ${menuOpen ? "open" : ""}`}
+          onClick={handleToggle}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div className={`nav-links ${menuOpen ? "show" : ""}`}>
+          {[
+            { to: "/DictionaryPage", label: "Словарь" },
+            { to: "/CoursesPage", label: "Курсы" },
+            { to: "/BooksPage", label: "Книги" },
+            { to: "/ArticlesPage", label: "Статьи" },
+            { to: "/dialects", label: "Диалект" },
+            { to: "/StudentBooksPage", label: "Учебники" },
+            { to: "/personalities", label: "Личности" },
+          ].map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={isActive(to) ? "nav-link active" : "nav-link"}
+              onClick={closeMenu}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </nav>
   );
 };

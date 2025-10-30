@@ -1,27 +1,32 @@
-/* BackZone.module.css */
-
 .backZone {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05); /* очень светлый фон */
+  background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.08),
+    -2px -2px 6px rgba(255, 255, 255, 0.9);
+  color: #333;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin: 16px 0 16px 16px; /* отступ слева и сверху/снизу */
+  transition: all 0.25s ease;
+  margin: 16px 0 16px 16px;
 }
 
 .backZone:hover {
-  background-color: rgba(0, 0, 0, 0.15); /* чуть темнее при наведении */
+  transform: translateX(-3px);
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1),
+    -2px -2px 6px rgba(255, 255, 255, 0.8);
+  background: linear-gradient(145deg, #e8e8e8, #ffffff);
 }
 
-/* Стрелка влево (обычно для "назад") */
 .arrow {
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-right: 10px solid #333; /* цвет стрелки */
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s ease;
+}
+
+.backZone:hover .arrow {
+  transform: translateX(-2px);
 }

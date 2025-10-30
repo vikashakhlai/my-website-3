@@ -1,45 +1,55 @@
-import { Box, Button, Image, Text, VStack } from "@chakra-ui/react";
-import CenteredBlockImg from "../assets/Horse.jpg";
+import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import "./CenteredBlock.css";
+import CenteredBlockImg from "../assets/Hero.png";
 
 const CenteredBlock = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 } // 30% блока должно быть видно
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <Box pos="relative" overflow="hidden">
-      <Image
-        src={CenteredBlockImg}
-        width="full"
-        height="full"
-        objectFit="contain"
-        borderRadius="20px"
-        overflow="hidden"
-      />
-
-      <VStack
-        pos="absolute"
-        left="0"
-        right="0"
-        top="0"
-        bottom="0"
-        justify="center"
-        align="center"
-        // textAlign="center"
-        color="white"
+    <Link to="/CoursesPage" className="hero-link">
+      <section
+        ref={ref}
+        className={`hero-section ${isVisible ? "visible" : ""}`}
       >
-        <Text fontSize="3xl" fontWeight="bold">
-          Раскрой всю красоту арабского языка
-        </Text>
-        <Text fontSize="lg" maxW="md" mt={4}>
-          Арабский язык — ключ к пониманию богатого культурного наследия
-          Востока. Откройте для себя мир изящных букв, мелодичных звуков и
-          глубоких смыслов. Путешествуйте по страницам истории, изучайте
-          искусство письма и погружайтесь в магию одного из древнейших языков
-          мира.
-        </Text>
-        <Button size="lg" mt={8} bgColor="white" color="black">
-          Начнём!
-        </Button>
-      </VStack>
-    </Box>
+        <img
+          src={CenteredBlockImg}
+          alt="Арабский язык — красота письма"
+          className="hero-image"
+        />
+
+        <div className="hero-overlay" />
+
+        <div className="hero-content">
+          <h1>Раскрой всю красоту арабского языка</h1>
+          <p>
+            Арабский язык — ключ к пониманию богатого культурного наследия
+            Востока. Откройте для себя мир изящных букв, мелодичных звуков и
+            глубоких смыслов. Путешествуйте по страницам истории, изучайте
+            искусство письма и погружайтесь в магию одного из древнейших языков
+            мира.
+          </p>
+          <button className="hero-btn">Начнём!</button>
+        </div>
+      </section>
+    </Link>
   );
 };
 

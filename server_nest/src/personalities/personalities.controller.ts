@@ -1,19 +1,48 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+// src/personalities/personalities.controller.ts
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Query,
+  Sse,
+  MessageEvent,
+} from '@nestjs/common';
 import { PersonalitiesService } from './personalities.service';
 import { Era } from './personality.entity';
+import { CommentsService } from 'src/comments/comments.service';
+import { interval, Observable, switchMap, map, from } from 'rxjs';
 
 @Controller('personalities')
 export class PersonalitiesController {
-  constructor(private readonly personalitiesService: PersonalitiesService) {}
+  constructor(
+    private readonly personalitiesService: PersonalitiesService,
+    private readonly commentsService: CommentsService,
+  ) {}
 
-  // ✅ 1. сначала конкретные пути
+  /** 🔴 SSE: поток комментариев для личности */
+  @Get('stream/:id/comments')
+  @Sse()
+  streamComments(
+    @Param('id', ParseIntPipe) id: number,
+  ): Observable<MessageEvent> {
+    return interval(5000).pipe(
+      // конвертируем Promise -> Observable
+      switchMap(() =>
+        from(this.commentsService.findByTarget('personality', id)),
+      ),
+      map((comments) => ({ data: comments }) as MessageEvent),
+    );
+  }
+
+  /** сначала конкретные пути */
   @Get('random')
   async getRandom(@Query('limit') limit?: string) {
     const numLimit = Number(limit);
     return this.personalitiesService.getRandom(isNaN(numLimit) ? 3 : numLimit);
   }
 
-  // ✅ 2. потом общий список
+  /** общий список */
   @Get()
   async findAll(
     @Query('page') page = '1',
@@ -21,8 +50,6 @@ export class PersonalitiesController {
     @Query('search') search?: string,
     @Query('era') era?: string,
   ) {
-    console.log('➡️ Получен запрос:', { page, limit, search, era });
-
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = Math.min(parseInt(limit, 10) || 12, 50);
 
@@ -34,13 +61,13 @@ export class PersonalitiesController {
     );
   }
 
-  // ✅ 3. потом вспомогательные (вложенные)
+  /** вспомогательный маршрут */
   @Get(':id/contemporaries')
   async getContemporaries(@Param('id', ParseIntPipe) id: number) {
     return this.personalitiesService.getContemporaries(id);
   }
 
-  // ✅ 4. и только в конце динамический маршрут
+  /** динамический маршрут в самом конце */
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.personalitiesService.findOne(id);

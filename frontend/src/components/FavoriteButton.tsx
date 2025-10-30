@@ -1,5 +1,5 @@
-import { Sun } from "lucide-react";
 import React from "react";
+import { Heart } from "lucide-react";
 import "./FavoriteButton.css";
 
 interface FavoriteButtonProps {
@@ -14,10 +14,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   return (
     <button
       onClick={onToggle}
-      className={`button ${isFavorite ? "active" : ""}`}
+      className={`favorite-btn ${isFavorite ? "active" : ""}`}
       title={isFavorite ? "Удалить из избранного" : "Добавить в избранное"}
     >
-      <Sun className="icon" />
+      <Heart className="icon" />
     </button>
   );
 };

@@ -179,6 +179,53 @@
   background: #f59e0b; /* жёлтый */
 }
 
+.feedback-section {
+  width: 100%;
+  max-width: 900px; /* 🔹 комфортная ширина, как у учебников */
+  margin: 40px auto; /* 🔹 центрирование */
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+.feedback-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+  text-align: center;
+}
+
+.rating-block {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.rating-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.comments-block {
+  margin-top: 24px;
+}
+
+/* 🔹 Адаптив для мобилок */
+@media (max-width: 768px) {
+  .feedback-section {
+    padding: 20px;
+    border-radius: 14px;
+    max-width: 95%;
+  }
+
+  .feedback-title {
+    font-size: 1.4rem;
+  }
+}
+
 /* === Адаптив === */
 @media (max-width: 768px) {
   .exercise-title {

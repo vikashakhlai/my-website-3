@@ -194,6 +194,7 @@ export class MediaService {
   }
 
   /** 🎞 Генерация превью с помощью ffmpeg */
+  /** 🎞 Генерация превью с помощью ffmpeg */
   async generatePreview(mediaUrl: string): Promise<string> {
     try {
       const uploadsRoot = join(process.cwd(), 'uploads');
@@ -201,7 +202,7 @@ export class MediaService {
         ? mediaUrl
         : join(uploadsRoot, mediaUrl.replace(/^\/?uploads[\\/]/, ''));
 
-      const { dir, name } = parse(videoPath);
+      const { name } = parse(videoPath);
       const outputDir = join(dirname(videoPath), '..', 'thumbnails');
       await fs.mkdir(outputDir, { recursive: true });
 
@@ -210,6 +211,7 @@ export class MediaService {
       // Проверяем, существует ли файл видео
       await fs.access(videoPath);
 
+      // 🧠 Запускаем ffmpeg и ожидаем завершения
       await new Promise<void>((resolve, reject) => {
         const ffmpeg = spawn(ffmpegPath as string, [
           '-i',
@@ -224,13 +226,23 @@ export class MediaService {
         ]);
 
         ffmpeg.on('close', (code) => {
-          code === 0
-            ? resolve()
-            : reject(
-                new InternalServerErrorException(
-                  'FFmpeg не смог создать превью',
-                ),
-              );
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(
+              new InternalServerErrorException(
+                `FFmpeg завершился с кодом ${code} и не смог создать превью`,
+              ),
+            );
+          }
+        });
+
+        ffmpeg.on('error', (err) => {
+          reject(
+            new InternalServerErrorException(
+              `Ошибка запуска FFmpeg: ${err.message}`,
+            ),
+          );
         });
       });
 

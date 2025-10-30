@@ -48,63 +48,6 @@
   opacity: 0;
 }
 
-/* === PAGINATION === */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.pageBtn {
-  padding: 0.6rem 1.2rem;
-  border: 1px solid #3498db;
-  background: white;
-  color: #3498db;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pageBtn:hover:not(:disabled) {
-  background: #3498db;
-  color: white;
-}
-
-.pageBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pageInfo {
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-/* === FILTERS === */
-.filters-container {
-  display: flex;
-  gap: 1rem;
-  margin: 1.5rem 0;
-  flex-wrap: wrap;
-}
-
-.search-input,
-.era-select {
-  padding: 0.6rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  min-width: 200px;
-}
-
-.search-input:focus,
-.era-select:focus {
-  outline: none;
-  border-color: #3498db;
-}
-
 /* === SKELETON LOADING === */
 .gridPlaceholder {
   display: grid;

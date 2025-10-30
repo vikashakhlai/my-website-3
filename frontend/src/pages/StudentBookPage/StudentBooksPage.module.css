@@ -114,6 +114,13 @@
   height: 100%;
 }
 
+.booksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.4rem;
+  justify-items: center;
+}
+
 /* ---------- Адаптив ---------- */
 @media (max-width: 1024px) {
   .topSection {
