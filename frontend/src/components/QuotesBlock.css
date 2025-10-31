@@ -1,3 +1,4 @@
+/* === Контейнер секции === */
 .quotes-section {
   width: 100%;
   padding: 4rem 2rem;
@@ -8,9 +9,10 @@
     rgba(245, 245, 255, 1) 100%
   );
   overflow: hidden;
+  z-index: 1;
 }
 
-/* === Мягкий каллиграфический фон === */
+/* === Фон каллиграфии === */
 .quotes-section::before {
   content: "";
   position: absolute;
@@ -18,27 +20,17 @@
   background-image: url("../assets/arabic-pattern.svg");
   background-repeat: repeat;
   background-size: 500px;
-  opacity: 0.05; /* 🧠 лёгкий след */
+  opacity: 0.05;
   pointer-events: none;
   mix-blend-mode: multiply;
-}
-
-/* === Заголовок === */
-.quotes-title {
-  position: relative;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #1e1b4b;
-  text-align: center;
-  margin-bottom: 2.5rem;
-  z-index: 2;
+  z-index: -1; /* ✅ фон под карточками */
 }
 
 /* === Сетка === */
 .quotes-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ✅ адаптив */
   gap: 2rem;
   justify-content: center;
   align-items: stretch;
@@ -59,7 +51,6 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 280px;
 }
 
 .quote-card:hover {
@@ -67,7 +58,7 @@
   box-shadow: 0 10px 28px rgba(99, 102, 241, 0.15);
 }
 
-/* === Текст === */
+/* === Текст цитаты === */
 .quote-ar {
   direction: rtl;
   text-align: right;
@@ -79,7 +70,7 @@
 }
 
 .quote-ru {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: #333;
   line-height: 1.6;
   margin-bottom: 1rem;
@@ -99,22 +90,31 @@
   color: #4f46e5;
 }
 
-/* === Адаптив === */
+/* === Skeleton при загрузке === */
+.quote-card.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* === Мобильная адаптация === */
 @media (max-width: 768px) {
   .quotes-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
+  .quote-card {
+    padding: 1.5rem;
+  }
+
   .quote-ar {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
   }
 
   .quote-ru {
     font-size: 1rem;
-  }
-
-  .quote-card {
-    padding: 1.5rem;
   }
 }

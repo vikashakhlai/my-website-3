@@ -1,83 +1,113 @@
-.articleCard {
-  display: block;
+.card {
+  display: flex;
+  gap: 20px;
+  padding: 22px;
+  background: white;
+  border-radius: 22px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
   text-decoration: none;
   color: inherit;
-  border-radius: 8px;
+  transition: all 0.25s ease;
+  align-items: stretch;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.card,
+.card * {
+  text-decoration: none !important;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.25);
+}
+
+.imageWrapper {
+  flex: 0 0 240px;
+  height: 160px;
+  border-radius: 18px;
   overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+}
+
+.imageWrapper img {
+  width: 100%;
   height: 100%;
-}
-
-.articleCard:hover {
-  transform: scale(1.05);
-  z-index: 10;
-}
-
-.cardContent {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0;
-}
-
-.textContainer {
-  flex: 1;
-  padding: 20px;
-}
-
-.headerContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.titleRu {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.titleAr {
-  font-size: 1.5rem;
-  font-weight: bold;
-  text-align: right;
-}
-
-.theme {
-  color: #3182ce; /* blue.500 */
-  font-size: 0.875rem;
-  margin-top: 4px;
-}
-
-.description {
-  font-size: 1rem;
-  margin-top: 10px;
-  text-align: left;
+  object-fit: cover;
+  object-position: center;
 }
 
 .content {
-  font-size: 1.125rem;
-  font-weight: bold;
-  margin-top: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.titleRu {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.titleAr {
+  font-size: 1.4rem;
+  font-weight: 700;
   text-align: right;
   direction: rtl;
 }
 
-.imageContainer {
-  width: 150px;
-  height: 150px;
-  flex-shrink: 0;
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  background: #eef0ff;
+  color: #6366f1;
+  border-radius: 8px;
+  margin: 6px 0 10px;
+  width: fit-content;
 }
 
-.imageContainer img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.description {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #444;
 }
 
-.dim {
-  opacity: 0.5;
-  transition: opacity 0.3s ease; 
+.readMore {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6366f1;
+  transition: opacity 0.2s;
+  text-decoration: none;
+}
+
+.card:hover .readMore {
+  text-decoration: underline;
+}
+
+.card:hover .readMore {
+  opacity: 0.7;
+}
+
+.dimmed {
+  opacity: 0.45;
+  filter: grayscale(25%);
+  pointer-events: none; /* ✅ чтобы затемнённые карточки не ловили ховеры */
+}
+
+/* ✅ Адаптив */
+@media (max-width: 900px) {
+  .card {
+    flex-direction: column;
+  }
+  .imageWrapper {
+    width: 100%;
+    height: 200px;
+  }
 }

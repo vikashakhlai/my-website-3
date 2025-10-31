@@ -75,6 +75,34 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
+  // ✅ Swagger (dev)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('User Management API')
+      .setDescription('API для управления пользователями и ролями')
+      .setVersion('1.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          in: 'header',
+          name: 'JWT',
+          description: 'Введите JWT токен',
+        },
+        'access-token',
+      )
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+
+    // ✅ Добавляем JSON-роут
+    app.getHttpAdapter().get('/api-json', (req, res) => {
+      res.json(document);
+    });
+  }
+
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
   console.log(`🚀 Сервер запущен на http://localhost:${port}/api/v1`);

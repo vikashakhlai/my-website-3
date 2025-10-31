@@ -1,3 +1,14 @@
+/* 🔵 Убираем стили браузера для всех ссылок внутри карточки */
+.card a,
+.card a:visited,
+.card a:hover,
+.card a:active,
+.card a:focus {
+  text-decoration: none !important;
+  color: inherit !important;
+  outline: none !important;
+}
+
 .card {
   display: flex;
   flex-direction: column;
@@ -18,7 +29,7 @@
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   transform: scale(1.02);
-  z-index: 1; 
+  z-index: 1;
 }
 
 .image {

@@ -32,7 +32,6 @@ const QuotesBlock = () => {
 
   return (
     <section className="quotes-section">
-      <h2 className="quotes-title">Арабская мудрость</h2>
       <div className="quotes-grid">
         {quotes.map((quote) => (
           <div key={quote.id} className="quote-card">

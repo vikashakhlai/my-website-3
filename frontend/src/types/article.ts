@@ -135,8 +135,11 @@ export interface Article {
   themeSlug: string | null;
   createdAt: string;
   exercises?: Exercise[];
-  averageRating?: number | null; 
+  averageRating?: number | null;
   userRating?: number | null;
+  isDimmed?: boolean;
+  onHover?: () => void;
+  onLeave?: () => void;
 }
 
 // Type guards

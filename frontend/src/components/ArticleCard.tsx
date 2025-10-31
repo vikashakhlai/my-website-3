@@ -3,61 +3,52 @@ import { Link } from "react-router-dom";
 import styles from "./ArticleCard.module.css";
 import { Article } from "../types/article";
 
-const ArticleCard: React.FC<{ article: Article | undefined }> = ({
+interface Props {
+  article: Article;
+  isDimmed?: boolean;
+  onHover?: () => void;
+  onLeave?: () => void;
+}
+
+const ArticleCard: React.FC<Props> = ({
   article,
+  isDimmed,
+  onHover,
+  onLeave,
 }) => {
-  if (!article) {
-    return <div className={styles.articleCard}>Загрузка...</div>;
-  }
-
-  const { id, titleRu, titleAr, description, content, imageUrl, themeRu } =
-    article;
-
-  const handleMouseEnter = () => {
-    document.querySelectorAll(`.${styles.articleCard}`).forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.classList.add("dim");
-      }
-    });
-    const currentCard = document.getElementById(`card-${id}`);
-    if (currentCard) {
-      currentCard.classList.remove("dim");
-    }
-  };
-
-  const handleMouseLeave = () => {
-    document.querySelectorAll(`.${styles.articleCard}`).forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.classList.remove("dim");
-      }
-    });
-  };
+  const { id, titleRu, titleAr, description, imageUrl, themeRu } = article;
 
   return (
-    <Link
-      to={`/articles/${id}`}
-      className={styles.articleCard}
-      id={`card-${id}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <div
+      className={`${styles.cardWrapper} ${isDimmed ? styles.dimmed : ""}`}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
     >
-      <div className={styles.cardContent}>
-        <div className={styles.textContainer}>
-          <div className={styles.headerContainer}>
-            <div className={styles.titleRu}>{titleRu}</div>
-            <div className={styles.titleAr}>{titleAr}</div>
-          </div>
-          <div className={styles.theme}>{themeRu}</div>
-          <div className={styles.description}>{description}</div>
-          <div className={styles.content}>
-            {content.length > 400 ? `${content.substring(0, 400)}...` : content}
-          </div>
-        </div>
-        <div className={styles.imageContainer}>
+      <Link to={`/articles/${id}`} className={styles.card}>
+        <div className={styles.imageWrapper}>
           <img src={imageUrl} alt={titleRu} />
         </div>
-      </div>
-    </Link>
+
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <h3 className={styles.titleRu}>{titleRu}</h3>
+            <h3 className={styles.titleAr}>{titleAr}</h3>
+          </div>
+
+          {themeRu && <span className={styles.tag}>{themeRu}</span>}
+
+          {description && (
+            <p className={styles.description}>
+              {description.length > 180
+                ? description.slice(0, 180) + "..."
+                : description}
+            </p>
+          )}
+
+          <span className={styles.readMore}>Читать далее →</span>
+        </div>
+      </Link>
+    </div>
   );
 };
 

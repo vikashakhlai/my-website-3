@@ -25,13 +25,15 @@ const StudentBookCardBigSlider: React.FC<Props> = ({ books }) => {
       {/* 🔹 Навигация */}
       {books.length > 1 && (
         <>
-          <button
-            className={`${styles.nav} ${styles.prev}`}
-            onClick={prevBook}
-            aria-label="Предыдущая книга"
-          >
-            ‹
-          </button>
+          {currentIndex > 0 && (
+            <button
+              className={`${styles.nav} ${styles.prev}`}
+              onClick={prevBook}
+              aria-label="Предыдущая книга"
+            >
+              ‹
+            </button>
+          )}
           <button
             className={`${styles.nav} ${styles.next}`}
             onClick={nextBook}
