@@ -28,9 +28,12 @@ export const StarRating: React.FC<StarRatingProps> = ({
   // 🧩 Сброс состояния при смене книги / статьи
   useEffect(() => {
     setHovered(null);
-    setRating(initialUserRating ?? 0);
-    setAverage(initialAverage ?? 0);
-    setVotes(0);
+    if (initialUserRating !== undefined && initialUserRating !== null) {
+      setRating(initialUserRating);
+    }
+    if (initialAverage !== undefined && initialAverage !== null) {
+      setAverage(initialAverage);
+    }
   }, [targetId, initialAverage, initialUserRating]);
 
   // 🧩 Функция для обновления средней оценки

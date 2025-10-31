@@ -7,8 +7,8 @@ import AudioWithBackground from "../../components/AudioWithBackground";
 import DialogueCompare from "../../components/DialogueCompare";
 import BackZone from "../../components/BackZone";
 import FavoriteButton from "../../components/FavoriteButton";
-import { useFavorites } from "../../hooks/useFavorites"; // 🆕 хук избранного
-import { useAuth } from "../../context/AuthContext"; // 🆕 для проверки авторизации
+import { useFavorites } from "../../hooks/useFavorites";
+import { useAuth } from "../../context/AuthContext";
 import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
 
@@ -30,6 +30,9 @@ interface Media {
   level?: string;
   speaker?: string;
   isFavorite?: boolean;
+  averageRating?: number | null;
+  userRating?: number | null;
+  ratingCount?: number;
 }
 
 interface Dialogue {
@@ -41,15 +44,15 @@ interface Dialogue {
 
 const DialectExercisePage = () => {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated } = useAuth(); // 🧾 для защиты действий
+  const { isAuthenticated } = useAuth();
   const [media, setMedia] = useState<Media | null>(null);
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // ❤️ избранное
-  const { favorites, toggleFavorite } = useFavorites("media");
   const [localFavorite, setLocalFavorite] = useState(false);
+
+  // ❤️ Избранное
+  const { favorites, toggleFavorite } = useFavorites("media");
 
   const dialectColors: Record<string, string> = {
     "Египетский арабский": "#6366F1",
@@ -59,7 +62,7 @@ const DialectExercisePage = () => {
     "Суданский арабский": "#8B5CF6",
   };
 
-  // 🔹 Загрузка данных
+  // 🔹 Загрузка данных с сервера
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -83,16 +86,37 @@ const DialectExercisePage = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [id]);
 
-  // 🔹 Синхронизация избранного при изменении списка
+  // 🔹 Подписка на SSE-стрим рейтинга
+  useEffect(() => {
+    if (!id) return;
+    const eventSource = new EventSource(`/api-nest/media/stream/media/${id}`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const { average, votes } = JSON.parse(event.data);
+        setMedia((prev) =>
+          prev ? { ...prev, averageRating: average, ratingCount: votes } : prev
+        );
+      } catch (e) {
+        console.error("Ошибка SSE:", e);
+      }
+    };
+
+    return () => eventSource.close();
+  }, [id]);
+
+  // ❤️ Синхронизация избранного
   useEffect(() => {
     if (media?.id) {
       setLocalFavorite(favorites.some((f) => f.id === media.id));
     }
   }, [favorites, media?.id]);
 
+  // 🎧 Плеер
   const mediaPlayer = useMemo(() => {
     if (!media) return null;
     return media.type === "audio" ? (
@@ -109,7 +133,6 @@ const DialectExercisePage = () => {
       alert("Только авторизованные пользователи могут добавлять в избранное");
       return;
     }
-
     const wasFavorite = favorites.some((f) => f.id === media.id);
     await toggleFavorite(media);
     setLocalFavorite(!wasFavorite);
@@ -119,7 +142,7 @@ const DialectExercisePage = () => {
   if (error) return <p className="error">{error}</p>;
   if (!media) return <p className="error">Медиа не найдено</p>;
 
-  const dialectName = media?.dialect?.name || media.name || "Арабский";
+  const dialectName = media.dialect?.name || media.name || "Арабский";
   const dialectColor = dialectColors[dialectName] || "#6366F1";
 
   const levelLabel =
@@ -170,8 +193,9 @@ const DialectExercisePage = () => {
         </div>
       </div>
 
-      {/* 🗣️ Таблица диалогов */}
+      {/* 🗣️ Диалог */}
       {dialogue && <DialogueCompare dialogue={dialogue} />}
+
       {/* 💬 Комментарии и ⭐ Рейтинг */}
       <div className="feedback-section">
         <h2 className="feedback-title">Обратная связь</h2>
@@ -180,7 +204,15 @@ const DialectExercisePage = () => {
         <div className="rating-block">
           <h3>Оцените материал</h3>
           <div className="rating-wrapper">
-            <StarRating targetType="media" targetId={media.id} />
+            <StarRating
+              targetType="media"
+              targetId={media.id}
+              average={media.averageRating ?? null}
+              userRating={media.userRating ?? null}
+              onRated={(val) =>
+                setMedia((prev) => (prev ? { ...prev, userRating: val } : prev))
+              }
+            />
           </div>
         </div>
 

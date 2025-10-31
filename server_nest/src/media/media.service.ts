@@ -14,6 +14,8 @@ import { join, parse, dirname } from 'path';
 import { promises as fs } from 'fs';
 import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
+import { RatingsService } from 'src/ratings/ratings.service';
+import { CommentsService } from 'src/comments/comments.service';
 
 @Injectable()
 export class MediaService {
@@ -23,6 +25,9 @@ export class MediaService {
 
     @InjectRepository(Exercise)
     private readonly exerciseRepository: Repository<Exercise>,
+
+    private readonly ratingsService: RatingsService,
+    private readonly commentsService: CommentsService,
   ) {}
 
   /** 📜 Получить все медиа */
@@ -254,5 +259,37 @@ export class MediaService {
       console.error('❌ Ошибка генерации превью:', err);
       throw err;
     }
+  }
+
+  /** 🎬 Получить медиа с рейтингом и рейтингом пользователя */
+  async findOneWithRating(id: number, userId?: string): Promise<any> {
+    // 1️⃣ Загружаем само медиа
+    const media = await this.mediaRepository.findOne({
+      where: { id },
+      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
+    });
+
+    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
+
+    // 2️⃣ Получаем средний рейтинг и все оценки
+    const [average, allRatings] = await Promise.all([
+      this.ratingsService.getAverage('media', id),
+      this.ratingsService.findByTarget('media', id),
+    ]);
+
+    // 3️⃣ Ищем пользовательскую оценку (UUID — сравнение строк)
+    const userRating =
+      userId !== undefined
+        ? (allRatings.find((r) => r.user_id === userId || r.user?.id === userId)
+            ?.value ?? null)
+        : null;
+
+    // 4️⃣ Возвращаем итоговый объект
+    return {
+      ...this.normalizeMediaPaths(media),
+      averageRating: average.average ?? 0,
+      votes: average.votes ?? 0,
+      userRating,
+    };
   }
 }

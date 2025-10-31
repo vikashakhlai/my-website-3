@@ -1,4 +1,3 @@
-// src/media/media.controller.ts
 import {
   Controller,
   Get,
@@ -8,12 +7,13 @@ import {
   Put,
   Delete,
   ParseIntPipe,
-  NotFoundException,
   UploadedFile,
   UseInterceptors,
   Query,
   Sse,
   MessageEvent,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -23,10 +23,10 @@ import { interval, Observable, switchMap } from 'rxjs';
 import { MediaService } from './media.service';
 import { Media } from './media.entity';
 import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
-
-// ✅ добавляем сервисы для рейтингов и комментариев
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('media')
 export class MediaController {
@@ -34,6 +34,7 @@ export class MediaController {
     private readonly mediaService: MediaService,
     private readonly ratingsService: RatingsService,
     private readonly commentsService: CommentsService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /** 📜 Получить все медиа с фильтрацией */
@@ -41,7 +42,7 @@ export class MediaController {
   async findAll(
     @Query('name') name?: string,
     @Query('region') region?: string,
-    @Query('topics') topics?: string, // "1,2,3"
+    @Query('topics') topics?: string,
   ): Promise<Media[]> {
     const topicIds = topics
       ? topics
@@ -57,25 +58,22 @@ export class MediaController {
     });
   }
 
-  /** 🎬 Получить одно медиа по ID */
+  /** 🎬 Получить одно медиа по ID (включая рейтинг пользователя, если авторизован) */
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Media> {
-    const media = await this.mediaService.findOne(id);
-    if (!media) throw new NotFoundException(`Медиа с id=${id} не найдено`);
-    return media;
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id;
+    return this.mediaService.findOneWithRating(id, userId);
   }
 
-  /** 🧩 Загрузка видео и автоматическая генерация превью */
+  /** 🧩 Загрузка видео */
   @Post('upload')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads/videos',
-        filename: (
-          req: Express.Request,
-          file: Express.Multer.File,
-          cb: (error: Error | null, filename: string) => void,
-        ) => {
+        filename: (req, file, cb) => {
           const uniqueName = `${Date.now()}${extname(file.originalname)}`;
           cb(null, uniqueName);
         },
@@ -86,10 +84,8 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: Partial<Media>,
   ): Promise<Media> {
-    const videoPath = file.path.split('\\').join('/');
-
+    const videoPath = file.path.replace(/\\/g, '/');
     const previewPath = await this.mediaService.generatePreview(videoPath);
-
     return this.mediaService.create({
       ...body,
       mediaUrl: videoPath,
@@ -99,6 +95,7 @@ export class MediaController {
 
   /** ♻️ Обновить запись */
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: Partial<Media>,
@@ -108,18 +105,21 @@ export class MediaController {
 
   /** 🗑 Удалить запись */
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.mediaService.remove(id);
   }
 
-  /** 🧩 Получить упражнения, связанные с конкретным медиа */
+  /** 🧩 Получить упражнения по медиа */
   @Get(':id/exercises')
+  @UseGuards(JwtAuthGuard) // ✅ доступ только авторизованным
   async findExercises(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.findExercisesByMedia(id);
   }
 
-  /** ➕ Создать упражнение, связанное с медиа */
+  /** ➕ Добавить упражнение */
   @Post(':id/exercises')
+  @UseGuards(JwtAuthGuard)
   async addExerciseToMedia(
     @Param('id', ParseIntPipe) mediaId: number,
     @Body() dto: CreateExerciseDto,
@@ -127,18 +127,13 @@ export class MediaController {
     return this.mediaService.addExerciseToMedia(mediaId, dto);
   }
 
-  // =========================
-  // 🔔 РЕЙТИНГИ И КОММЕНТАРИИ
-  // =========================
-
-  /** ⭐ Средний рейтинг и количество голосов по медиа */
+  /** ⭐ Средний рейтинг */
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
-    // фронт использует targetType="media"
     return this.ratingsService.getAverage('media', id);
   }
 
-  /** 💬 SSE-стрим комментариев по медиа (реал-тайм) */
+  /** 💬 SSE-стрим комментариев */
   @Get('stream/:id/comments')
   @Sse()
   streamComments(
@@ -148,6 +143,27 @@ export class MediaController {
       switchMap(async () => {
         const comments = await this.commentsService.findByTarget('media', id);
         return { data: comments };
+      }),
+    );
+  }
+
+  /** 🌟 SSE-стрим рейтинга */
+  @Get('stream/:targetType/:targetId')
+  @Sse()
+  streamRatings(
+    @Param('targetType')
+    targetType: 'book' | 'article' | 'media' | 'textbook' | 'personality',
+    @Param('targetId', ParseIntPipe) targetId: number,
+  ): Observable<MessageEvent> {
+    return interval(5000).pipe(
+      switchMap(async () => {
+        const { average, votes } = await this.ratingsService.getAverage(
+          targetType,
+          targetId,
+        );
+
+        // Возвращаем уже чистые числа, не вложенные объекты
+        return { data: { average, votes } };
       }),
     );
   }
