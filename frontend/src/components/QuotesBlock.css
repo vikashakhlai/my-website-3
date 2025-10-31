@@ -15,7 +15,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("/assets/arabic-pattern.svg"); /* 👈 сюда добавишь свой svg */
+  background-image: url("../assets/arabic-pattern.svg");
   background-repeat: repeat;
   background-size: 500px;
   opacity: 0.05; /* 🧠 лёгкий след */

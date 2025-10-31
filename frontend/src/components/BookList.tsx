@@ -1,4 +1,4 @@
-import { Grid, GridItem } from "@chakra-ui/react";
+import styles from "./BookList.module.css";
 import BookCard from "./BookCard";
 import { Book } from "../types/Book";
 
@@ -8,21 +8,13 @@ interface BookListProps {
 
 const BookList = ({ books = [] }: BookListProps) => {
   return (
-    <Grid
-      templateColumns={{
-        base: "repeat(2, 1fr)",
-        md: "repeat(3, 1fr)",
-        lg: "repeat(5, 1fr)",
-      }}
-      gap={6}
-      justifyContent="center"
-    >
+    <div className={styles.grid}>
       {books.map((book) => (
-        <GridItem key={book.id} display="flex" justifyContent="center">
+        <div key={book.id} className={styles.item}>
           <BookCard {...book} />
-        </GridItem>
+        </div>
       ))}
-    </Grid>
+    </div>
   );
 };
 

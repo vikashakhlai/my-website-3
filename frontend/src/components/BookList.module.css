@@ -1,0 +1,26 @@
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  justify-content: center;
+  width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.item {
+  display: flex;
+  justify-content: center;
+}
+
+/* Medium screens (>= 768px) */
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large screens (>= 1024px) */
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

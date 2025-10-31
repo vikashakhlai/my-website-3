@@ -1,6 +1,6 @@
 import PersonCard from "./PersonCard";
 import { PersonalityPreview } from "../types/Personality";
-import { Box, GridItem, Grid } from "@chakra-ui/react";
+import styles from "./PersonList.module.css";
 
 interface PersonsProps {
   persons: PersonalityPreview[];
@@ -8,28 +8,15 @@ interface PersonsProps {
 
 const PersonList = ({ persons }: PersonsProps) => {
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      height="100%"
-      padding="20px"
-      // backgroundColor="rgba(0, 0, 0, 0.05)"
-    >
-      <Grid
-        templateColumns="repeat(3, 1fr)"
-        gap={4}
-        width="100%"
-        marginTop="20px"
-      >
+    <div className={styles.wrapper}>
+      <div className={styles.grid}>
         {persons.map((person) => (
-          <GridItem key={person.id}>
+          <div key={person.id} className={styles.gridItem}>
             <PersonCard person={person} />
-          </GridItem>
+          </div>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 };
 
