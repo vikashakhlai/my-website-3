@@ -1,101 +1,120 @@
-.quotes-container {
+.quotes-section {
+  width: 100%;
+  padding: 4rem 2rem;
   position: relative;
-  width: 100%;
-  height: 70vh;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: linear-gradient(
+    180deg,
+    rgba(250, 250, 255, 1) 0%,
+    rgba(245, 245, 255, 1) 100%
+  );
   overflow: hidden;
-  font-family: "Noto Sans", sans-serif;
-  background-color: transparent;
 }
 
-.quotes-background {
+/* === Мягкий каллиграфический фон === */
+.quotes-section::before {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center; /* как background-position: center */
-  pointer-events: none; /* чтобы не мешать кликам */
-  filter: brightness(0.9) contrast(1.1);
+  inset: 0;
+  background-image: url("/assets/arabic-pattern.svg"); /* 👈 сюда добавишь свой svg */
+  background-repeat: repeat;
+  background-size: 500px;
+  opacity: 0.05; /* 🧠 лёгкий след */
+  pointer-events: none;
+  mix-blend-mode: multiply;
 }
 
-.quote-item {
-  width: 45%;
-  max-width: 500px;
-  background: rgba(255, 255, 255, 0.85); /* ⬆️ Увеличили прозрачность */
-  backdrop-filter: blur(8px); /* ⬆️ Усилили блюр для мягкости */
-  padding: 24px 28px; /* ⬆️ Немного увеличили отступы */
-  border-radius: 20px; /* ⬆️ Смягчили углы */
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); /* ⬇️ Смягчили тень */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.6); /* Добавили лёгкую обводку */
+/* === Заголовок === */
+.quotes-title {
+  position: relative;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  z-index: 2;
 }
 
-.quote-item:hover {
-  transform: scale(1.03);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); /* Усиливаем тень при ховере */
+/* === Сетка === */
+.quotes-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 2rem;
+  justify-content: center;
+  align-items: stretch;
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 2;
 }
 
-.quote-item-1 {
-  position: absolute;
-  top: 12%;
-  left: 5%;
-  animation: fadeInUp 0.8s ease-out;
+/* === Карточка цитаты === */
+.quote-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
 }
 
-.quote-item-2 {
-  position: absolute;
-  bottom: 12%;
-  right: 5%;
-  animation: fadeInUp 0.8s ease-out 0.3s;
+.quote-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.15);
 }
 
-/* Анимация появления */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
+/* === Текст === */
 .quote-ar {
   direction: rtl;
   text-align: right;
-  font-size: 3.45rem;
-  font-weight: 700; /* Усилили жирность */
-  color: #1a1a1a; /* Более глубокий чёрный */
-  margin-bottom: 14px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
   line-height: 1.5;
-  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
 }
 
 .quote-ru {
-  font-size: 1.75rem;
-  color: #2d2d2d; /* Не серый, а тёмно-серый */
-  margin-bottom: 16px;
+  font-size: 1.1rem;
+  color: #333;
   line-height: 1.6;
+  margin-bottom: 1rem;
 }
 
+/* === Автор === */
 .quote-author {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #555; /* Заменили ярко-синий на нейтральный */
+  color: #6366f1;
   text-decoration: none;
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  align-self: flex-start;
+  transition: color 0.2s ease;
 }
 
 .quote-author:hover {
-  color: #333;
-  background-color: rgba(200, 200, 200, 0.3);
-  text-decoration: none;
+  color: #4f46e5;
+}
+
+/* === Адаптив === */
+@media (max-width: 768px) {
+  .quotes-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .quote-ar {
+    font-size: 1.7rem;
+  }
+
+  .quote-ru {
+    font-size: 1rem;
+  }
+
+  .quote-card {
+    padding: 1.5rem;
+  }
 }
