@@ -177,30 +177,27 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
   /** === React like/dislike === */
   const handleReact = async (id: number, value: 1 | -1) => {
+    const prevReaction = comments.find((c) => c.id === id)?.my_reaction ?? 0;
+    const newReaction = prevReaction === value ? 0 : value;
+
     // локально обновляем UI
     setComments((prev) =>
-      updateReaction(prev, id, (c) => {
-        const newReaction = c.my_reaction === value ? 0 : value;
-        return {
-          ...c,
-          my_reaction: newReaction,
-          likes_count:
-            c.likes_count +
-            (newReaction === 1 ? 1 : c.my_reaction === 1 ? -1 : 0),
-          dislikes_count:
-            c.dislikes_count +
-            (newReaction === -1 ? 1 : c.my_reaction === -1 ? -1 : 0),
-        };
-      })
+      updateInTree(prev, id, (c) => ({
+        ...c,
+        my_reaction: newReaction,
+        likes_count:
+          c.likes_count + (newReaction === 1 ? 1 : prevReaction === 1 ? -1 : 0),
+        dislikes_count:
+          c.dislikes_count +
+          (newReaction === -1 ? 1 : prevReaction === -1 ? -1 : 0),
+      }))
     );
 
-    // лог
-    const sendVal =
-      value === comments.find((c) => c.id === id)?.my_reaction ? 0 : value;
-    console.log("LIKE SEND:", id, sendVal, typeof sendVal);
+    // лог — проверяем реальные данные
+    console.log("LIKE SEND:", id, newReaction, typeof newReaction);
 
     try {
-      await api.post(`/comments/${id}/react`, { value: sendVal });
+      await api.post(`/comments/${id}/react`, { value: newReaction });
     } catch (err) {
       console.error("Ошибка при реакции:", err);
       await loadComments();

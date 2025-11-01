@@ -122,17 +122,22 @@ export class CommentsController {
   @Post(':id/react')
   async react(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: ReactDto,
+    @Body() body: any, // ← any вместо ReactDto
     @Request() req: any,
   ) {
-    console.log('BACKEND BODY:', body);
-    console.log('BACKEND TYPEOF:', typeof body.value);
-    const raw = Number(body.value);
-    if (![1, -1, 0].includes(raw)) {
+    const rawValue = body?.value;
+
+    // Валидация вручную
+    if (rawValue === undefined || rawValue === null) {
+      throw new BadRequestException('Field "value" is required');
+    }
+
+    const value = Number(rawValue);
+    if (!Number.isInteger(value) || ![1, -1, 0].includes(value)) {
       throw new BadRequestException('value must be 1, -1 or 0');
     }
-    const value = raw as 1 | -1 | 0;
-    return this.commentsService.react(id, req.user, value);
+
+    return this.commentsService.react(id, req.user, value as 1 | -1 | 0);
   }
 
   // =====================================================
