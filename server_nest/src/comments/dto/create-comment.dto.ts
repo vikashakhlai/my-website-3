@@ -1,17 +1,19 @@
-import { IsNotEmpty, IsOptional, IsInt, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 export class CreateCommentDto {
-  @IsString()
-  @IsNotEmpty()
-  target_type!: 'book' | 'article' | 'media' | 'personality' | 'textbook';
+  @IsEnum(TargetType, {
+    message: `target_type must be one of: ${Object.values(TargetType).join(', ')}`,
+  })
+  target_type!: TargetType;
 
   @IsInt()
   target_id!: number;
 
   @IsString()
-  @IsNotEmpty()
   content!: string;
 
   @IsOptional()
-  parent_id?: number;
+  @IsInt()
+  parent_id?: number | null;
 }

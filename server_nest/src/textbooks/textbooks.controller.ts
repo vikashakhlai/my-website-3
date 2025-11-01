@@ -23,7 +23,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateTextbookDto } from './dto/create-textbook.dto';
 import { UpdateTextbookDto } from './dto/update-textbook.dto';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from 'src/auth/roles.enum';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
+@ApiTags('Textbooks')
 @Controller('textbooks')
 export class TextbooksController {
   constructor(
@@ -31,9 +35,7 @@ export class TextbooksController {
     private readonly ratingsService: RatingsService,
   ) {}
 
-  /**
-   * 📚 Получить список учебников (с пагинацией, фильтром и сортировкой)
-   */
+  @ApiOperation({ summary: 'Список учебников (публично)' })
   @Get()
   async getAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -44,31 +46,34 @@ export class TextbooksController {
     return this.textbooksService.getAll({ page, limit, sort, level });
   }
 
-  /** 🔍 Получить учебник по ID (включая рейтинг и комментарии) */
-  @Get(':id')
+  @ApiOperation({ summary: 'Получить учебник (требует авторизацию)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
+  @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user ? req.user.id : null;
+    const userId = req.user?.sub;
     return this.textbooksService.getById(id, userId);
   }
 
-  /** 🎲 Получить случайный учебник с PDF */
+  @ApiOperation({ summary: 'Случайный учебник (публично)' })
   @Get('random/one')
   getRandom() {
     return this.textbooksService.getRandom();
   }
 
-  /** ➕ Добавить новый учебник (только для админов) */
+  @ApiOperation({ summary: 'Создать новый учебник (только SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(Role.SUPER_ADMIN)
   @Post()
   create(@Body() dto: CreateTextbookDto) {
     return this.textbooksService.create(dto);
   }
 
-  /** 🔄 Обновить учебник (только для админов) */
+  @ApiOperation({ summary: 'Обновить учебник (только SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(Role.SUPER_ADMIN)
   @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -77,31 +82,26 @@ export class TextbooksController {
     return this.textbooksService.update(id, dto);
   }
 
-  /** ❌ Удалить учебник (только для админов) */
+  @ApiOperation({ summary: 'Удалить учебник (только SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(Role.SUPER_ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.textbooksService.remove(id);
   }
 
-  /** 🧩 SSE — обновление рейтинга учебников в реальном времени */
-  @Get('stream/:targetType/:targetId')
-  @Sse()
+  /** 📡 SSE Live рейтинг учебника */
+  @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
+  @Sse('stream/:id/rating')
   streamRatings(
-    @Param('targetType')
-    targetType: 'book' | 'article' | 'media' | 'personality' | 'textbook',
-    @Param('targetId', ParseIntPipe) targetId: number,
+    @Param('id', ParseIntPipe) id: number,
   ): Observable<MessageEvent> {
     return interval(5000).pipe(
       switchMap(async () => {
-        const average = await this.ratingsService.getAverage(
-          targetType,
-          targetId,
-        );
-        const votes = await this.ratingsService.getVotesCount(
-          targetType,
-          targetId,
+        const { average, votes } = await this.ratingsService.getAverage(
+          TargetType.TEXTBOOK,
+          id,
         );
         return { data: { average, votes } };
       }),

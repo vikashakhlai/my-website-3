@@ -1,3 +1,4 @@
+// src/users/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,12 +9,7 @@ import {
 } from 'typeorm';
 import { Comment } from 'src/comments/comment.entity';
 import { Rating } from 'src/ratings/rating.entity';
-
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN',
-}
+import { Role } from 'src/auth/roles.enum'; // ✅ общий enum ролей
 
 export enum AccessLevel {
   BASIC = 'BASIC',
@@ -29,15 +25,17 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
+  // ✅ Не возвращаем пароль по умолчанию из запросов (утечки / автосериализация)
+  @Column({ select: false })
   password!: string;
 
+  // ✅ Используем общий enum ролей, добавлен TUTOR
   @Column({
     type: 'enum',
-    enum: UserRole,
-    default: UserRole.USER,
+    enum: Role,
+    default: Role.USER,
   })
-  role!: UserRole;
+  role!: Role;
 
   @Column({ default: false })
   isAuthor!: boolean;

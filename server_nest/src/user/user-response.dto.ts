@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole, AccessLevel } from '../user/user.entity';
+import { Role } from 'src/auth/roles.enum';
 
 export class UserResponseDto {
   @ApiProperty({ example: 'b1a3e4d6-1234-4567-89ab-123456789abc' })
@@ -8,11 +8,8 @@ export class UserResponseDto {
   @ApiProperty({ example: 'user@example.com' })
   email!: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.USER })
-  role!: UserRole;
-
-  @ApiProperty({ enum: AccessLevel, example: AccessLevel.BASIC })
-  accessLevel!: AccessLevel;
+  @ApiProperty({ enum: Role, example: Role.USER })
+  role!: Role;
 
   @ApiProperty({ example: false })
   isAuthor!: boolean;

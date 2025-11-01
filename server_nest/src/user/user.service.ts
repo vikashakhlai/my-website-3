@@ -2,12 +2,12 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserRole, AccessLevel } from './user.entity';
+import { User, AccessLevel } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/auth/roles.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -17,14 +17,8 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  // 🔹 Создание пользователя
-  async create(
-    email: string,
-    password: string,
-    role: UserRole = UserRole.USER,
-    isAuthor = false,
-    accessLevel: AccessLevel = AccessLevel.BASIC,
-  ): Promise<User> {
+  // 🔹 Создание пользователя (всегда USER, без внешней роли)
+  async create(email: string, password: string): Promise<User> {
     if (!email || !password) {
       throw new BadRequestException('Email и пароль обязательны');
     }
@@ -41,31 +35,62 @@ export class UserService {
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
-      role,
-      isAuthor,
-      accessLevel,
+      role: Role.USER,
+      isAuthor: false,
+      accessLevel: AccessLevel.BASIC,
     });
 
     return this.userRepository.save(user);
   }
 
-  // 🔹 Получение всех пользователей
+  // 🔹 Получение всех пользователей (для ADMIN+)
   async findAll(): Promise<Partial<User>[]> {
     return this.userRepository.find({
-      select: ['id', 'email', 'role', 'isAuthor', 'accessLevel', 'createdAt'],
+      select: [
+        'id',
+        'email',
+        'role',
+        'isAuthor',
+        'accessLevel',
+        'createdAt',
+        'updatedAt',
+      ],
     });
   }
 
+  // 🔹 Поиск пользователя по ID (пароль не возвращается 💡)
   async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
 
+  // 🔹 Поиск по email без пароля
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  // 🔹 Поиск по email + пароль (используется только при логине)
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { email },
+      select: [
+        'id',
+        'email',
+        'password',
+        'role',
+        'isAuthor',
+        'accessLevel',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
+  }
+
+  // 🔹 Проверка пароля
   async validatePassword(
     plainPassword: string,
     hashedPassword: string,
@@ -73,58 +98,32 @@ export class UserService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  // 🔹 Повышение до администратора
-  async promoteToAdmin(userId: string, requesterRole: UserRole): Promise<User> {
-    if (requesterRole !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException(
-        'Only SUPER_ADMIN can promote users to ADMIN',
-      );
-    }
-
+  // 🔹 Повышение до ADMIN (только SUPER_ADMIN)
+  async promoteToAdmin(userId: string): Promise<User> {
     const user = await this.findById(userId);
 
-    if (user.role === UserRole.SUPER_ADMIN) {
-      throw new BadRequestException('Cannot change SUPER_ADMIN role');
+    if (user.role === Role.SUPER_ADMIN) {
+      throw new BadRequestException('Нельзя менять роль SUPER_ADMIN');
     }
 
-    user.role = UserRole.ADMIN;
+    user.role = Role.ADMIN;
     return this.userRepository.save(user);
   }
 
-  // 🔹 Отзыв прав администратора
-  async revokeAdminRights(
-    userId: string,
-    requesterRole: UserRole,
-  ): Promise<User> {
-    if (requesterRole !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Only SUPER_ADMIN can revoke admin rights');
-    }
-
+  // 🔹 Отзыв прав ADMIN (только SUPER_ADMIN)
+  async revokeAdminRights(userId: string): Promise<User> {
     const user = await this.findById(userId);
 
-    if (user.role === UserRole.SUPER_ADMIN) {
-      throw new BadRequestException('Cannot change SUPER_ADMIN role');
+    if (user.role !== Role.ADMIN) {
+      throw new BadRequestException('Пользователь не является ADMIN');
     }
 
-    if (user.role !== UserRole.ADMIN) {
-      throw new BadRequestException('User is not an admin');
-    }
-
-    user.role = UserRole.USER;
+    user.role = Role.USER;
     return this.userRepository.save(user);
   }
 
-  // 🔹 Назначение автора
-  async makeAuthor(userId: string, requesterRole: UserRole): Promise<User> {
-    if (
-      requesterRole !== UserRole.ADMIN &&
-      requesterRole !== UserRole.SUPER_ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Only ADMIN or SUPER_ADMIN can assign author status',
-      );
-    }
-
+  // 🔹 Назначение автора (ADMIN или SUPER_ADMIN)
+  async makeAuthor(userId: string): Promise<User> {
     const user = await this.findById(userId);
 
     if (user.isAuthor) {
@@ -135,57 +134,25 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  // 🔹 Удаление пользователя
-  async deleteUser(
-    userId: string,
-    requesterRole: UserRole,
-  ): Promise<{ message: string }> {
-    if (requesterRole !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Only SUPER_ADMIN can delete users');
-    }
-
+  // 🔹 Удаление пользователя (только SUPER_ADMIN)
+  async deleteUser(userId: string): Promise<{ message: string }> {
     const user = await this.findById(userId);
 
-    if (user.role === UserRole.SUPER_ADMIN) {
-      throw new BadRequestException('Cannot delete a SUPER_ADMIN');
+    if (user.role === Role.SUPER_ADMIN) {
+      throw new BadRequestException('Нельзя удалить SUPER_ADMIN');
     }
 
     await this.userRepository.remove(user);
     return { message: `User ${user.email} has been deleted` };
   }
 
-  // 🔹 Обновление пользователя
-  async updateUser(
-    userId: string,
-    updateDto: UpdateUserDto,
-    requesterRole: UserRole,
-  ): Promise<User> {
+  // 🔹 Обновление email/пароля (SELF или ADMIN+)
+  async updateUser(userId: string, updateDto: UpdateUserDto): Promise<User> {
     const user = await this.findById(userId);
 
-    // Проверка прав
-    if (
-      requesterRole !== UserRole.ADMIN &&
-      requesterRole !== UserRole.SUPER_ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Недостаточно прав для обновления пользователя',
-      );
-    }
-
-    if (updateDto.role && requesterRole !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException(
-        'Только SUPER_ADMIN может менять роли пользователей',
-      );
-    }
-
-    // Применение обновлений
     if (updateDto.email) user.email = updateDto.email;
     if (updateDto.password)
       user.password = await bcrypt.hash(updateDto.password, 10);
-    if (typeof updateDto.isAuthor === 'boolean')
-      user.isAuthor = updateDto.isAuthor;
-    if (updateDto.role) user.role = updateDto.role;
-    if (updateDto.accessLevel) user.accessLevel = updateDto.accessLevel;
 
     await this.userRepository.save(user);
     return user;

@@ -16,6 +16,7 @@ import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
 export class MediaService {
@@ -273,8 +274,8 @@ export class MediaService {
 
     // 2️⃣ Получаем средний рейтинг и все оценки
     const [average, allRatings] = await Promise.all([
-      this.ratingsService.getAverage('media', id),
-      this.ratingsService.findByTarget('media', id),
+      this.ratingsService.getAverage(TargetType.MEDIA, id),
+      this.ratingsService.findByTarget(TargetType.MEDIA, id),
     ]);
 
     // 3️⃣ Ищем пользовательскую оценку (UUID — сравнение строк)

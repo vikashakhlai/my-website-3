@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from 'src/user/user.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Entity('comments')
 export class Comment {
@@ -25,10 +26,8 @@ export class Comment {
   user_id!: string;
 
   // 🎯 Тип сущности, к которой привязан комментарий
-  @Column({
-    type: 'text',
-  })
-  target_type!: 'book' | 'article' | 'media' | 'personality' | 'textbook';
+  @Column({ type: 'enum', enum: TargetType })
+  target_type!: TargetType;
 
   // 🔗 ID конкретной сущности
   @Column({ type: 'int' })

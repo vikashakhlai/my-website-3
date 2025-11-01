@@ -1,15 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
+
 import { Article } from './article.entity';
 import { Theme } from './themes/theme.entity';
+
 import { Exercise } from './entities/exercise.entity';
 import { ExerciseItem } from './entities/exercise-item.entity';
 import { Distractor } from './entities/distractor.entity';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { ExerciseType } from './entities/exercise-type.enum';
 
-// 👇 Добавляем рейтинги и комментарии
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
+
+// ✅ Новый enum цели
+import { TargetType } from 'src/common/enums/target-type.enum';
+
+// ✅ рейтинги и комментарии
 import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
 
@@ -48,7 +60,6 @@ export class ArticlesService {
     @InjectRepository(Distractor)
     private readonly distractorRepo: Repository<Distractor>,
 
-    // ⭐ Новое
     @InjectRepository(Rating)
     private readonly ratingRepo: Repository<Rating>,
 
@@ -56,7 +67,7 @@ export class ArticlesService {
     private readonly commentRepo: Repository<Comment>,
   ) {}
 
-  /** 📰 Получить последние N статей */
+  /** 📰 Последние N статей */
   async getLatest(limit = 3): Promise<Article[]> {
     const articles = await this.articleRepo.find({
       relations: ['theme'],
@@ -70,7 +81,7 @@ export class ArticlesService {
     }));
   }
 
-  /** 📚 Получить список статей (опционально по теме) */
+  /** 📚 Список статей (опционально по теме) */
   async getArticles(themeSlug?: string, limit = 10): Promise<Article[]> {
     const qb = this.articleRepo
       .createQueryBuilder('a')
@@ -88,25 +99,21 @@ export class ArticlesService {
     }));
   }
 
-  /** 🔍 Получить статью по ID (с упражнениями, рейтингом и комментариями) */
+  /** 🔍 Одна статья с упражнениями, рейтингом и счётчиками */
   async getById(id: number, userId?: string): Promise<ArticleWithExtras> {
     const article = await this.articleRepo.findOne({
       where: { id },
       relations: ['theme'],
     });
+    if (!article) throw new NotFoundException('Статья не найдена');
 
-    if (!article) {
-      throw new NotFoundException('Статья не найдена');
-    }
-
-    // === 🧩 Загружаем упражнения ===
+    // === Упражнения ===
     const exercises = await this.exerciseRepo.find({
       where: { article: { id } },
       order: { id: 'ASC' },
     });
 
     const enrichedExercises: ExerciseWithItems[] = [];
-
     for (const ex of exercises) {
       const items = await this.exerciseItemRepo.find({
         where: { exercise: { id: ex.id } },
@@ -131,19 +138,13 @@ export class ArticlesService {
         exType === ExerciseType.MATCHING_PAIRS
       ) {
         let poolWords: string[] = [];
-
         if (ex.distractorPoolId) {
           const distractors = await this.distractorRepo.find({
             where: { distractorPool: { id: ex.distractorPoolId } },
           });
-
-          console.log(`🎯 Distractors for exercise ${ex.id}:`, distractors);
-
           poolWords = distractors
             .map((d) => d.word)
             .filter((w): w is string => !!w);
-        } else {
-          console.warn(`⚠️ У упражнения ${ex.id} нет distractorPoolId`);
         }
 
         const processed = items.map((item) => {
@@ -156,18 +157,23 @@ export class ArticlesService {
 
         enrichedExercises.push({ ...ex, items: processed });
       } else {
-        // Все остальные типы — open_question, flashcards и т.п.
         enrichedExercises.push({ ...ex, items });
       }
     }
 
-    // === ⭐ Загружаем рейтинги и комментарии ===
+    // === Рейтинги и комментарии (enum TargetType!) ===
     const ratings = await this.ratingRepo.find({
-      where: { target_type: 'article', target_id: id },
+      where: {
+        target_type: TargetType.ARTICLE,
+        target_id: id,
+      },
     });
 
     const commentsCount = await this.commentRepo.count({
-      where: { target_type: 'article', target_id: id },
+      where: {
+        target_type: TargetType.ARTICLE,
+        target_id: id,
+      },
     });
 
     const average =
@@ -179,7 +185,6 @@ export class ArticlesService {
       ? (ratings.find((r) => r.user_id === userId)?.value ?? null)
       : null;
 
-    // ✅ Возвращаем статью со всем
     return {
       ...article,
       themeRu: article.theme?.name_ru || null,
@@ -189,6 +194,63 @@ export class ArticlesService {
       userRating,
       commentCount: commentsCount,
     };
+  }
+
+  // ========= CRUD статей =========
+
+  async create(dto: CreateArticleDto): Promise<Article> {
+    const entity = this.articleRepo.create({
+      ...dto,
+    } as DeepPartial<Article>);
+    const saved = await this.articleRepo.save(entity);
+    return this.articleRepo.findOne({
+      where: { id: saved.id },
+      relations: ['theme'],
+    }) as Promise<Article>;
+  }
+
+  async update(id: number, dto: UpdateArticleDto): Promise<Article> {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Статья не найдена');
+
+    Object.assign(article, dto);
+    await this.articleRepo.save(article);
+
+    return this.articleRepo.findOne({
+      where: { id },
+      relations: ['theme'],
+    }) as Promise<Article>;
+  }
+
+  async remove(id: number): Promise<{ message: string }> {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Статья не найдена');
+
+    await this.ratingRepo.delete({
+      target_type: TargetType.ARTICLE,
+      target_id: id,
+    });
+
+    await this.commentRepo.delete({
+      target_type: TargetType.ARTICLE,
+      target_id: id,
+    });
+
+    await this.articleRepo.remove(article);
+    return { message: `Article #${id} has been removed` };
+  }
+
+  // ========= Упражнения =========
+
+  async findExercisesByArticle(articleId: number): Promise<Exercise[]> {
+    const exists = await this.articleRepo.exists({ where: { id: articleId } });
+    if (!exists) throw new NotFoundException('Статья не найдена');
+
+    return this.exerciseRepo.find({
+      where: { article: { id: articleId } },
+      relations: ['items'],
+      order: { id: 'ASC' },
+    });
   }
 
   async addExerciseToArticle(
@@ -217,7 +279,7 @@ export class ArticlesService {
       distractorPoolId: dto.distractorPoolId,
       items: dto.items?.map((item, index) => {
         const entity = new ExerciseItem();
-        entity.position = index + 1;
+        entity.position = item.position ?? index + 1;
         entity.questionRu = item.questionRu ?? undefined;
         entity.questionAr = item.questionAr ?? undefined;
         entity.partBefore = item.partBefore ?? undefined;
@@ -230,7 +292,63 @@ export class ArticlesService {
       }) as DeepPartial<ExerciseItem>[],
     };
 
-    const entity = this.exerciseRepo.create(exercise);
-    return await this.exerciseRepo.save(entity);
+    const saved = await this.exerciseRepo.save(
+      this.exerciseRepo.create(exercise),
+    );
+
+    return this.exerciseRepo.findOne({
+      where: { id: saved.id },
+      relations: ['items'],
+    }) as Promise<Exercise>;
+  }
+
+  // ========= Рейтинг статьи =========
+
+  async rateArticle(
+    articleId: number,
+    userId: string,
+    value: number,
+  ): Promise<{ average: number; votes: number; value: number }> {
+    if (!Number.isInteger(value) || value < 1 || value > 5) {
+      throw new BadRequestException('Значение рейтинга должно быть от 1 до 5');
+    }
+
+    const exists = await this.articleRepo.exists({ where: { id: articleId } });
+    if (!exists) throw new NotFoundException('Статья не найдена');
+
+    const existing = await this.ratingRepo.findOne({
+      where: {
+        user_id: userId,
+        target_type: TargetType.ARTICLE,
+        target_id: articleId,
+      },
+    });
+
+    if (existing) {
+      existing.value = value;
+      await this.ratingRepo.save(existing);
+    } else {
+      const entity = this.ratingRepo.create({
+        user_id: userId,
+        target_type: TargetType.ARTICLE,
+        target_id: articleId,
+        value,
+      } as DeepPartial<Rating>);
+      await this.ratingRepo.save(entity);
+    }
+
+    const { avg, count } = await this.ratingRepo
+      .createQueryBuilder('r')
+      .select('AVG(r.value)', 'avg')
+      .addSelect('COUNT(r.id)', 'count')
+      .where('r.target_type = :t', { t: TargetType.ARTICLE })
+      .andWhere('r.target_id = :id', { id: articleId })
+      .getRawOne();
+
+    return {
+      average: avg ? Number(parseFloat(avg).toFixed(2)) : 0,
+      votes: count ? Number(count) : 0,
+      value,
+    };
   }
 }

@@ -1,4 +1,3 @@
-// src/favorites/favorites.controller.ts
 import {
   Controller,
   Post,
@@ -13,8 +12,8 @@ import {
 import { FavoritesService } from './favorites.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { Request } from 'express';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-// допустимые типы избранного
 export const ALLOWED_TYPES = [
   'book',
   'textbook',
@@ -24,15 +23,14 @@ export const ALLOWED_TYPES = [
 ] as const;
 export type FavoriteType = (typeof ALLOWED_TYPES)[number];
 
-@Controller('favorites')
+@ApiTags('Favorites')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
+@Controller('favorites')
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
-  /**
-   * ⭐ Добавить элемент в избранное
-   * Пример: POST /favorites/book/10
-   */
+  @ApiOperation({ summary: 'Добавить элемент в избранное' })
   @Post(':type/:id')
   async addToFavorites(
     @Param('type') type: string,
@@ -54,10 +52,7 @@ export class FavoritesController {
     );
   }
 
-  /**
-   * 🗑 Удалить элемент из избранного
-   * Пример: DELETE /favorites/video/12
-   */
+  @ApiOperation({ summary: 'Удалить элемент из избранного' })
   @Delete(':type/:id')
   async removeFromFavorites(
     @Param('type') type: string,
@@ -79,35 +74,23 @@ export class FavoritesController {
     );
   }
 
-  /**
-   * 📋 Получить все избранные элементы по типу
-   * Примеры:
-   *   GET /favorites/book
-   *   GET /favorites/article
-   *   GET /favorites/video
-   */
+  @ApiOperation({ summary: 'Получить избранное по типу' })
   @Get(':type')
   async getUserFavorites(@Param('type') type: string, @Req() req: Request) {
     const userId = (req.user as any)?.sub;
     if (!userId)
       throw new BadRequestException('Не удалось определить пользователя');
 
-    // приводим во множественное/единичное, если нужно
-    if (type.endsWith('s')) {
-      type = type.slice(0, -1);
-    }
+    if (type.endsWith('s')) type = type.slice(0, -1);
 
     if (!ALLOWED_TYPES.includes(type as FavoriteType)) {
-      throw new BadRequestException(`Недопустимый тип избранного: ${type}`);
+      throw new BadRequestException(`Недопустимый тип: ${type}`);
     }
 
     return this.favoritesService.getUserFavorites(userId, type as FavoriteType);
   }
 
-  /**
-   * 💫 (опционально) Получить все избранные элементы пользователя
-   * Пример: GET /favorites
-   */
+  @ApiOperation({ summary: 'Получить все избранное пользователя' })
   @Get()
   async getAllUserFavorites(@Req() req: Request) {
     const userId = (req.user as any)?.sub;

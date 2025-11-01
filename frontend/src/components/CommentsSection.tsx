@@ -1,9 +1,17 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThumbsUp, ThumbsDown, Trash2, MessageSquare } from "lucide-react";
 import { api } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import styles from "./CommentsSection.module.css";
+
+type TargetType = "book" | "article" | "media" | "personality" | "textbook";
 
 interface Comment {
   id: number;
@@ -18,17 +26,19 @@ interface Comment {
 }
 
 interface CommentsSectionProps {
-  targetType: "book" | "article" | "media" | "personality" | "textbook";
+  targetType: TargetType;
   targetId: number;
-  apiBase?: string;
+  apiBase?: string; // опционально, иначе возьмётся из axios instance
 }
 
-// 🧩 Хелпер: строим дерево из плоского списка
+/** =========================
+ *  Tree utils
+ *  ========================= */
 const buildTree = (flat: Comment[]): Comment[] => {
   const map = new Map<number, Comment & { replies: Comment[] }>();
   const roots: Comment[] = [];
 
-  flat.forEach((c) => map.set(c.id, { ...c, replies: [] }));
+  flat.forEach((c) => map.set(c.id, { ...c, replies: c.replies ?? [] }));
 
   flat.forEach((c) => {
     if (c.parent_id && map.has(c.parent_id)) {
@@ -41,9 +51,54 @@ const buildTree = (flat: Comment[]): Comment[] => {
   return roots;
 };
 
+const insertIntoTree = (tree: Comment[], node: Comment): Comment[] => {
+  // если уже есть — ничего не делаем
+  const exists = (list: Comment[]): boolean =>
+    list.some((c) => c.id === node.id || exists(c.replies || []));
+  if (exists(tree)) return tree;
+
+  if (!node.parent_id) {
+    return [{ ...node, replies: node.replies ?? [] }, ...tree];
+  }
+  const rec = (list: Comment[]): Comment[] =>
+    list.map((c) => {
+      if (c.id === node.parent_id) {
+        return {
+          ...c,
+          replies: [
+            { ...node, replies: node.replies ?? [] },
+            ...(c.replies || []),
+          ],
+        };
+      }
+      return { ...c, replies: rec(c.replies || []) };
+    });
+  return rec(tree);
+};
+
+const updateInTree = (
+  list: Comment[],
+  id: number,
+  updater: (c: Comment) => Comment
+): Comment[] =>
+  list.map((c) =>
+    c.id === id
+      ? updater(c)
+      : { ...c, replies: updateInTree(c.replies || [], id, updater) }
+  );
+
+const removeFromTree = (list: Comment[], id: number): Comment[] =>
+  list
+    .map((c) => ({ ...c, replies: removeFromTree(c.replies || [], id) }))
+    .filter((c) => c.id !== id);
+
+/** =========================
+ *  Component
+ *  ========================= */
 export const CommentsSection: React.FC<CommentsSectionProps> = ({
   targetType,
   targetId,
+  apiBase,
 }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState("");
@@ -55,10 +110,22 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   const [visibleReplies, setVisibleReplies] = useState<Record<number, number>>(
     {}
   );
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { user } = useAuth();
 
-  // === Загрузка комментариев ===
+  const baseUrl = useMemo(() => {
+    // берем base от axios инстанса, но если нужно — можно передать вручную
+    const fromEnv =
+      (import.meta as any).env?.VITE_API_URL?.replace(/\/$/, "") ||
+      (api.defaults.baseURL
+        ? api.defaults.baseURL.replace(/\/$/, "")
+        : "/api-nest");
+    return apiBase?.replace(/\/$/, "") || fromEnv;
+  }, [apiBase]);
+
+  /** === Load comments === */
   const loadComments = useCallback(async () => {
     try {
       const res = await api.get(`/comments/${targetType}/${targetId}`);
@@ -66,100 +133,175 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     } catch (err) {
       console.error("❌ Ошибка загрузки комментариев:", err);
     }
-  }, [targetType, targetId]);
+  }, [targetId, targetType]);
 
   useEffect(() => {
+    setVisibleCount(3);
+    setVisibleReplies({});
+    setReplyTo(null);
+    setContent("");
     loadComments();
-  }, [loadComments]);
+  }, [loadComments, targetId, targetType]);
 
-  // === Отправка комментария ===
+  /** === Send comment (instant insert, без полного refetch) === */
   const handleSend = async () => {
-    if (!content.trim()) return;
+    const text = content.trim();
+    if (!text) return;
     setLoading(true);
+
     try {
-      await api.post("/comments", {
+      const body = {
         target_type: targetType,
         target_id: targetId,
-        content,
+        content: text,
         parent_id: replyTo?.id ?? null,
-      });
+      };
+      const res = await api.post("/comments", body);
+
+      // МГНОВЕННО вставляем полученный от сервера комментарий (без полного перезапроса)
+      const newComment: Comment = {
+        ...res.data,
+        replies: res.data.replies ?? [],
+      };
+      setComments((prev) => insertIntoTree(prev, newComment));
+
       setContent("");
       setReplyTo(null);
-      await loadComments();
     } catch (err) {
       console.error("❌ Ошибка при отправке комментария:", err);
-      alert("Необходимо войти, чтобы оставить комментарий.");
+      alert("Чтобы оставить комментарий, нужно войти в систему.");
     } finally {
       setLoading(false);
     }
   };
 
-  // === Рекурсивное обновление реакции ===
-  const updateReaction = (
-    list: Comment[],
-    id: number,
-    updater: (c: Comment) => Comment
-  ): Comment[] =>
-    list.map((c) =>
-      c.id === id
-        ? updater(c)
-        : { ...c, replies: updateReaction(c.replies || [], id, updater) }
+  /** === React like/dislike === */
+  const handleReact = async (id: number, value: 1 | -1) => {
+    // локально обновляем UI
+    setComments((prev) =>
+      updateReaction(prev, id, (c) => {
+        const newReaction = c.my_reaction === value ? 0 : value;
+        return {
+          ...c,
+          my_reaction: newReaction,
+          likes_count:
+            c.likes_count +
+            (newReaction === 1 ? 1 : c.my_reaction === 1 ? -1 : 0),
+          dislikes_count:
+            c.dislikes_count +
+            (newReaction === -1 ? 1 : c.my_reaction === -1 ? -1 : 0),
+        };
+      })
     );
 
-  // === Реакции ===
-  const handleReact = async (id: number, value: 1 | -1) => {
-    try {
-      setComments((prev) =>
-        updateReaction(prev, id, (c) => {
-          const newReaction = c.my_reaction === value ? 0 : value;
-          const deltaLike =
-            value === 1
-              ? c.my_reaction === 1
-                ? -1
-                : c.my_reaction === -1
-                ? 1
-                : 1
-              : c.my_reaction === 1
-              ? -1
-              : 0;
-          const deltaDislike =
-            value === -1
-              ? c.my_reaction === -1
-                ? -1
-                : c.my_reaction === 1
-                ? 1
-                : 1
-              : c.my_reaction === -1
-              ? -1
-              : 0;
-          return {
-            ...c,
-            my_reaction: newReaction,
-            likes_count: c.likes_count + deltaLike,
-            dislikes_count: c.dislikes_count + deltaDislike,
-          };
-        })
-      );
+    // лог
+    const sendVal =
+      value === comments.find((c) => c.id === id)?.my_reaction ? 0 : value;
+    console.log("LIKE SEND:", id, sendVal, typeof sendVal);
 
-      await api.post(`/comments/${id}/react`, { value });
+    try {
+      await api.post(`/comments/${id}/react`, { value: sendVal });
     } catch (err) {
       console.error("Ошибка при реакции:", err);
       await loadComments();
     }
   };
 
-  // === Удаление ===
+  /** === Delete === */
   const handleDelete = async (id: number) => {
     if (!window.confirm("Удалить комментарий?")) return;
     try {
       await api.delete(`/comments/${id}`);
-      await loadComments();
+      // удалить локально (SSE удаление тоже придёт, но тут можно убрать сразу)
+      setComments((prev) => removeFromTree(prev, id));
     } catch (err) {
       console.error("Ошибка удаления:", err);
     }
   };
 
-  // === Формат даты и времени ===
+  /** === SSE subscribe === */
+  useEffect(() => {
+    // чистим предыдущую подписку
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+
+    let stopped = false;
+
+    const connect = () => {
+      if (stopped) return;
+
+      const url = `${baseUrl}/comments/stream/${targetType}/${targetId}`;
+      const es = new EventSource(url);
+      eventSourceRef.current = es;
+
+      es.onopen = () => {
+        // eslint-disable-next-line no-console
+        console.info(`✅ SSE подключено: ${url}`);
+      };
+
+      es.onmessage = (ev) => {
+        try {
+          const payload = JSON.parse(ev.data) as
+            | { type: "created"; comment: Comment }
+            | { type: "react"; comment: Comment }
+            | { type: "deleted"; id: number };
+
+          if (payload.type === "created") {
+            setComments((prev) =>
+              insertIntoTree(prev, {
+                ...payload.comment,
+                replies: payload.comment.replies ?? [],
+              })
+            );
+          } else if (payload.type === "react") {
+            const { comment } = payload;
+            setComments((prev) =>
+              updateInTree(prev, comment.id, (c) => ({
+                ...c,
+                likes_count: comment.likes_count,
+                dislikes_count: comment.dislikes_count,
+                // my_reaction может быть не прислан — не трогаем, оставляем как есть
+              }))
+            );
+          } else if (payload.type === "deleted") {
+            setComments((prev) => removeFromTree(prev, payload.id));
+          }
+        } catch (e) {
+          console.warn("⚠️ Ошибка парсинга SSE:", e);
+        }
+      };
+
+      es.onerror = () => {
+        console.warn("⚠️ SSE разорвано, переподключение через 2s ...");
+        es.close();
+        reconnectTimerRef.current = setTimeout(connect, 2000);
+      };
+    };
+
+    connect();
+
+    return () => {
+      stopped = true;
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      // eslint-disable-next-line no-console
+      console.info(`🛑 SSE отключено для ${targetType} #${targetId}`);
+    };
+  }, [baseUrl, targetId, targetType]);
+
+  /** === helpers === */
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleString("ru-RU", {
@@ -171,7 +313,6 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     });
   };
 
-  // === Управление количеством ответов ===
   const toggleReplies = (id: number, totalReplies: number) => {
     setVisibleReplies((prev) => ({
       ...prev,
@@ -179,7 +320,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     }));
   };
 
-  // === Рендер комментария ===
+  /** === Render === */
   const renderComment = (c: Comment, level = 0): JSX.Element => {
     const replies = c.replies || [];
     const visible = visibleReplies[c.id] || 1;
@@ -319,7 +460,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
         <button
           onClick={handleSend}
-          disabled={loading}
+          disabled={loading || !content.trim()}
           className={styles.submitButton}
         >
           {loading ? "Отправка..." : "Отправить"}

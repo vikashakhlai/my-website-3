@@ -9,6 +9,8 @@ import { ArticlesService } from './articles.service';
 import { ArticlesController } from './articles.controller';
 import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { CommentsModule } from 'src/comments/comments.module';
+import { RatingsModule } from 'src/ratings/ratings.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { Comment } from 'src/comments/comment.entity';
       Rating,
       Comment,
     ]),
+    CommentsModule,
+    RatingsModule,
   ],
   controllers: [ArticlesController],
   providers: [ArticlesService],

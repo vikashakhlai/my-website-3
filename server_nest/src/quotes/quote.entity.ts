@@ -21,7 +21,8 @@ export class Quote {
   @ManyToOne(() => Personality, (personality) => personality.quotes, {
     onDelete: 'CASCADE',
     eager: true,
+    nullable: true, // ✅ можно убрать, если хочешь запрещать null в БД
   })
   @JoinColumn({ name: 'personality_id' })
-  personality!: Personality;
+  personality!: Personality | null;
 }

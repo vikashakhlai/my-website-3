@@ -1,13 +1,17 @@
+// src/ratings/ratings.service.ts
 import {
   Injectable,
-  BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Rating } from './rating.entity';
 import { CreateRatingDto } from './dto/create-rating.dto';
 import { User } from 'src/user/user.entity';
+import { Role } from 'src/auth/roles.enum';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
 export class RatingsService {
@@ -16,12 +20,8 @@ export class RatingsService {
     private readonly ratingRepository: Repository<Rating>,
   ) {}
 
-  // --- Создать или обновить рейтинг ---
+  /** ✅ Создать или обновить рейтинг */
   async createOrUpdate(dto: CreateRatingDto, user: User): Promise<Rating> {
-    if (dto.value < 1 || dto.value > 5) {
-      throw new BadRequestException('Значение рейтинга должно быть от 1 до 5');
-    }
-
     const existing = await this.ratingRepository.findOne({
       where: {
         user_id: user.id,
@@ -45,9 +45,9 @@ export class RatingsService {
     return this.ratingRepository.save(rating);
   }
 
-  // --- Получить все рейтинги по объекту ---
+  /** ✅ Получить все рейтинги для сущности */
   async findByTarget(
-    target_type: 'book' | 'article' | 'media' | 'personality' | 'textbook',
+    target_type: TargetType,
     target_id: number,
   ): Promise<Rating[]> {
     return this.ratingRepository.find({
@@ -57,9 +57,9 @@ export class RatingsService {
     });
   }
 
-  // --- Получить средний рейтинг и количество голосов ---
+  /** ✅ Средний рейтинг + число голосов */
   async getAverage(
-    target_type: 'book' | 'article' | 'media' | 'personality' | 'textbook',
+    target_type: TargetType,
     target_id: number,
   ): Promise<{ average: number; votes: number }> {
     const { avg, count } = await this.ratingRepository
@@ -70,20 +70,13 @@ export class RatingsService {
       .andWhere('rating.target_id = :target_id', { target_id })
       .getRawOne();
 
-    const average = avg ? parseFloat(avg).toFixed(2) : 0;
-    const votes = parseInt(count, 10) || 0;
-    return { average: Number(average), votes };
+    return {
+      average: avg ? Number(parseFloat(avg).toFixed(2)) : 0,
+      votes: count ? Number(count) : 0,
+    };
   }
 
-  // --- Получить только количество голосов (для SSE) ---
-  async getVotesCount(
-    target_type: 'book' | 'article' | 'media' | 'personality' | 'textbook',
-    target_id: number,
-  ): Promise<number> {
-    return this.ratingRepository.count({ where: { target_type, target_id } });
-  }
-
-  // --- Удалить рейтинг (только автор или админ) ---
+  /** ✅ Удалить рейтинг (только свой, или SUPER_ADMIN) */
   async delete(id: number, user: User): Promise<void> {
     const rating = await this.ratingRepository.findOne({
       where: { id },
@@ -92,8 +85,13 @@ export class RatingsService {
 
     if (!rating) throw new NotFoundException('Рейтинг не найден');
 
-    if (rating.user.id !== user.id && user.role !== 'ADMIN') {
-      throw new NotFoundException('Вы не можете удалить этот рейтинг');
+    const isOwner = rating.user.id === user.id;
+    const isSuperAdmin = user.role === Role.SUPER_ADMIN;
+
+    if (!isOwner && !isSuperAdmin) {
+      throw new ForbiddenException(
+        'Вы можете удалять только свой рейтинг. SUPER_ADMIN может удалять любой.',
+      );
     }
 
     await this.ratingRepository.remove(rating);

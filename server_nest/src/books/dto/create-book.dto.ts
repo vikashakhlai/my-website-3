@@ -1,3 +1,5 @@
+// src/books/dto/create-book.dto.ts
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -5,17 +7,20 @@ import {
   IsArray,
   ArrayNotEmpty,
   ArrayUnique,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class CreateBookDto {
   @IsString()
-  title?: string;
+  @IsNotEmpty()
+  title!: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   publication_year?: number;
 
@@ -24,10 +29,12 @@ export class CreateBookDto {
   cover_url?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   pages?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   publisher_id?: number;
 
@@ -35,10 +42,14 @@ export class CreateBookDto {
   @IsArray()
   @ArrayNotEmpty()
   @ArrayUnique()
+  @Type(() => Number)
+  @IsInt({ each: true })
   authorIds?: number[];
 
   @IsOptional()
   @IsArray()
   @ArrayUnique()
+  @Type(() => Number)
+  @IsInt({ each: true })
   tagIds?: number[];
 }

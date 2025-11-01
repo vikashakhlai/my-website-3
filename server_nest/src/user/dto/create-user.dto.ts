@@ -1,13 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsNotEmpty,
-  MinLength,
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-} from 'class-validator';
-import { UserRole, AccessLevel } from '../user.entity';
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -15,7 +7,7 @@ export class CreateUserDto {
     description: 'Email пользователя',
   })
   @IsEmail()
-  readonly email!: string; // ✅ добавлен "!" — гарантирует инициализацию
+  readonly email!: string;
 
   @ApiProperty({
     example: 'strongPassword123',
@@ -23,34 +15,5 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @MinLength(6)
-  readonly password!: string; // ✅ добавлен "!" — исправляет TS2564
-
-  @ApiProperty({
-    example: UserRole.USER,
-    enum: UserRole,
-    required: false,
-    description: 'Роль пользователя (по умолчанию USER)',
-  })
-  @IsOptional()
-  @IsEnum(UserRole)
-  readonly role?: UserRole;
-
-  @ApiProperty({
-    example: false,
-    description: 'Флаг — является ли пользователь автором',
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  readonly isAuthor?: boolean;
-
-  @ApiProperty({
-    example: AccessLevel.BASIC,
-    enum: AccessLevel,
-    required: false,
-    description: 'Уровень доступа пользователя (BASIC / ADVANCED / PREMIUM)',
-  })
-  @IsOptional()
-  @IsEnum(AccessLevel)
-  readonly accessLevel?: AccessLevel;
+  readonly password!: string;
 }

@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsRelations } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Quote } from './quote.entity';
+import { CreateQuoteDto } from './dto/create-quote.dto';
+import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { Personality } from 'src/personalities/personality.entity';
 
 @Injectable()
@@ -11,20 +13,30 @@ export class QuotesService {
     private readonly quoteRepo: Repository<Quote>,
   ) {}
 
-  // 🔹 Все цитаты
   async findAll() {
-    const relations: FindOptionsRelations<Quote> = { personality: true };
-    return this.quoteRepo.find({ relations });
+    return this.quoteRepo.find({ relations: ['personality'] });
   }
 
-  // 🔹 Случайные цитаты
-  async findRandom(limit = 2) {
-    return this.quoteRepo
+  async getRandomMapped(limit = 2) {
+    const quotes = await this.quoteRepo
       .createQueryBuilder('q')
       .leftJoinAndSelect('q.personality', 'p')
       .orderBy('RANDOM()')
       .limit(limit)
       .getMany();
+
+    return quotes.map((q) => ({
+      id: q.id,
+      text_ar: q.text_ar,
+      text_ru: q.text_ru,
+      personality: q.personality
+        ? {
+            id: q.personality.id,
+            full_name: q.personality.name,
+            position: q.personality.position,
+          }
+        : null,
+    }));
   }
 
   async findByPersonality(personalityId: number) {
@@ -34,18 +46,40 @@ export class QuotesService {
     });
   }
 
-  // 🔹 Создать новую цитату
-  async create(text_ar: string, text_ru: string, personalityId?: number) {
+  async create(dto: CreateQuoteDto) {
     const quote = this.quoteRepo.create({
-      text_ar,
-      text_ru,
+      text_ar: dto.text_ar,
+      text_ru: dto.text_ru ?? null,
+      personality: dto.personalityId
+        ? ({ id: dto.personalityId } as Personality)
+        : null,
     });
 
-    // 💡 безопасно подставляем связь через Reference Object
-    if (personalityId) {
-      (quote as any).personality = { id: personalityId } as Personality;
+    return this.quoteRepo.save(quote);
+  }
+
+  async update(id: number, dto: UpdateQuoteDto) {
+    const quote = await this.quoteRepo.findOne({ where: { id } });
+    if (!quote) throw new NotFoundException('Цитата не найдена');
+
+    if (dto.text_ar !== undefined) quote.text_ar = dto.text_ar;
+    if (dto.text_ru !== undefined) quote.text_ru = dto.text_ru;
+
+    // ⚡ обновляем личность ТОЛЬКО если поле пришло
+    if ('personalityId' in dto) {
+      quote.personality = dto.personalityId
+        ? ({ id: dto.personalityId } as Personality)
+        : null; // явный null — значит удалить связь
     }
 
     return this.quoteRepo.save(quote);
+  }
+
+  async delete(id: number) {
+    const quote = await this.quoteRepo.findOne({ where: { id } });
+    if (!quote) throw new NotFoundException('Цитата не найдена');
+
+    await this.quoteRepo.remove(quote);
+    return { message: `Цитата #${id} удалена` };
   }
 }

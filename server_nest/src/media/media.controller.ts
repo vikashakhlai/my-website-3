@@ -14,6 +14,7 @@ import {
   MessageEvent,
   Req,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -26,18 +27,23 @@ import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { JwtService } from '@nestjs/jwt';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Role } from 'src/auth/roles.enum';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
+@ApiTags('Media')
 @Controller('media')
 export class MediaController {
   constructor(
     private readonly mediaService: MediaService,
     private readonly ratingsService: RatingsService,
     private readonly commentsService: CommentsService,
-    private readonly jwtService: JwtService,
   ) {}
 
-  /** 📜 Получить все медиа с фильтрацией */
+  /** 📜 Публичный список медиа */
+  @ApiOperation({ summary: 'Список медиа (публично)' })
   @Get()
   async findAll(
     @Query('name') name?: string,
@@ -47,10 +53,9 @@ export class MediaController {
     const topicIds = topics
       ? topics
           .split(',')
-          .map((id) => parseInt(id.trim(), 10))
+          .map((id) => Number(id))
           .filter((id) => !isNaN(id))
       : [];
-
     return this.mediaService.findAllWithFilters({
       name,
       region,
@@ -58,26 +63,44 @@ export class MediaController {
     });
   }
 
-  /** 🎬 Получить одно медиа по ID (включая рейтинг пользователя, если авторизован) */
-  @Get(':id')
+  /** 🎬 Только авторизованные видят детали + userRating */
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
+  @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    const userId = req.user?.sub || req.user?.id;
-    return this.mediaService.findOneWithRating(id, userId);
+    return this.mediaService.findOneWithRating(id, req.user?.sub);
   }
 
-  /** 🧩 Загрузка видео */
+  /** ⬆️ Загрузка медиа (ADMIN+) */
+  @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post('upload')
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads/videos',
+        destination: './uploads/media',
         filename: (req, file, cb) => {
-          const uniqueName = `${Date.now()}${extname(file.originalname)}`;
+          const safeName = file.originalname
+            .replace(/\s+/g, '_')
+            .replace(/[^a-zA-Z0-9_\.-]/g, '');
+          const uniqueName = `${Date.now()}_${safeName}`;
           cb(null, uniqueName);
         },
       }),
+      fileFilter: (req, file, cb) => {
+        const allowed = ['.mp4', '.webm', '.mkv', '.mp3'];
+        const ext = extname(file.originalname).toLowerCase();
+        if (!allowed.includes(ext)) {
+          return cb(
+            new BadRequestException(`Недопустимый формат файла: ${ext}`),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
     }),
   )
   async uploadVideo(
@@ -93,33 +116,36 @@ export class MediaController {
     });
   }
 
-  /** ♻️ Обновить запись */
+  /** 🔄 Обновить медиа (ADMIN+) */
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: Partial<Media>,
-  ): Promise<Media> {
+  ) {
     return this.mediaService.update(id, data);
   }
 
-  /** 🗑 Удалить запись */
+  /** 🗑 Удалить медиа (ADMIN+) */
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.remove(id);
   }
 
-  /** 🧩 Получить упражнения по медиа */
+  /** 🧩 Упражнения — авторизованные */
+  @UseGuards(JwtAuthGuard)
   @Get(':id/exercises')
-  @UseGuards(JwtAuthGuard) // ✅ доступ только авторизованным
   async findExercises(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.findExercisesByMedia(id);
   }
 
-  /** ➕ Добавить упражнение */
-  @Post(':id/exercises')
   @UseGuards(JwtAuthGuard)
+  @Post(':id/exercises')
   async addExerciseToMedia(
     @Param('id', ParseIntPipe) mediaId: number,
     @Body() dto: CreateExerciseDto,
@@ -130,39 +156,32 @@ export class MediaController {
   /** ⭐ Средний рейтинг */
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
-    return this.ratingsService.getAverage('media', id);
+    return this.ratingsService.getAverage(TargetType.MEDIA, id);
   }
 
-  /** 💬 SSE-стрим комментариев */
-  @Get('stream/:id/comments')
-  @Sse()
+  /** 💬 SSE комментариев */
+  @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
   ): Observable<MessageEvent> {
     return interval(5000).pipe(
-      switchMap(async () => {
-        const comments = await this.commentsService.findByTarget('media', id);
-        return { data: comments };
-      }),
+      switchMap(async () => ({
+        data: await this.commentsService.findByTarget(TargetType.MEDIA, id),
+      })),
     );
   }
 
-  /** 🌟 SSE-стрим рейтинга */
-  @Get('stream/:targetType/:targetId')
-  @Sse()
+  /** 🌟 SSE рейтинга */
+  @Sse('stream/:id/rating')
   streamRatings(
-    @Param('targetType')
-    targetType: 'book' | 'article' | 'media' | 'textbook' | 'personality',
-    @Param('targetId', ParseIntPipe) targetId: number,
+    @Param('id', ParseIntPipe) id: number,
   ): Observable<MessageEvent> {
     return interval(5000).pipe(
       switchMap(async () => {
         const { average, votes } = await this.ratingsService.getAverage(
-          targetType,
-          targetId,
+          TargetType.MEDIA,
+          id,
         );
-
-        // Возвращаем уже чистые числа, не вложенные объекты
         return { data: { average, votes } };
       }),
     );

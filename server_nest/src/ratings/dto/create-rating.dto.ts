@@ -1,9 +1,9 @@
-import { IsNotEmpty, IsInt, Min, Max, IsString } from 'class-validator';
+import { IsEnum, IsInt, Min, Max } from 'class-validator';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 export class CreateRatingDto {
-  @IsString()
-  @IsNotEmpty()
-  target_type!: 'book' | 'article' | 'media' | 'personality' | 'textbook';
+  @IsEnum(TargetType)
+  target_type!: TargetType;
 
   @IsInt()
   target_id!: number;

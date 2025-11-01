@@ -6,39 +6,30 @@ import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { UserService } from '../../user/user.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private userService: UserService) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(private readonly userService: UserService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwtConstants.secret,
+      secretOrKey: jwtConstants.secret, // ✅ только access токен
     });
-    console.log('✅ JwtStrategy зарегистрирована');
+    console.log('✅ JwtStrategy (access) инициализирована');
   }
 
   async validate(payload: JwtPayload) {
-    console.log('🔐 JWT validate() вызван, payload:', payload);
     const user = await this.userService.findById(payload.sub);
 
-    console.log('👤 Результат поиска пользователя:', user?.id || 'не найден');
-
     if (!user) {
-      console.warn('❌ Пользователь не найден по payload.sub =', payload.sub);
       throw new UnauthorizedException('User not found');
     }
 
-    // Убираем пароль из объекта
     const { password, ...safeUser } = user;
 
-    // ✅ Добавляем роль, чтобы RolesGuard мог использовать
-    console.log(
-      `✅ Пользователь ${safeUser.email} авторизован как ${safeUser.role}`,
-    );
-
     return {
-      ...safeUser,
-      sub: payload.sub,
+      id: safeUser.id,
+      email: safeUser.email,
       role: safeUser.role,
+      sub: payload.sub, // важно для совместимости с guards
     };
   }
 }

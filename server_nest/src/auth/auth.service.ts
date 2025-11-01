@@ -1,17 +1,24 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
-import { User, UserRole } from '../user/user.entity';
+import { User } from '../user/user.entity';
 import { jwtConstants } from './constants';
+import { Role } from './roles.enum';
+import { UserResponseDto } from 'src/user/dto/user-response.dto';
 
 interface JwtPayload {
   sub: string;
-  role: UserRole;
+  role: Role;
 }
 
-interface AuthTokens {
+export interface AuthTokens {
   access_token: string;
   refresh_token: string;
+  user: UserResponseDto; // ✅ теперь обязательный
 }
 
 @Injectable()
@@ -21,30 +28,18 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  /**
-   * Проверка валидности пользователя
-   */
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<Omit<User, 'password'> | null> {
-    const user = await this.userService.findByEmail(email);
-    if (
-      user &&
-      (await this.userService.validatePassword(password, user.password))
-    ) {
-      // исключаем пароль из результата
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...result } = user;
-      return result;
-    }
-    return null;
+  async validateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.userService.findByEmailWithPassword(email);
+    if (!user) return null;
+
+    const isPasswordValid = await this.userService.validatePassword(
+      password,
+      user.password,
+    );
+    return isPasswordValid ? user : null;
   }
 
-  /**
-   * Генерация Access и Refresh токенов
-   */
-  private generateTokens(user: User): AuthTokens {
+  private generateTokens(user: User): Omit<AuthTokens, 'user'> {
     const payload: JwtPayload = {
       sub: String(user.id),
       role: user.role,
@@ -52,60 +47,69 @@ export class AuthService {
 
     const accessOptions: JwtSignOptions = {
       secret: jwtConstants.secret,
-      expiresIn: jwtConstants.expiresIn as JwtSignOptions['expiresIn'],
+      expiresIn: jwtConstants.expiresIn as any,
     };
 
     const refreshOptions: JwtSignOptions = {
       secret: jwtConstants.refreshSecret,
-      expiresIn: jwtConstants.refreshExpiresIn as JwtSignOptions['expiresIn'],
+      expiresIn: jwtConstants.refreshExpiresIn as any,
     };
 
-    const access_token = this.jwtService.sign(payload, accessOptions);
-    const refresh_token = this.jwtService.sign(payload, refreshOptions);
-    console.log('🪙 Access token payload:', payload);
-    console.log('🔁 Refresh token payload:', payload);
-    console.log('🧩 Access secret:', jwtConstants.secret);
-    console.log('🧩 Refresh secret:', jwtConstants.refreshSecret);
-
-    return { access_token, refresh_token };
+    return {
+      access_token: this.jwtService.sign(payload, accessOptions),
+      refresh_token: this.jwtService.sign(payload, refreshOptions),
+    };
   }
 
-  /**
-   * Логин
-   */
-  async login(user: User): Promise<AuthTokens> {
-    return this.generateTokens(user);
+  async login(user: User) {
+    const fullUser = await this.userService.findById(user.id);
+    const tokens = this.generateTokens(fullUser);
+
+    return {
+      user: this.toResponseDto(fullUser),
+      ...tokens,
+    };
   }
 
-  /**
-   * Регистрация
-   */
-  async register(email: string, password: string): Promise<AuthTokens> {
-    const user = await this.userService.create(email, password);
-    if (!user) {
-      throw new UnauthorizedException('User creation failed');
+  async register(email: string, password: string) {
+    const existing = await this.userService.findByEmail(email);
+    if (existing) {
+      throw new BadRequestException('User with this email already exists');
     }
-    return this.generateTokens(user);
+
+    const user = await this.userService.create(email, password);
+    const fullUser = await this.userService.findById(user.id);
+    const tokens = this.generateTokens(fullUser);
+
+    return {
+      user: this.toResponseDto(fullUser),
+      ...tokens,
+    };
   }
 
-  /**
-   * Обновление токена
-   */
-  async refreshToken(refresh_token: string): Promise<AuthTokens> {
+  async refreshToken(refresh_token: string) {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(
         refresh_token,
-        {
-          secret: jwtConstants.refreshSecret,
-        },
+        { secret: jwtConstants.refreshSecret },
       );
 
-      const user = await this.userService.findById(String(payload.sub));
+      const user = await this.userService.findById(payload.sub);
       if (!user) throw new UnauthorizedException('User not found');
 
-      return this.generateTokens(user);
+      const tokens = this.generateTokens(user);
+
+      return {
+        user: this.toResponseDto(user),
+        ...tokens,
+      };
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  toResponseDto(user: User): UserResponseDto {
+    const { password, ...safeUser } = user;
+    return safeUser as UserResponseDto;
   }
 }

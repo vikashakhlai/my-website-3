@@ -1,17 +1,19 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
 import cors from 'cors';
 import { join } from 'path';
+
 import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
 import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
+import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Настройки CORS
+  // ✅ CORS
   const corsOptions = {
     origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
     credentials: true,
@@ -25,25 +27,19 @@ async function bootstrap() {
     ],
     exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'],
   };
-
-  // ✅ Подключаем CORS до всего остального
   app.use(cors(corsOptions));
   app.enableCors(corsOptions);
 
-  // ✅ Путь к папке с загрузками
+  // ✅ Static uploads
   const uploadsPath = join(__dirname, '..', 'uploads');
-
-  // ✅ Потом кастомные middleware для потокового видео и субтитров
   app.use('/uploads/dialect/:dialect/subtitles/:filename', subtitlesMiddleware);
   app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
-
-  // ✅ Сначала обычная статика (для изображений, pdf и т.п.)
   app.use('/uploads', express.static(uploadsPath));
 
-  // ✅ Префикс API
+  // ✅ Prefix /api/v1
   app.setGlobalPrefix('api/v1');
 
-  // ✅ Глобальная валидация
+  // ✅ Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -52,61 +48,52 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Swagger (dev)
+  // ✅ Global JWT Guard (всё требует токен, кроме @Public())
+  app.useGlobalGuards(new GlobalJwtAuthGuard(app.get(Reflector)));
+
+  // ✅ Swagger only in dev
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('User Management API')
-      .setDescription('API для управления пользователями и ролями')
+      .setTitle('Backend API')
+      .setDescription('Protected API with global JWT')
       .setVersion('1.0')
       .addBearerAuth(
         {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          in: 'header',
-          name: 'JWT',
-          description: 'Введите JWT токен',
+          description: 'Введите JWT access token',
         },
         'access-token',
       )
       .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-  }
-
-  // ✅ Swagger (dev)
-  if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('User Management API')
-      .setDescription('API для управления пользователями и ролями')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          in: 'header',
-          name: 'JWT',
-          description: 'Введите JWT токен',
-        },
-        'access-token',
-      )
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-
-    // ✅ Добавляем JSON-роут
-    app.getHttpAdapter().get('/api-json', (req, res) => {
-      res.json(document);
+    const document = SwaggerModule.createDocument(app, config, {
+      deepScanRoutes: true,
     });
+
+    // ✅ Глобально требуем токен для всех эндпоинтов, кроме @Public()
+    document.components = document.components ?? {};
+    document.components.securitySchemes = {
+      'access-token': {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    };
+    document.security = [{ 'access-token': [] }];
+
+    SwaggerModule.setup('api/docs', app, document);
+
+    app.getHttpAdapter().get('/api-json', (req, res) => res.json(document));
   }
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`🚀 Сервер запущен на http://localhost:${port}/api/v1`);
-  console.log(`📁 Статические файлы: http://localhost:${port}/uploads/...`);
+
+  console.log(`🚀 Server running at http://localhost:${port}/api/v1`);
+  console.log(`📁 Static files: http://localhost:${port}/uploads/...`);
+  console.log(`📘 Swagger: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

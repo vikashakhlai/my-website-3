@@ -1,53 +1,35 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
 } from 'typeorm';
 import { User } from 'src/user/user.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Entity('ratings')
 export class Rating {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => User, (user) => user.ratings, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' }) // ✅ Явно связываем с колонкой user_id
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' }) // <-- вручную указываем имя FK
   user!: User;
 
   @Column()
-  user_id!: string;
+  user_id!: string; // <-- это теперь FK и единственное поле
 
-  @Column({
-    type: 'text',
-  })
-  target_type!: 'book' | 'article' | 'media' | 'personality' | 'textbook';
+  @Column({ type: 'enum', enum: TargetType })
+  target_type!: TargetType;
 
   @Column()
   target_id!: number;
 
-  @ManyToOne(() => Rating, (rating) => rating.replies, {
-    onDelete: 'CASCADE',
-    nullable: true,
-  })
-  @JoinColumn({ name: 'parent_id' }) // ✅ То же самое для parent_id
-  parent?: Rating;
-
-  @OneToMany(() => Rating, (rating) => rating.parent)
-  replies!: Rating[];
-
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int' })
   value!: number;
-
-  @Column({ type: 'int', default: 0 })
-  likes_count!: number;
-
-  @Column({ type: 'int', default: 0 })
-  dislikes_count!: number;
 
   @CreateDateColumn()
   created_at!: Date;

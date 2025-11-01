@@ -2,22 +2,58 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  MessageEvent,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+
 import { Comment } from './comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { User } from 'src/user/user.entity';
 import { CommentReaction } from './comment-reaction.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { Role } from 'src/auth/roles.enum';
+
+import { Subject, Observable, map } from 'rxjs';
+
+/** Тип событий, которые уходит в SSE */
+export type StreamEvent =
+  | { type: 'created'; comment: Comment }
+  | { type: 'react'; comment: Comment }
+  | { type: 'deleted'; id: number };
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
+
     @InjectRepository(CommentReaction)
     private readonly reactionRepo: Repository<CommentReaction>,
   ) {}
+
+  /** Хранилище стримов: `${target_type}:${target_id}` → Subject */
+  private streams = new Map<string, Subject<StreamEvent>>();
+
+  private getStream(target_type: TargetType, target_id: number) {
+    const key = `${target_type}:${target_id}`;
+    if (!this.streams.has(key)) {
+      this.streams.set(key, new Subject<StreamEvent>());
+    }
+    return this.streams.get(key)!;
+  }
+
+  /** ✅ SSE подписка */
+  subscribe(
+    target_type: TargetType,
+    target_id: number,
+  ): Observable<MessageEvent> {
+    return this.getStream(target_type, target_id).pipe(
+      map((event) => ({
+        data: event, // здесь лежит StreamEvent
+      })),
+    );
+  }
 
   // --- Создание комментария ---
   async create(dto: CreateCommentDto, user: User): Promise<Comment> {
@@ -27,15 +63,23 @@ export class CommentsService {
       user_id: user.id,
       parent: dto.parent_id ? ({ id: dto.parent_id } as any) : null,
     });
-    return this.commentRepository.save(entity);
+
+    const saved = await this.commentRepository.save(entity);
+
+    this.getStream(dto.target_type, dto.target_id).next({
+      type: 'created',
+      comment: saved,
+    });
+
+    return saved;
   }
 
-  // --- Получить комментарии по сущности (+ my_reaction, если передан userId) ---
+  // --- Получить комментарии по сущности ---
   async findByTarget(
-    target_type: 'book' | 'article' | 'media' | 'personality' | 'textbook',
+    target_type: TargetType,
     target_id: number,
     viewerUserId?: string,
-  ): Promise<Array<Comment & { my_reaction?: 1 | -1 | 0 }>> {
+  ) {
     const list = await this.commentRepository.find({
       where: { target_type, target_id },
       relations: ['user', 'replies', 'replies.user'],
@@ -48,13 +92,15 @@ export class CommentsService {
       c.id,
       ...(c.replies?.map((r) => r.id) ?? []),
     ]);
+
     const reactions = await this.reactionRepo.find({
       where: { user_id: viewerUserId, comment_id: In(ids) },
     });
+
     const map = new Map<number, 1 | -1>();
     reactions.forEach((r) => map.set(r.comment_id, r.value));
 
-    const attach = (c: Comment): Comment & { my_reaction?: 1 | -1 | 0 } => ({
+    const attach = (c: Comment) => ({
       ...c,
       my_reaction: (map.get(c.id) ?? 0) as 1 | -1 | 0,
       replies: c.replies?.map((r) => attach(r)) as any,
@@ -63,8 +109,7 @@ export class CommentsService {
     return list.map((c) => attach(c));
   }
 
-  // --- Реакция (лайк/дизлайк/снятие) ---
-  // value: 1 = like, -1 = dislike, 0 = снять реакцию
+  // --- Реакция (лайк / дизлайк / снять) ---
   async react(commentId: number, user: User, value: 1 | -1 | 0) {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
@@ -75,34 +120,29 @@ export class CommentsService {
       where: { comment_id: commentId, user_id: user.id },
     });
 
-    // вычисляем дельты для счетчиков
     let deltaLike = 0;
     let deltaDislike = 0;
 
     if (!existing) {
-      if (value === 0) return comment; // нечего снимать
-      // вставка новой реакции
+      if (value === 0) return comment;
       existing = this.reactionRepo.create({
         comment_id: commentId,
         user_id: user.id,
-        value: value as 1 | -1,
+        value,
       });
       await this.reactionRepo.save(existing);
       if (value === 1) deltaLike = +1;
-      else if (value === -1) deltaDislike = +1;
+      else deltaDislike = +1;
     } else {
       if (value === 0) {
-        // снять реакцию
         if (existing.value === 1) deltaLike = -1;
         if (existing.value === -1) deltaDislike = -1;
         await this.reactionRepo.remove(existing);
       } else if (existing.value === value) {
-        // повторный клик по той же — снять
         if (value === 1) deltaLike = -1;
         else deltaDislike = -1;
         await this.reactionRepo.remove(existing);
       } else {
-        // переключение like <-> dislike
         if (value === 1) {
           deltaLike = +1;
           deltaDislike = -1;
@@ -110,7 +150,7 @@ export class CommentsService {
           deltaLike = -1;
           deltaDislike = +1;
         }
-        existing.value = value as 1 | -1;
+        existing.value = value;
         await this.reactionRepo.save(existing);
       }
     }
@@ -127,14 +167,20 @@ export class CommentsService {
         .execute();
     }
 
-    // вернуть актуальный комментарий
-    return this.commentRepository.findOne({
+    const updated = await this.commentRepository.findOne({
       where: { id: commentId },
       relations: ['user', 'replies', 'replies.user'],
     });
+
+    this.getStream(comment.target_type, comment.target_id).next({
+      type: 'react',
+      comment: updated!,
+    });
+
+    return updated;
   }
 
-  // --- Удалить комментарий (только автор или админ/суперадмин) ---
+  // --- Удаление комментария ---
   async delete(id: number, user: User): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id },
@@ -142,10 +188,17 @@ export class CommentsService {
     });
     if (!comment) throw new NotFoundException('Комментарий не найден');
 
-    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    const isAdmin = [Role.ADMIN, Role.SUPER_ADMIN].includes(user.role);
+
     if (comment.user.id !== user.id && !isAdmin) {
       throw new ForbiddenException('Вы не можете удалить этот комментарий');
     }
+
     await this.commentRepository.remove(comment);
+
+    this.getStream(comment.target_type, comment.target_id).next({
+      type: 'deleted',
+      id,
+    });
   }
 }

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Textbook } from './textbook.entity';
 import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
 export class TextbooksService {
@@ -18,31 +19,18 @@ export class TextbooksService {
     private readonly commentRepo: Repository<Comment>,
   ) {}
 
-  /**
-   * 📚 Получить все учебники с рейтингом, количеством комментариев,
-   *     фильтрацией, сортировкой и пагинацией.
-   */
+  /** 📚 Получить все учебники с рейтингом, количеством комментариев и пагинацией */
   async getAll(options?: {
     page?: number;
     limit?: number;
     sort?: 'asc' | 'desc';
     level?: string;
-  }): Promise<{
-    data: (Textbook & {
-      averageRating: number | null;
-      ratingCount: number;
-      commentCount: number;
-    })[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+  }) {
     const page = Math.max(options?.page || 1, 1);
     const limit = Math.max(options?.limit || 10, 1);
     const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
     const levelFilter = options?.level?.trim();
 
-    // 🔹 Основной запрос с подзапросами
     const qb = this.textbookRepo
       .createQueryBuilder('t')
       .select([
@@ -54,9 +42,18 @@ export class TextbooksService {
         't.description AS description',
         't.level AS level',
         't.pdf_url AS pdf_url',
-        "(SELECT AVG(r.value) FROM ratings r WHERE r.target_id = t.id AND r.target_type = 'textbook') AS averageRating",
-        "(SELECT COUNT(*) FROM ratings r WHERE r.target_id = t.id AND r.target_type = 'textbook') AS ratingCount",
-        "(SELECT COUNT(*) FROM comments c WHERE c.target_id = t.id AND c.target_type = 'textbook') AS commentCount",
+        `(SELECT AVG(r.value) 
+          FROM ratings r 
+          WHERE r.target_id = t.id 
+          AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
+        `(SELECT COUNT(*) 
+          FROM ratings r 
+          WHERE r.target_id = t.id 
+          AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
+        `(SELECT COUNT(*) 
+          FROM comments c 
+          WHERE c.target_id = t.id 
+          AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
       ])
       .orderBy('t.id', sortOrder)
       .skip((page - 1) * limit)
@@ -66,7 +63,6 @@ export class TextbooksService {
       qb.where('t.level = :level', { level: levelFilter });
     }
 
-    // 🔹 Получаем данные и общее количество
     const [data, total] = await Promise.all([
       qb.getRawMany(),
       this.textbookRepo.count(
@@ -74,7 +70,6 @@ export class TextbooksService {
       ),
     ]);
 
-    // 🔹 Приведение типов
     const formatted = data.map((t) => ({
       id: Number(t.id),
       title: t.title,
@@ -105,11 +100,11 @@ export class TextbooksService {
     if (!book) throw new NotFoundException('Учебник не найден');
 
     const ratings = await this.ratingRepo.find({
-      where: { target_type: 'textbook', target_id: id },
+      where: { target_type: TargetType.TEXTBOOK, target_id: id },
     });
 
     const commentsCount = await this.commentRepo.count({
-      where: { target_type: 'textbook', target_id: id },
+      where: { target_type: TargetType.TEXTBOOK, target_id: id },
     });
 
     const average =
@@ -142,20 +137,16 @@ export class TextbooksService {
     return book;
   }
 
-  /** ➕ Создать */
   async create(data: Partial<Textbook>) {
-    const book = this.textbookRepo.create(data);
-    return this.textbookRepo.save(book);
+    return this.textbookRepo.save(this.textbookRepo.create(data));
   }
 
-  /** 🔄 Обновить */
   async update(id: number, data: Partial<Textbook>) {
     const book = await this.textbookRepo.preload({ id, ...data });
     if (!book) throw new NotFoundException('Учебник не найден');
     return this.textbookRepo.save(book);
   }
 
-  /** ❌ Удалить */
   async remove(id: number) {
     const book = await this.textbookRepo.findOne({ where: { id } });
     if (!book) throw new NotFoundException('Учебник не найден');

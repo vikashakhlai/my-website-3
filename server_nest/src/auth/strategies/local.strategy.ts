@@ -13,15 +13,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'email' });
   }
 
-  async validate(
-    email: string,
-    password: string,
-  ): Promise<Omit<User, 'password'>> {
+  async validate(email: string, password: string): Promise<User> {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
       this.logger.warn(`Invalid login attempt for email: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
-    return user;
+    return user; // возвращаем ПОЛНОГО юзера
   }
 }

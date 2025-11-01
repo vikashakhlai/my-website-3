@@ -6,44 +6,77 @@ import {
   Query,
   ParseIntPipe,
   Param,
+  UseGuards,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
+import { CreateQuoteDto } from './dto/create-quote.dto';
+import { UpdateQuoteDto } from './dto/update-quote.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/roles.enum';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorator';
 
+@ApiTags('Quotes')
 @Controller('quotes')
 export class QuotesController {
   constructor(private readonly quotesService: QuotesService) {}
 
-  // ✅ случайные цитаты для главной страницы
+  // ✅ Публичные random quotes
+  @ApiOperation({ summary: 'Случайные цитаты для главной страницы' })
+  @Public()
   @Get('random')
   async getRandomQuotes(@Query('limit') limit?: number) {
-    const quotes = await this.quotesService.findRandom(limit ?? 2);
-
-    return quotes.map((q) => ({
-      id: q.id,
-      text_ar: q.text_ar,
-      text_ru: q.text_ru,
-      personality: q.personality
-        ? {
-            id: q.personality.id,
-            full_name: q.personality.name,
-            position: q.personality.position,
-          }
-        : null, // 💡 безопасно обрабатываем отсутствие автора
-    }));
+    return this.quotesService.getRandomMapped(limit ?? 2);
   }
 
+  // ✅ Публичные цитаты по личности
+  @ApiOperation({ summary: 'Все цитаты по персоне' })
   @Get('by-personality/:id')
   async getByPersonality(@Param('id', ParseIntPipe) id: number) {
     return this.quotesService.findByPersonality(id);
   }
 
-  // ➕ добавление цитаты
+  // ✅ Публичный список всех цитат
+  @ApiOperation({ summary: 'Все цитаты' })
+  @Get()
+  async getAll() {
+    return this.quotesService.findAll();
+  }
+
+  // 🔒 Создать (ADMIN+)
+  @ApiOperation({ summary: 'Создать цитату (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
-  async addQuote(
-    @Body('text_ar') text_ar: string,
-    @Body('text_ru') text_ru: string,
-    @Body('personalityId') personalityId: number,
+  async create(@Body() dto: CreateQuoteDto) {
+    return this.quotesService.create(dto);
+  }
+
+  // 🔒 Обновить (ADMIN+)
+  @ApiOperation({ summary: 'Обновить цитату (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuoteDto,
   ) {
-    return this.quotesService.create(text_ar, text_ru, personalityId);
+    return this.quotesService.update(id, dto);
+  }
+
+  // 🔒 Удалить (ADMIN+)
+  @ApiOperation({ summary: 'Удалить цитату (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    return this.quotesService.delete(id);
   }
 }

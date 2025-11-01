@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './authors.entity';
 import { Repository } from 'typeorm';
 import { Book } from 'src/books/book.entity';
+import { CreateAuthorDto } from './dto/create-author.dto';
+import { UpdateAuthorDto } from './dto/update-author.dto';
 
 @Injectable()
 export class AuthorsService {
@@ -15,14 +17,13 @@ export class AuthorsService {
     private readonly authorsRepo: Repository<Author>,
   ) {}
 
+  // ✅ Публичное получение автора + книг
   async getAuthorById(idParam: string | number) {
     const id = Number(idParam);
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('Некорректный ID автора');
     }
 
-    // Загружаем автора вместе с книгами
-    // и сортируем книги как в Express: publication_year DESC NULLS LAST
     const author = await this.authorsRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.books', 'b')
@@ -32,7 +33,6 @@ export class AuthorsService {
 
     if (!author) throw new NotFoundException('Автор не найден');
 
-    // Приводим ответ к прежнему контракту
     const books = (author.books ?? []).map((b: Book) => ({
       id: b.id,
       title: b.title,
@@ -47,5 +47,42 @@ export class AuthorsService {
       photo_url: author.photoUrl,
       books,
     };
+  }
+
+  // ✅ Создание автора (ADMIN+)
+  async createAuthor(dto: CreateAuthorDto) {
+    const author = this.authorsRepo.create({
+      fullName: dto.fullName,
+      bio: dto.bio ?? null,
+      photoUrl: dto.photoUrl ?? null,
+    });
+
+    const saved = await this.authorsRepo.save(author);
+    return { message: 'Автор создан', id: saved.id };
+  }
+
+  // ✅ Обновление автора (ADMIN+)
+  async updateAuthor(id: number, dto: UpdateAuthorDto) {
+    const author = await this.authorsRepo.findOne({ where: { id } });
+
+    if (!author) throw new NotFoundException('Автор не найден');
+
+    if (dto.fullName) author.fullName = dto.fullName;
+    if (dto.bio !== undefined) author.bio = dto.bio;
+    if (dto.photoUrl !== undefined) author.photoUrl = dto.photoUrl;
+
+    await this.authorsRepo.save(author);
+    return { message: 'Автор обновлён', id: author.id };
+  }
+
+  // ✅ Удаление автора (ADMIN+)
+  async deleteAuthor(id: number) {
+    const author = await this.authorsRepo.findOne({ where: { id } });
+
+    if (!author) throw new NotFoundException('Автор не найден');
+
+    await this.authorsRepo.remove(author);
+
+    return { message: `Автор #${id} удалён` };
   }
 }

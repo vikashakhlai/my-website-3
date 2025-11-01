@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Personality, Era } from './personality.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
 export class PersonalitiesService {
@@ -14,7 +15,7 @@ export class PersonalitiesService {
     private readonly commentRepo: Repository<Comment>,
   ) {}
 
-  // ✅ Получить всех (с фильтрацией и пагинацией)
+  // ✅ Список с фильтрацией и пагинацией
   async findAll(
     page = 1,
     limit = 12,
@@ -33,17 +34,13 @@ export class PersonalitiesService {
       .leftJoinAndSelect('p.articles', 'articles')
       .leftJoinAndSelect('p.books', 'books');
 
-    // 🔍 Поиск по имени
     if (search) {
       qb.andWhere('LOWER(p.name) LIKE LOWER(:search)', {
         search: `%${search}%`,
       });
     }
 
-    // 🕰️ Фильтр по эпохе
-    if (era) {
-      qb.andWhere('p.era = :era', { era });
-    }
+    if (era) qb.andWhere('p.era = :era', { era });
 
     qb.orderBy('p.createdAt', 'DESC').skip(skip).take(limit);
 
@@ -57,18 +54,17 @@ export class PersonalitiesService {
     };
   }
 
-  // Получить одну личность
-  async findOne(id: number): Promise<any> {
+  // ✅ Одна личность с комментариями и рейтингом
+  async findOne(id: number, userId?: string): Promise<any> {
     const personality = await this.personalityRepo.findOne({
       where: { id },
       relations: ['articles', 'books'],
     });
 
-    if (!personality) return null;
+    if (!personality) throw new NotFoundException('Личность не найдена');
 
-    // 🔹 Загружаем комментарии, привязанные к этой личности
     const comments = await this.commentRepo.find({
-      where: { target_type: 'personality', target_id: id },
+      where: { target_type: TargetType.PERSONALITY, target_id: id },
       order: { created_at: 'DESC' },
       relations: ['user'],
     });
@@ -80,7 +76,7 @@ export class PersonalitiesService {
     };
   }
 
-  // Получить случайные личности
+  // ✅ Случайные личности
   async getRandom(limit = 3): Promise<Personality[]> {
     return this.personalityRepo
       .createQueryBuilder('p')
@@ -91,7 +87,7 @@ export class PersonalitiesService {
       .getMany();
   }
 
-  // Получить современников
+  // ✅ Современники
   async getContemporaries(targetId: number): Promise<Personality[]> {
     const target = await this.personalityRepo.findOne({
       where: { id: targetId },
@@ -103,23 +99,23 @@ export class PersonalitiesService {
     const targetRange = this.parseYears(target.years);
     if (!targetRange) return [];
 
-    const allPersonalities = await this.personalityRepo.find({
+    const all = await this.personalityRepo.find({
       where: { id: Not(targetId) },
       relations: ['articles', 'books'],
     });
 
-    return allPersonalities.filter((p) => {
+    return all.filter((p) => {
       const range = this.parseYears(p.years);
-      if (!range) return false;
-      return targetRange[0] <= range[1] && range[0] <= targetRange[1];
+      return range
+        ? targetRange[0] <= range[1] && range[0] <= targetRange[1]
+        : false;
     });
   }
 
-  // Парсинг лет жизни
   private parseYears(yearsStr?: string): [number, number] | null {
     if (!yearsStr) return null;
-
     const clean = yearsStr.trim();
+
     const hasPresent = clean.includes('н.в.') || clean.includes('н.в');
     let endYear = hasPresent ? new Date().getFullYear() : undefined;
 

@@ -1,12 +1,7 @@
 // src/auth/interfaces/jwt-payload.interface.ts
-import { UserRole } from '../../user/user.entity';
+import { Role } from '../roles.enum';
 
 export interface JwtPayload {
-  sub: string;
-  role: UserRole;
-}
-
-export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
+  sub: string; // user.id
+  role: Role; // SUPER_ADMIN | ADMIN | USER
 }

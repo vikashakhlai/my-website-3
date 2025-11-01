@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+
 import { AppController } from './app.controller';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import databaseConfig from './config/database.config';
 import { AllConfigType, DatabaseConfig } from './config/configuration.types';
+
 import { BookModule } from './books/books.module';
 import { AuthorsModule } from './authors/authors.module';
 import { TagsModule } from './tags/tags.module';
@@ -26,21 +29,21 @@ import { RatingsModule } from './ratings/ratings.module';
 
 @Module({
   imports: [
-    // ✅ Глобальная конфигурация (.env + кастомные конфиги)
+    // ✅ .env config
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig],
       envFilePath: ['.env'],
     }),
 
-    // ✅ Подключение к PostgreSQL через TypeORM
+    // ✅ TypeORM
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
         const dbConfig = configService.getOrThrow<DatabaseConfig>('database');
         return {
-          type: 'postgres' as const,
+          type: 'postgres',
           host: dbConfig.host,
           port: dbConfig.port,
           username: dbConfig.username,
@@ -57,7 +60,18 @@ import { RatingsModule } from './ratings/ratings.module';
       },
     }),
 
-    // ✅ Модули приложения
+    // ✅ Throttler v4 (глобальный лимит)
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'global',
+          ttl: 60, // 60 секунд
+          limit: 20, // 20 запросов
+        },
+      ],
+    }),
+
+    // ✅ App modules
     UserModule,
     AuthModule,
     BookModule,
@@ -78,7 +92,6 @@ import { RatingsModule } from './ratings/ratings.module';
     CommentsModule,
     RatingsModule,
   ],
-
   controllers: [AppController],
 })
 export class AppModule {}

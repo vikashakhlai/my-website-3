@@ -1,6 +1,7 @@
 export const jwtConstants = {
-  secret: 'super-secret-key',
-  expiresIn: '15m', // access токен живёт 15 минут
-  refreshSecret: 'super-refresh-key',
-  refreshExpiresIn: '7d', // refresh токен живёт 7 дней
+  secret: process.env.JWT_ACCESS_SECRET || 'super-secret-key',
+  expiresIn: '15m' as any, // Access-токен
+
+  refreshSecret: process.env.JWT_REFRESH_SECRET || 'super-refresh-key',
+  refreshExpiresIn: '7d', // Refresh-токен
 };

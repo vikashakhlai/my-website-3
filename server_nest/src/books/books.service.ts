@@ -9,6 +9,7 @@ import { UpdateBookDto } from './dto/update-book.dto';
 import { Comment } from 'src/comments/comment.entity';
 import { Rating } from 'src/ratings/rating.entity';
 import { Favorite } from 'src/favorites/favorite.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
 export class BookService {
@@ -100,7 +101,7 @@ export class BookService {
 
     // ⚙️ Подсчёт рейтингов из универсальной таблицы
     const ratings = await this.ratingRepo.find({
-      where: { target_type: 'book', target_id: id },
+      where: { target_type: TargetType.BOOK, target_id: id },
     });
 
     const ratingCount = ratings.length;
@@ -208,7 +209,7 @@ export class BookService {
   // === 💬 Комментарии (универсальные) ===
   async getComments(book_id: number) {
     return this.commentRepo.find({
-      where: { target_type: 'book', target_id: book_id },
+      where: { target_type: TargetType.BOOK, target_id: book_id },
       relations: ['user'],
       order: { created_at: 'ASC' },
     });
@@ -217,7 +218,7 @@ export class BookService {
   // === ⭐ Рейтинги (универсальные) ===
   async getRatings(book_id: number) {
     const ratings = await this.ratingRepo.find({
-      where: { target_type: 'book', target_id: book_id },
+      where: { target_type: TargetType.BOOK, target_id: book_id },
     });
 
     if (!ratings.length) return { average: null, count: 0 };
@@ -230,14 +231,14 @@ export class BookService {
 
   async rateBook(book_id: number, user_id: string, value: number) {
     let rating = await this.ratingRepo.findOne({
-      where: { target_type: 'book', target_id: book_id, user_id },
+      where: { target_type: TargetType.BOOK, target_id: book_id, user_id },
     });
 
     if (rating) {
       rating.value = value;
     } else {
       rating = this.ratingRepo.create({
-        target_type: 'book',
+        target_type: TargetType.BOOK,
         target_id: book_id,
         user_id,
         value,
@@ -255,7 +256,7 @@ export class BookService {
     parent_id?: number | null,
   ) {
     const comment = this.commentRepo.create({
-      target_type: 'book',
+      target_type: TargetType.BOOK,
       target_id: book_id,
       user_id,
       content,

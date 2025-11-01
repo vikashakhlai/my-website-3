@@ -11,22 +11,34 @@ import {
   Sse,
   MessageEvent,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Observable, from, interval, map, mergeMap } from 'rxjs';
+import { Observable, interval, mergeMap, from } from 'rxjs';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiParam,
+} from '@nestjs/swagger';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { Public } from 'src/auth/decorators/public.decorator';
 
+@ApiTags('Ratings')
 @Controller('ratings')
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
-  // --- Создать или обновить рейтинг ---
+  /** Создать / обновить рейтинг */
+  @ApiOperation({ summary: 'Поставить или изменить рейтинг (1–5)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post()
   async createOrUpdate(@Body() dto: CreateRatingDto, @Request() req) {
     const user = req.user;
     const result = await this.ratingsService.createOrUpdate(dto, user);
-    // Возвращаем сразу обновлённую статистику
     const stats = await this.ratingsService.getAverage(
       dto.target_type,
       dto.target_id,
@@ -34,61 +46,54 @@ export class RatingsController {
     return { ...result, ...stats };
   }
 
-  // --- Получить все рейтинги по сущности ---
+  /** Получить список всех оценок сущности */
+  @Public()
+  @ApiOperation({ summary: 'Получить все оценки сущности' })
+  @ApiParam({ name: 'target_type', enum: TargetType })
   @Get(':target_type/:target_id')
   async getRatings(
-    @Param('target_type') target_type: string,
+    @Param('target_type') target_type: TargetType,
     @Param('target_id', ParseIntPipe) target_id: number,
   ) {
-    return this.ratingsService.findByTarget(
-      target_type as 'book' | 'article' | 'media' | 'personality' | 'textbook',
-      target_id,
-    );
+    return this.ratingsService.findByTarget(target_type, target_id);
   }
 
-  // --- Получить средний рейтинг и количество голосов ---
+  /** Средний рейтинг */
+  @ApiOperation({ summary: 'Получить средний рейтинг и число голосов' })
+  @ApiParam({ name: 'target_type', enum: TargetType })
   @Get(':target_type/:target_id/average')
   async getAverage(
-    @Param('target_type') target_type: string,
+    @Param('target_type') target_type: TargetType,
     @Param('target_id', ParseIntPipe) target_id: number,
   ) {
-    return this.ratingsService.getAverage(
-      target_type as 'book' | 'article' | 'media' | 'personality' | 'textbook',
-      target_id,
-    );
+    return this.ratingsService.getAverage(target_type, target_id);
   }
 
-  // --- Live-стрим обновлений среднего рейтинга через SSE ---
+  /** SSE стрим лайв-рейтинга */
+  @Public()
+  @ApiOperation({ summary: 'Live-поток рейтинга через SSE (публично)' })
   @Sse('stream/:target_type/:target_id')
   streamAverage(
-    @Param('target_type') target_type: string,
+    @Param('target_type') target_type: TargetType,
     @Param('target_id', ParseIntPipe) target_id: number,
   ): Observable<MessageEvent> {
-    // ⚡ Каждые 5 секунд шлём обновлённую статистику
     return interval(5000).pipe(
       mergeMap(() =>
         from(
           this.ratingsService
-            .getAverage(
-              target_type as
-                | 'book'
-                | 'article'
-                | 'media'
-                | 'personality'
-                | 'textbook',
-              target_id,
-            )
+            .getAverage(target_type, target_id)
             .then((stats) => ({ data: stats }) as MessageEvent),
         ),
       ),
     );
   }
 
-  // --- Удалить рейтинг (только автор или админ) ---
+  /** Удалить рейтинг (только свой, SUPER_ADMIN — любой) */
+  @ApiOperation({ summary: 'Удалить рейтинг (только свой либо SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const user = req.user;
-    return this.ratingsService.delete(id, user);
+    return this.ratingsService.delete(id, req.user);
   }
 }
