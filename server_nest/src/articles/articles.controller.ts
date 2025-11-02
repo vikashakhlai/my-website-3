@@ -48,7 +48,10 @@ export class ArticlesController {
     private readonly favoritesService: FavoritesService,
   ) {}
 
+  // ====================== Публичные ======================
+
   /** 📰 Последние статьи (публично) */
+  @Public()
   @ApiOperation({ summary: 'Последние статьи (публично)' })
   @Get('latest')
   async getLatest(
@@ -58,6 +61,7 @@ export class ArticlesController {
   }
 
   /** 📋 Список статей (публично, с фильтром по теме) */
+  @Public()
   @ApiOperation({ summary: 'Список статей (публично)' })
   @Get()
   async getArticles(
@@ -67,18 +71,19 @@ export class ArticlesController {
     return this.articlesService.getArticles(theme, limit);
   }
 
-  /** 🔍 Публичная статья. Если передан JWT — добавится userId */
+  /** 🔍 Получить статью (публично). JWT добавляет userId */
+  @Public()
   @ApiOperation({
-    summary: 'Получить статью (публично). JWT добавит userId в результат',
+    summary: 'Получить статью (публично). Если есть JWT — вернётся userId',
   })
   @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.articlesService.getById(id, req.user?.sub);
   }
 
-  // ===== CRUD (ADMIN+) =====
+  // ====================== CRUD (ADMIN+) ======================
 
-  @ApiOperation({ summary: 'Создать статью (ADMIN+)' })
+  @ApiOperation({ summary: 'Создать статью (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -87,7 +92,7 @@ export class ArticlesController {
     return this.articlesService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Обновить статью (ADMIN+)' })
+  @ApiOperation({ summary: 'Обновить статью (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -99,7 +104,7 @@ export class ArticlesController {
     return this.articlesService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Удалить статью (ADMIN+)' })
+  @ApiOperation({ summary: 'Удалить статью (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -108,7 +113,7 @@ export class ArticlesController {
     return this.articlesService.remove(id);
   }
 
-  // ===== Exercises =====
+  // ====================== Exercises ======================
 
   @ApiOperation({ summary: 'Список упражнений (только авторизованные)' })
   @ApiBearerAuth('access-token')
@@ -118,7 +123,7 @@ export class ArticlesController {
     return this.articlesService.findExercisesByArticle(id);
   }
 
-  @ApiOperation({ summary: 'Добавить упражнение (ADMIN+)' })
+  @ApiOperation({ summary: 'Добавить упражнение (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -131,9 +136,9 @@ export class ArticlesController {
     return this.articlesService.addExerciseToArticle(articleId, dto);
   }
 
-  // ===== Rating =====
+  // ====================== Rating ======================
 
-  @ApiOperation({ summary: 'Оценить статью (1–5)' })
+  @ApiOperation({ summary: 'Оценить статью (1–5, только авторизованные)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/ratings')
@@ -145,8 +150,8 @@ export class ArticlesController {
     return this.articlesService.rateArticle(id, req.user.sub, dto.value);
   }
 
-  @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
   @Public()
+  @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
   @Sse('stream/:id/rating')
   streamRating(
     @Param('id', ParseIntPipe) id: number,
@@ -162,15 +167,16 @@ export class ArticlesController {
     );
   }
 
-  // ===== Comments =====
+  // ====================== Comments ======================
 
+  @Public()
   @ApiOperation({ summary: 'Список комментариев (публично)' })
   @Get(':id/comments')
   async getComments(@Param('id', ParseIntPipe) id: number) {
     return this.commentsService.findByTarget(TargetType.ARTICLE, id);
   }
 
-  @ApiOperation({ summary: 'Добавить комментарий (авторизованные)' })
+  @ApiOperation({ summary: 'Добавить комментарий (только авторизованные)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/comments')
@@ -190,8 +196,8 @@ export class ArticlesController {
     );
   }
 
-  @ApiOperation({ summary: 'Live-комментарии (публично, SSE)' })
   @Public()
+  @ApiOperation({ summary: 'Live-комментарии (публично, SSE)' })
   @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
@@ -203,8 +209,11 @@ export class ArticlesController {
     );
   }
 
-  /** 💛 Добавить статью в избранное */
-  @ApiOperation({ summary: 'Добавить статью в избранное' })
+  // ====================== Favorites ======================
+
+  @ApiOperation({
+    summary: 'Добавить статью в избранное (только авторизованные)',
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
@@ -215,8 +224,9 @@ export class ArticlesController {
     });
   }
 
-  /** 💔 Удалить статью из избранного */
-  @ApiOperation({ summary: 'Удалить статью из избранного' })
+  @ApiOperation({
+    summary: 'Удалить статью из избранного (только авторизованные)',
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')

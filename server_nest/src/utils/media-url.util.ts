@@ -1,13 +1,26 @@
-// универсальная версия, принимает string | null | undefined
 export function makeAbsoluteUrl<T extends string | null | undefined>(
   path: T,
 ): T extends string ? string : T {
   if (!path) return path as any;
 
-  const base =
-    process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const isAbsolute =
+    path.startsWith('http://') ||
+    path.startsWith('https://') ||
+    path.startsWith('//');
 
-  if (path.startsWith('http')) return path as any;
+  if (isAbsolute) return path as any;
+
+  let base = process.env.BACKEND_URL;
+
+  if (!base) {
+    const port = process.env.PORT || 3001;
+    base = `http://localhost:${port}`;
+  }
+
+  // гарантируем наличие протокола
+  if (!base.startsWith('http://') && !base.startsWith('https://')) {
+    base = `http://${base}`;
+  }
 
   return `${base}${path.startsWith('/') ? '' : '/'}${path}` as any;
 }

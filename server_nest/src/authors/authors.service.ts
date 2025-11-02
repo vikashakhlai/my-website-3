@@ -49,6 +49,14 @@ export class AuthorsService {
     };
   }
 
+  async getAllAuthors() {
+    return this.authorsRepo
+      .createQueryBuilder('a')
+      .select(['a.id', 'a.fullName AS full_name'])
+      .orderBy('a.fullName', 'ASC')
+      .getRawMany();
+  }
+
   // ✅ Создание автора (ADMIN+)
   async createAuthor(dto: CreateAuthorDto) {
     const author = this.authorsRepo.create({

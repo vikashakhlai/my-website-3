@@ -52,11 +52,6 @@ const Filters = ({
   >({});
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // ✅ первый вызов onChange — сразу
-  useEffect(() => {
-    onChange(initialValues);
-  }, []);
-
   // === debounce вызов onChange ===
   useEffect(() => {
     const timeout = setTimeout(() => {

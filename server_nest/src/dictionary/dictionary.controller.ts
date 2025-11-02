@@ -1,48 +1,41 @@
-import { Controller, Get, Query, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
 import { DictionaryService } from './dictionary.service';
-import type { Response } from 'express';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('dictionary')
 export class DictionaryController {
   constructor(private readonly dictService: DictionaryService) {}
 
+  /** 🔍 Поиск слов по словарю (публично) */
+  @Public()
   @Get('search')
-  async searchDictionary(@Query('query') query: string, @Res() res: Response) {
+  async searchDictionary(@Query('query') query: string) {
     try {
-      const result = await this.dictService.searchDictionary(query);
-      return res.json(result);
+      return await this.dictService.searchDictionary(query);
     } catch (err: any) {
-      // можно улучшить: прокидывать HttpException с кодом
-      console.error('Ошибка searchDictionary:', err);
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ error: err.message || 'Ошибка' });
+      throw new BadRequestException(err.message || 'Ошибка поиска');
     }
   }
 
+  /** 🧬 Поиск по корню (публично) */
+  @Public()
   @Get('by-root')
-  async searchByRoot(@Query('root') root: string, @Res() res: Response) {
+  async searchByRoot(@Query('root') root: string) {
     try {
-      const result = await this.dictService.searchByRoot(root);
-      return res.json(result);
+      return await this.dictService.searchByRoot(root);
     } catch (err: any) {
-      console.error('Ошибка searchByRoot:', err);
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ error: err.message || 'Ошибка' });
+      throw new BadRequestException(err.message || 'Ошибка поиска по корню');
     }
   }
 
+  /** ✨ Автодополнение (публично) */
+  @Public()
   @Get('autocomplete')
-  async autocomplete(@Query('q') q: string, @Res() res: Response) {
+  async autocomplete(@Query('q') q: string) {
     try {
-      const result = await this.dictService.autocomplete(q);
-      return res.json(result);
+      return await this.dictService.autocomplete(q);
     } catch (err: any) {
-      console.error('Ошибка autocomplete:', err);
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ error: err.message || 'Ошибка' });
+      throw new BadRequestException(err.message || 'Ошибка автодополнения');
     }
   }
 }

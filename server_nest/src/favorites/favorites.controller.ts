@@ -4,29 +4,19 @@ import {
   Delete,
   Body,
   Req,
-  UseGuards,
   UnauthorizedException,
   Get,
   Param,
   ParseEnumPipe,
 } from '@nestjs/common';
-import { FavoritesService } from './favorites.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { Request } from 'express';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-  ApiBody,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { FavoritesService } from './favorites.service';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
 import { RemoveFavoriteDto } from './dto/remove-favorite.dto';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Favorites')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard)
 @Controller('favorites')
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
@@ -41,12 +31,8 @@ export class FavoritesController {
   @ApiBody({
     type: CreateFavoriteDto,
     examples: {
-      book: {
-        value: { targetType: 'book', targetId: 12 },
-      },
-      media: {
-        value: { targetType: 'media', targetId: 44 },
-      },
+      book: { value: { targetType: 'book', targetId: 12 } },
+      media: { value: { targetType: 'media', targetId: 44 } },
     },
   })
   @Post()
@@ -58,9 +44,7 @@ export class FavoritesController {
   @ApiBody({
     type: RemoveFavoriteDto,
     examples: {
-      book: {
-        value: { targetType: 'book', targetId: 12 },
-      },
+      book: { value: { targetType: 'book', targetId: 12 } },
     },
   })
   @Delete()
@@ -97,16 +81,8 @@ export class FavoritesController {
   @ApiResponse({
     status: 200,
     example: [
-      {
-        type: 'book',
-        id: 12,
-        data: { id: 12, title: 'Война и мир' },
-      },
-      {
-        type: 'media',
-        id: 44,
-        data: { id: 44, title: 'Фильм о Петре I' },
-      },
+      { type: 'book', id: 12, data: { id: 12, title: 'Война и мир' } },
+      { type: 'media', id: 44, data: { id: 44, title: 'Фильм о Петре I' } },
     ],
   })
   @Get()

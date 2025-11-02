@@ -5,7 +5,6 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   Request,
   ParseIntPipe,
   Sse,
@@ -14,14 +13,8 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Observable, interval, mergeMap, from } from 'rxjs';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 
@@ -30,10 +23,8 @@ import { Public } from 'src/auth/decorators/public.decorator';
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
-  /** Создать / обновить рейтинг */
+  /** ⭐ Создать / обновить рейтинг (1–5) */
   @ApiOperation({ summary: 'Поставить или изменить рейтинг (1–5)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post()
   async createOrUpdate(@Body() dto: CreateRatingDto, @Request() req) {
@@ -46,7 +37,7 @@ export class RatingsController {
     return { ...result, ...stats };
   }
 
-  /** Получить список всех оценок сущности */
+  /** 📋 Получить список всех оценок сущности */
   @Public()
   @ApiOperation({ summary: 'Получить все оценки сущности' })
   @ApiParam({ name: 'target_type', enum: TargetType })
@@ -58,7 +49,7 @@ export class RatingsController {
     return this.ratingsService.findByTarget(target_type, target_id);
   }
 
-  /** Средний рейтинг */
+  /** 📊 Средний рейтинг + количество голосов */
   @ApiOperation({ summary: 'Получить средний рейтинг и число голосов' })
   @ApiParam({ name: 'target_type', enum: TargetType })
   @Get(':target_type/:target_id/average')
@@ -69,7 +60,7 @@ export class RatingsController {
     return this.ratingsService.getAverage(target_type, target_id);
   }
 
-  /** SSE стрим лайв-рейтинга */
+  /** 🔁 Live-обновление рейтинга через SSE */
   @Public()
   @ApiOperation({ summary: 'Live-поток рейтинга через SSE (публично)' })
   @Sse('stream/:target_type/:target_id')
@@ -88,10 +79,8 @@ export class RatingsController {
     );
   }
 
-  /** Удалить рейтинг (только свой, SUPER_ADMIN — любой) */
+  /** ❌ Удалить рейтинг (только свой, SUPER_ADMIN — любой) */
   @ApiOperation({ summary: 'Удалить рейтинг (только свой либо SUPER_ADMIN)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.ratingsService.delete(id, req.user);

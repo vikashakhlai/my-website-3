@@ -1,17 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import styles from "./BooksPage.module.css";
 import BookList from "../components/BookList";
 import Filters from "../components/Filters";
 import Pagination from "../components/Pagination";
 import { Book } from "../types/Book";
+import { api } from "../api/auth";
+
+type TagDto = { id: number; name: string };
+type AuthorDto = { id: number; full_name: string };
 
 const BooksPage = () => {
   const [filters, setFilters] = useState({ tag: "", author: "", title: "" });
+  const filtersRef = useRef(filters);
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
   const [books, setBooks] = useState<Book[]>([]);
-  const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
-  const [authors, setAuthors] = useState<{ id: number; full_name: string }[]>(
-    []
-  );
+  const [tags, setTags] = useState<TagDto[]>([]);
+  const [authors, setAuthors] = useState<AuthorDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,95 +30,106 @@ const BooksPage = () => {
   });
 
   const limit = 20;
+  const mountedRef = useRef(true);
+  const isFirstLoad = useRef(true);
 
-  // === Загрузка фильтров (теги, авторы) ===
+  // useEffect(() => {
+  //   return () => {
+  //     mountedRef.current = false;
+  //   };
+  // }, []);
+
+  // === фильтры (tags + authors) ===
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const [tagsRes, authorsRes] = await Promise.all([
-          fetch("/api-nest/tags"),
-          fetch("/api-nest/authors"),
+          api.get<TagDto[]>("/tags"),
+          api.get<AuthorDto[]>("/authors"),
         ]);
 
-        const tagsData = await tagsRes.json();
-        const authorsData = await authorsRes.json();
-
-        setTags(Array.isArray(tagsData) ? tagsData : []);
-        setAuthors(Array.isArray(authorsData) ? authorsData : []);
+        if (!mountedRef.current) return;
+        setTags(tagsRes.data ?? []);
+        setAuthors(authorsRes.data ?? []);
       } catch (err) {
         console.error("Ошибка загрузки фильтров:", err);
       }
     };
+
     fetchFilters();
   }, []);
 
-  // === Загрузка книг ===
-  const loadBooks = useCallback(
-    async (page = 1, fullLoad = false) => {
-      try {
-        if (fullLoad) {
-          setLoading(true);
-          setBooks([]);
-        } else {
-          setIsFetching(true);
-        }
-
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: limit.toString(),
-        });
-
-        if (filters.tag) params.append("tag", filters.tag);
-        if (filters.author) params.append("author", filters.author);
-        if (filters.title) params.append("title", filters.title);
-
-        const res = await fetch(`/api-nest/books/search?${params}`);
-        const data = await res.json();
-
-        if (Array.isArray(data.books)) {
-          setBooks(data.books);
-          setPagination({
-            currentPage: page,
-            totalPages: data.totalPages || 1,
-            totalCount: data.totalCount || 0,
-          });
-        } else {
-          setBooks([]);
-          setPagination({ currentPage: 1, totalPages: 1, totalCount: 0 });
-        }
-
-        setError(null);
-      } catch (err) {
-        console.error("Ошибка загрузки книг:", err);
-        setError("Не удалось загрузить книги.");
+  // === Стабильная функция загрузки книг ===
+  const fetchBooks = useCallback(async (page = 1, fullLoad = false) => {
+    try {
+      if (fullLoad) {
+        setLoading(true);
         setBooks([]);
-      } finally {
-        setLoading(false);
-        setIsFetching(false);
+      } else {
+        setIsFetching(true);
       }
-    },
-    [filters]
-  );
 
-  useEffect(() => {
-    loadBooks(1, true);
+      const params: Record<string, string | number> = { page, limit };
+      const f = filtersRef.current;
+
+      if (f.title.trim()) params.title = f.title.trim();
+      if (f.tag.trim()) params.tag = f.tag.trim();
+      if (f.author.trim()) params.author = f.author.trim();
+
+      const { data } = await api.get("/books", { params });
+
+      if (!mountedRef.current) return;
+
+      setBooks(data.items ?? []);
+      setPagination({
+        currentPage: data.page ?? 1,
+        totalPages: data.pages ?? 1,
+        totalCount: data.total ?? 0,
+      });
+      setError(null);
+    } catch (err) {
+      console.error("Ошибка загрузки книг:", err);
+      if (!mountedRef.current) return;
+      setError("Не удалось загрузить книги.");
+      setBooks([]);
+    } finally {
+      if (!mountedRef.current) return;
+      setLoading(false);
+      setIsFetching(false);
+    }
   }, []);
 
+  // === первый запрос ===
   useEffect(() => {
-    loadBooks(1);
-  }, [filters, loadBooks]);
+    fetchBooks(1, true);
+  }, []);
+
+  // === повторная загрузка при изменении фильтров ===
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+    fetchBooks(1);
+    setPagination((p) => ({ ...p, currentPage: 1 }));
+  }, [filters, fetchBooks]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
-      loadBooks(page);
+      fetchBooks(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleReset = () => {
     setFilters({ tag: "", author: "", title: "" });
-    loadBooks(1, true);
+    fetchBooks(1, true);
   };
+
+  const handleFiltersChange = useCallback(
+    (values: Record<string, string>) => setFilters(values as any),
+    []
+  );
 
   return (
     <div className={styles.page}>
@@ -142,10 +160,7 @@ const BooksPage = () => {
             placeholder: "Поиск по названию...",
           },
         ]}
-        onChange={(values) => {
-          setFilters(values);
-          setPagination((prev) => ({ ...prev, currentPage: 1 }));
-        }}
+        onChange={handleFiltersChange}
         onReset={handleReset}
         totalCount={pagination.totalCount}
       />
@@ -153,7 +168,7 @@ const BooksPage = () => {
       <div className={styles.booksWrapper}>
         {error ? (
           <p className={styles.error}>{error}</p>
-        ) : loading || (!books.length && !error) ? (
+        ) : loading ? (
           <div className={styles.gridPlaceholder}>
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="skeletonCard">
@@ -170,6 +185,7 @@ const BooksPage = () => {
             <BookList books={books} />
           </div>
         )}
+
         {isFetching && !loading && (
           <div className={styles.overlay}>
             <div className={styles.spinner}></div>

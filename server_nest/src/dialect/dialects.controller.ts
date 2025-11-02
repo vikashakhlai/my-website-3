@@ -11,12 +11,16 @@ import {
 } from '@nestjs/common';
 import { DialectsService } from './dialects.service';
 import { Dialect } from './dialect.entity';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/roles.enum';
 
 @Controller('dialects')
 export class DialectsController {
   constructor(private readonly dialectsService: DialectsService) {}
 
-  /** 📜 Получить все диалекты (фильтрация и пагинация) */
+  /** 📜 Получить все диалекты (публично) */
+  @Public()
   @Get()
   async findAll(
     @Query('page') page?: number,
@@ -32,19 +36,22 @@ export class DialectsController {
     });
   }
 
-  /** 🔍 Один диалект */
+  /** 🔍 Один диалект (публично) */
+  @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Dialect> {
     return this.dialectsService.findOne(id);
   }
 
-  /** ➕ Создать */
+  /** ➕ Создать (только админ) */
+  @Roles(Role.SUPER_ADMIN)
   @Post()
   async create(@Body() data: Partial<Dialect>): Promise<Dialect> {
     return this.dialectsService.create(data);
   }
 
-  /** ♻️ Обновить */
+  /** ♻️ Обновить (только админ) */
+  @Roles(Role.SUPER_ADMIN)
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -53,7 +60,8 @@ export class DialectsController {
     return this.dialectsService.update(id, data);
   }
 
-  /** 🗑 Удалить */
+  /** 🗑 Удалить (только админ) */
+  @Roles(Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.dialectsService.remove(id);

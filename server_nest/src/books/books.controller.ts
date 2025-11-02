@@ -23,6 +23,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { RateBookDto } from './dto/rate-book.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { SearchBooksDto } from './dto/search-books.dto';
 
 @ApiTags('Books')
 @Controller('books')
@@ -32,26 +33,13 @@ export class BooksController {
     private readonly jwtService: JwtService,
   ) {}
 
-  // === 🔍 Поиск и фильтрация ===
+  // ✅ Новый универсальный эндпоинт поиска + пагинации
   @Public()
-  @ApiOperation({ summary: 'Поиск книг с фильтрацией' })
-  @Get('search')
-  async search(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('tag') tag?: string,
-    @Query('author') author?: string,
-    @Query('title') title?: string,
-  ) {
-    return this.bookService.searchBooks({ page, limit, tag, author, title });
-  }
-
-  // === 📚 Все книги ===
-  @Public()
-  @ApiOperation({ summary: 'Получить список всех книг (публично)' })
+  @ApiOperation({ summary: 'Получить список книг с пагинацией и фильтрами' })
   @Get()
-  async findAll() {
-    return this.bookService.findAll();
+  async getBooks(@Query() query: SearchBooksDto, @Req() req: Request) {
+    const userId = this.extractUserId(req);
+    return this.bookService.searchBooks(query);
   }
 
   // === 📚 Похожие книги ===
@@ -74,9 +62,8 @@ export class BooksController {
   @Public()
   @ApiOperation({ summary: 'Последние добавленные книги' })
   @Get('latest')
-  async getLatest(@Query() query: any) {
-    const safeLimit = Number(query.limit) || 10;
-    return this.bookService.findLatest(safeLimit);
+  async getLatest(@Query('limit') limit?: number) {
+    return this.bookService.findLatest(Number(limit) || 10);
   }
 
   // === 📘 Одна книга + связанные ===
@@ -87,19 +74,7 @@ export class BooksController {
     @Param('id', ParseIntPipe) id: number,
     @Req() req: Request,
   ) {
-    let userId: string | undefined;
-
-    const authHeader = req.headers['authorization'];
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const decoded: any = this.jwtService.verify(token);
-        userId = decoded.sub || decoded.id;
-      } catch {
-        // токен просто игнорируется, если неверен
-      }
-    }
-
+    const userId = this.extractUserId(req);
     return this.bookService.findOneWithRelated(id, userId);
   }
 
@@ -122,8 +97,12 @@ export class BooksController {
     @Body('parentId') parentId: number | null,
     @Req() req: any,
   ) {
-    const userId = req.user.sub;
-    return this.bookService.addComment(id, userId, content, parentId);
+    return this.bookService.addComment(
+      id,
+      req.user.sub,
+      content,
+      parentId ?? undefined,
+    );
   }
 
   // === ⭐ Поставить/обновить рейтинг ===
@@ -136,8 +115,7 @@ export class BooksController {
     @Body() dto: RateBookDto,
     @Req() req: any,
   ) {
-    const userId = req.user.sub;
-    return this.bookService.rateBook(id, userId, dto.value);
+    return this.bookService.rateBook(id, req.user.sub, dto.value);
   }
 
   // === ➕ Создать книгу (ADMIN+) ===
@@ -171,5 +149,19 @@ export class BooksController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.remove(id);
+  }
+
+  // === 🔐 Helper to decode optional JWT ===
+  private extractUserId(req: Request): string | undefined {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader?.startsWith('Bearer ')) return undefined;
+
+    try {
+      const token = authHeader.split(' ')[1];
+      const decoded: any = this.jwtService.verify(token);
+      return decoded.sub || decoded.id;
+    } catch {
+      return undefined;
+    }
   }
 }
