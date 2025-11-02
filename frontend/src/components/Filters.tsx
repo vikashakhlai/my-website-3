@@ -42,12 +42,20 @@ const Filters = ({
   totalCount,
   debounce = 300,
 }: FiltersProps) => {
-  const [values, setValues] = useState<Record<string, string>>({});
+  // ✅ создаём объект { name: "", region: "", topics: "" } и т.п.
+  const initialValues = Object.fromEntries(fields.map((f) => [f.key, ""]));
+  const [values, setValues] = useState<Record<string, string>>(initialValues);
+
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
   const [showSuggestions, setShowSuggestions] = useState<
     Record<string, boolean>
   >({});
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // ✅ первый вызов onChange — сразу
+  useEffect(() => {
+    onChange(initialValues);
+  }, []);
 
   // === debounce вызов onChange ===
   useEffect(() => {

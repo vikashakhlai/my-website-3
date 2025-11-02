@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BookService } from './books.service';
-import { FavoritesService } from 'src/favorites/favorites.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -31,7 +30,6 @@ export class BooksController {
   constructor(
     private readonly bookService: BookService,
     private readonly jwtService: JwtService,
-    private readonly favoritesService: FavoritesService,
   ) {}
 
   // === 🔍 Поиск и фильтрация ===
@@ -173,26 +171,5 @@ export class BooksController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.remove(id);
-  }
-
-  // === 💛 Добавить в избранное ===
-  @ApiOperation({ summary: 'Добавить книгу в избранное' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/favorite')
-  async addToFavorites(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.favoritesService.addToFavorites(req.user.sub, id, 'book');
-  }
-
-  // === 💔 Удалить из избранного ===
-  @ApiOperation({ summary: 'Удалить книгу из избранного' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id/favorite')
-  async removeFromFavorites(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
-  ) {
-    return this.favoritesService.removeFromFavorites(req.user.sub, id, 'book');
   }
 }

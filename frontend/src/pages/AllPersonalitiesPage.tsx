@@ -55,10 +55,10 @@ const AllPersonalitiesPage = () => {
         if (filters.era) params.era = filters.era;
 
         const response = await api.get("/personalities", { params });
-        const { data, total, totalPages } = response.data;
+        const { items, total, pages } = response.data;
 
-        setPersonalities(data);
-        setPagination({ currentPage: page, totalPages, total });
+        setPersonalities(items);
+        setPagination({ currentPage: page, totalPages: pages, total });
         setError(null);
       } catch (err) {
         console.error("Ошибка загрузки:", err);

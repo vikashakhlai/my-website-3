@@ -18,10 +18,12 @@ import { interval, Observable, switchMap } from 'rxjs';
 
 import { TextbooksService } from './textbooks.service';
 import { RatingsService } from 'src/ratings/ratings.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Public } from 'src/auth/decorators/public.decorator'; // ✅ важно
+import { Public } from 'src/auth/decorators/public.decorator';
 import { CreateTextbookDto } from './dto/create-textbook.dto';
 import { UpdateTextbookDto } from './dto/update-textbook.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -35,6 +37,7 @@ export class TextbooksController {
   constructor(
     private readonly textbooksService: TextbooksService,
     private readonly ratingsService: RatingsService,
+    private readonly favoritesService: FavoritesService,
   ) {}
 
   /** 📚 Список учебников (публично) */
@@ -50,7 +53,7 @@ export class TextbooksController {
     return this.textbooksService.getAll({ page, limit, sort, level });
   }
 
-  /** 📖 Просмотр одного учебника (публично, со свойством canDownload) */
+  /** 📖 Просмотр одного учебника (публично) */
   @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Получить учебник (публично, с canDownload)' })
   @Get(':id')
@@ -125,5 +128,35 @@ export class TextbooksController {
         return { data: { average, votes } };
       }),
     );
+  }
+
+  /** 💛 Добавить в избранное */
+  @ApiOperation({ summary: 'Добавить учебник в избранное' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/favorite')
+  async addToFavorites(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: any,
+  ) {
+    return this.favoritesService.addToFavorites(req.user.sub, {
+      targetType: TargetType.TEXTBOOK,
+      targetId: id,
+    });
+  }
+
+  /** 💔 Удалить из избранного */
+  @ApiOperation({ summary: 'Удалить учебник из избранного' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/favorite')
+  async removeFromFavorites(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: any,
+  ) {
+    return this.favoritesService.removeFromFavorites(req.user.sub, {
+      targetType: TargetType.TEXTBOOK,
+      targetId: id,
+    });
   }
 }

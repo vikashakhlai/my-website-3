@@ -37,11 +37,17 @@ export class MediaService {
    * ========================================= */
 
   async findAll(): Promise<Media[]> {
-    const medias = await this.mediaRepository.find({
-      relations: ['dialect', 'topics'],
-      order: { createdAt: 'DESC' },
-    });
-    return medias.map((m) => this.normalizeMediaPaths(m));
+    console.log('🔥 findAll() CALLED');
+    const list = await this.mediaRepository
+      .createQueryBuilder('media')
+      .leftJoinAndSelect('media.dialect', 'dialect')
+      .leftJoinAndSelect('media.topics', 'topics')
+      .where('media.dialectId IS NOT NULL') // ←←← ДОБАВЬТЕ ЭТУ СТРОКУ
+      .orderBy('media.createdAt', 'DESC')
+      .getMany();
+
+    console.log('📌 RESULT COUNT =', list.length);
+    return list.map((m) => this.normalizeMediaPaths(m));
   }
 
   async findOne(id: number): Promise<Media> {
@@ -62,6 +68,7 @@ export class MediaService {
       .createQueryBuilder('media')
       .leftJoinAndSelect('media.dialect', 'dialect')
       .leftJoinAndSelect('media.topics', 'topics')
+      .where('media.dialectId IS NOT NULL')
       .orderBy('media.createdAt', 'DESC');
 
     if (filters.name) {
@@ -75,7 +82,6 @@ export class MediaService {
         region: `%${filters.region}%`,
       });
     }
-
 
     const topics = filters.topics ?? [];
     if (topics.length > 0) {

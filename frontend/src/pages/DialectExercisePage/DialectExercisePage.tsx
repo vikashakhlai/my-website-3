@@ -13,7 +13,7 @@ import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
 import { api } from "../../api/auth";
 
-import type { Media } from "../../types/media"; // ✅ импорт АДЕКВАТНОГО media-типа
+import type { Media } from "../../types/media";
 
 interface Dialogue {
   id: number;
@@ -45,7 +45,7 @@ export default function DialectExercisePage() {
   const esRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 🔒 блокировка страницы для гостей (твой запрос)
+  // 🔒 redirect guests
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login?redirect=/dialects/" + id);
@@ -71,7 +71,7 @@ export default function DialectExercisePage() {
     []
   );
 
-  // ===== 1) Загрузка media + диалога + избранного =====
+  // ===== 1) Load media + dialogue + favorites =====
   useEffect(() => {
     if (!id || !isAuthenticated) return;
 
@@ -97,10 +97,11 @@ export default function DialectExercisePage() {
           );
         }
 
-        const { data: favList } = await api.get<any[]>(`/favorites/media`, {
+        // ✅ FIXED: получение избранного
+        const { data: favList } = await api.get(`/favorites/by-type/media`, {
           signal,
         });
-        setFav(favList.some((f) => f.id === Number(id)));
+        setFav(favList.some((f: any) => f.targetId === Number(id)));
       } catch (e: any) {
         if (e?.name !== "CanceledError") {
           console.error("Ошибка загрузки медиа:", e);
@@ -115,7 +116,7 @@ export default function DialectExercisePage() {
     return () => controller.abort();
   }, [id, isAuthenticated]);
 
-  // ===== 2) SSE =====
+  // ===== 2) SSE rating updates =====
   useEffect(() => {
     if (!id || !isAuthenticated) return;
     if (esRef.current) esRef.current.close();
@@ -161,15 +162,21 @@ export default function DialectExercisePage() {
     };
   }, [id, apiBase, isAuthenticated]);
 
-  // ===== 3) Избранное =====
+  // ===== 3) Favorite toggle =====
   const handleToggleFavorite = async () => {
     if (!media) return;
+
     try {
       if (fav) {
-        await api.delete(`/favorites/media/${media.id}`);
+        await api.delete("/favorites", {
+          data: { targetType: "media", targetId: media.id },
+        });
         setFav(false);
       } else {
-        await api.post(`/favorites/media/${media.id}`);
+        await api.post("/favorites", {
+          targetType: "media",
+          targetId: media.id,
+        });
         setFav(true);
       }
     } catch (e) {
@@ -177,7 +184,6 @@ export default function DialectExercisePage() {
     }
   };
 
-  // ===== 4) Плеер =====
   const mediaPlayer = useMemo(() => {
     if (!media) return null;
     return media.type === "audio" ? (
@@ -195,7 +201,7 @@ export default function DialectExercisePage() {
     <div className="dialect-exercise">
       {mediaPlayer}
 
-      {/* 🧾 Метаданные */}
+      {/* 🧾 Meta */}
       <div className="exercise-meta">
         <div className="meta-inline">
           <BackZone to="/dialects" />
@@ -222,19 +228,15 @@ export default function DialectExercisePage() {
             </span>
           )}
 
-          {/* ❤️ Избранное */}
           <FavoriteButton isFavorite={fav} onToggle={handleToggleFavorite} />
         </div>
       </div>
 
-      {/* 🗣️ Диалог */}
       {dialogue && <DialogueCompare dialogue={dialogue} />}
 
-      {/* 💬 Комментарии и ⭐ Рейтинг */}
       <div className="feedback-section">
         <h2 className="feedback-title">Обратная связь</h2>
 
-        {/* ⭐ Рейтинг */}
         <div className="rating-block">
           <h3>Оцените материал</h3>
           <div className="rating-wrapper">
@@ -250,7 +252,6 @@ export default function DialectExercisePage() {
           </div>
         </div>
 
-        {/* 💬 Комментарии */}
         <div className="comments-block">
           <CommentsSection targetType="media" targetId={media.id} />
         </div>

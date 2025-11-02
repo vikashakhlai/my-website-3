@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Favorite } from './favorite.entity';
@@ -7,221 +11,168 @@ import { Textbook } from '../textbooks/textbook.entity';
 import { Article } from '../articles/article.entity';
 import { Media } from '../media/media.entity';
 import { Personality } from '../personalities/personality.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { CreateFavoriteDto } from './dto/create-favorite.dto';
+import { RemoveFavoriteDto } from './dto/remove-favorite.dto';
 
-export type FavoriteType =
-  | 'book'
-  | 'textbook'
-  | 'article'
-  | 'media'
-  | 'personality';
+export interface FavoriteResponseItem<T = any> {
+  type: TargetType;
+  id: number;
+  data: T;
+}
 
 @Injectable()
 export class FavoritesService {
+  private repoMap: Record<TargetType, Repository<any> | null>;
+
   constructor(
     @InjectRepository(Favorite)
     private readonly favoriteRepo: Repository<Favorite>,
+
     @InjectRepository(Book)
     private readonly bookRepo: Repository<Book>,
+
     @InjectRepository(Textbook)
     private readonly textbookRepo: Repository<Textbook>,
+
     @InjectRepository(Article)
     private readonly articleRepo: Repository<Article>,
+
     @InjectRepository(Media)
     private readonly mediaRepo: Repository<Media>,
+
     @InjectRepository(Personality)
     private readonly personalityRepo: Repository<Personality>,
-  ) {}
+  ) {
+    this.repoMap = {
+      [TargetType.BOOK]: this.bookRepo,
+      [TargetType.TEXTBOOK]: this.textbookRepo,
+      [TargetType.ARTICLE]: this.articleRepo,
+      [TargetType.MEDIA]: this.mediaRepo,
+      [TargetType.PERSONALITY]: this.personalityRepo,
+      [TargetType.AUTHOR]: null, // TODO: будет позже
+    };
+  }
 
   /** ⭐ Добавить элемент в избранное */
   async addToFavorites(
     userId: string,
-    itemId: number,
-    type: FavoriteType,
+    dto: CreateFavoriteDto,
   ): Promise<Favorite> {
-    const repo = this.getRepoByType(type);
-    const item = await repo.findOne({ where: { id: itemId } });
+    const { targetType, targetId } = dto;
 
+    const repo = this.repoMap[targetType];
+    if (!repo) {
+      throw new BadRequestException(
+        `Тип "${targetType}" пока не поддерживается`,
+      );
+    }
+
+    const item = await repo.findOne({ where: { id: targetId } });
     if (!item) {
-      throw new NotFoundException(`${this.getReadableType(type)} не найден`);
+      throw new NotFoundException(`${this.readableType(targetType)} не найден`);
     }
 
     const existing = await this.favoriteRepo.findOne({
-      where: { userId, itemType: type, itemId },
+      where: { userId, targetType, targetId },
     });
 
     if (existing) return existing;
 
-    const favorite = this.favoriteRepo.create({
-      userId,
-      itemType: type,
-      itemId,
-    });
-
-    return this.favoriteRepo.save(favorite);
+    return this.favoriteRepo.save(
+      this.favoriteRepo.create({ userId, targetType, targetId }),
+    );
   }
 
-  /** 🗑 Удалить элемент из избранного */
+  /** 🗑 Удалить элемент */
   async removeFromFavorites(
     userId: string,
-    itemId: number,
-    type: FavoriteType,
+    dto: RemoveFavoriteDto,
   ): Promise<void> {
+    const { targetType, targetId } = dto;
+
     const existing = await this.favoriteRepo.findOne({
-      where: { userId, itemType: type, itemId },
+      where: { userId, targetType, targetId },
     });
 
     if (!existing) {
       throw new NotFoundException(
-        `${this.getReadableType(type)} не найден в избранном`,
+        `${this.readableType(targetType)} не найден в избранном`,
       );
     }
 
     await this.favoriteRepo.remove(existing);
   }
 
-  /** 📋 Получить избранное одного типа */
-  async getUserFavorites(
+  /** 📋 Избранное одного типа — универсальный формат */
+  async getUserFavoritesByType(
     userId: string,
-    type: FavoriteType,
-  ): Promise<Book[] | Textbook[] | Article[] | Media[] | Personality[]> {
-    const favorites = await this.favoriteRepo.find({
-      where: { userId, itemType: type },
-    });
-
-    if (favorites.length === 0) {
-      return [];
+    targetType: TargetType,
+  ): Promise<FavoriteResponseItem[]> {
+    const repo = this.repoMap[targetType];
+    if (!repo) {
+      throw new BadRequestException(
+        `Тип "${targetType}" пока не поддерживается`,
+      );
     }
 
-    const ids = favorites.map((f) => f.itemId);
-    const repo = this.getRepoByType(type);
+    const favs = await this.favoriteRepo.find({
+      where: { userId, targetType },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!favs.length) return [];
+
+    const ids = favs.map((f) => f.targetId);
     const items = await repo.find({ where: { id: In(ids) } });
 
-    // Сохраняем порядок из избранного
-    const itemMap = new Map(items.map((item) => [item.id, item]));
-    const ordered = favorites
-      .map((f) => itemMap.get(f.itemId))
-      .filter((item): item is NonNullable<typeof item> => item != null);
+    const map = new Map(items.map((i) => [i.id, i]));
 
-    return ordered;
+    return favs
+      .map((f) => {
+        const data = map.get(f.targetId);
+        return data
+          ? ({ type: targetType, id: f.targetId, data } as FavoriteResponseItem)
+          : null;
+      })
+      .filter(Boolean) as FavoriteResponseItem[];
   }
 
-  /** 📋 Получить все избранные элементы всех типов */
-  async getAllUserFavorites(userId: string): Promise<{
-    books: Book[];
-    textbooks: Textbook[];
-    articles: Article[];
-    media: Media[];
-    personalities: Personality[];
-  }> {
-    const favorites = await this.favoriteRepo.find({
+  /** 📋 Все избранные элементы — универсальный массив */
+  async getAllUserFavorites(userId: string): Promise<FavoriteResponseItem[]> {
+    const favs = await this.favoriteRepo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
 
-    const grouped = {
-      books: [] as Book[],
-      textbooks: [] as Textbook[],
-      articles: [] as Article[],
-      media: [] as Media[],
-      personalities: [] as Personality[],
-    };
+    const result: FavoriteResponseItem[] = [];
 
-    // Группируем по типу
-    const byType: Record<FavoriteType, number[]> = {
-      book: [],
-      textbook: [],
-      article: [],
-      media: [],
-      personality: [],
-    };
+    for (const f of favs) {
+      const repo = this.repoMap[f.targetType];
+      if (!repo) continue;
 
-    for (const fav of favorites) {
-      byType[fav.itemType].push(fav.itemId);
-    }
+      const item = await repo.findOne({ where: { id: f.targetId } });
+      if (!item) continue; // ✅ фильтруем удалённые сущности
 
-    // Загружаем каждый тип отдельно — это решает проблему типизации
-    if (byType.book.length) {
-      const books = await this.bookRepo.find({
-        where: { id: In(byType.book) },
+      result.push({
+        type: f.targetType,
+        id: f.targetId,
+        data: item,
       });
-      const bookMap = new Map(books.map((b) => [b.id, b]));
-      grouped.books = byType.book
-        .map((id) => bookMap.get(id))
-        .filter((b): b is Book => !!b);
     }
 
-    if (byType.textbook.length) {
-      const textbooks = await this.textbookRepo.find({
-        where: { id: In(byType.textbook) },
-      });
-      const map = new Map(textbooks.map((t) => [t.id, t]));
-      grouped.textbooks = byType.textbook
-        .map((id) => map.get(id))
-        .filter((t): t is Textbook => !!t);
-    }
-
-    if (byType.article.length) {
-      const articles = await this.articleRepo.find({
-        where: { id: In(byType.article) },
-      });
-      const map = new Map(articles.map((a) => [a.id, a]));
-      grouped.articles = byType.article
-        .map((id) => map.get(id))
-        .filter((a): a is Article => !!a);
-    }
-
-    if (byType.media.length) {
-      const media = await this.mediaRepo.find({
-        where: { id: In(byType.media) },
-      });
-      const map = new Map(media.map((m) => [m.id, m]));
-      grouped.media = byType.media
-        .map((id) => map.get(id))
-        .filter((m): m is Media => !!m);
-    }
-
-    if (byType.personality.length) {
-      const personalities = await this.personalityRepo.find({
-        where: { id: In(byType.personality) },
-      });
-      const map = new Map(personalities.map((p) => [p.id, p]));
-      grouped.personalities = byType.personality
-        .map((id) => map.get(id))
-        .filter((p): p is Personality => !!p);
-    }
-
-    return grouped;
+    return result;
   }
 
-  /** 🧩 Возвращает репозиторий по типу */
-  private getRepoByType(type: FavoriteType): Repository<any> {
-    switch (type) {
-      case 'book':
-        return this.bookRepo;
-      case 'textbook':
-        return this.textbookRepo;
-      case 'article':
-        return this.articleRepo;
-      case 'media':
-        return this.mediaRepo;
-      case 'personality':
-        return this.personalityRepo;
-      default:
-        throw new NotFoundException(
-          `Неизвестный тип избранного: ${String(type)}`,
-        );
-    }
-  }
-
-  /** 🧠 Красивое имя типа для сообщений об ошибках */
-  private getReadableType(type: FavoriteType): string {
-    const map: Record<FavoriteType, string> = {
-      book: 'Книга',
-      textbook: 'Учебник',
-      article: 'Статья',
-      media: 'Медиа',
-      personality: 'Личность',
-    };
-    return map[type];
+  /** 🧠 Человеческое имя */
+  private readableType(type: TargetType): string {
+    return {
+      [TargetType.BOOK]: 'Книга',
+      [TargetType.TEXTBOOK]: 'Учебник',
+      [TargetType.ARTICLE]: 'Статья',
+      [TargetType.MEDIA]: 'Медиа',
+      [TargetType.PERSONALITY]: 'Личность',
+      [TargetType.AUTHOR]: 'Автор',
+    }[type];
   }
 }

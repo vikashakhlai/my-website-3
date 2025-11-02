@@ -2,26 +2,27 @@ import {
   Controller,
   Post,
   Delete,
-  Get,
-  Param,
+  Body,
   Req,
   UseGuards,
-  ParseIntPipe,
-  BadRequestException,
+  UnauthorizedException,
+  Get,
+  Param,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { Request } from 'express';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-
-export const ALLOWED_TYPES = [
-  'book',
-  'textbook',
-  'article',
-  'media',
-  'personality',
-] as const;
-export type FavoriteType = (typeof ALLOWED_TYPES)[number];
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { CreateFavoriteDto } from './dto/create-favorite.dto';
+import { RemoveFavoriteDto } from './dto/remove-favorite.dto';
+import { TargetType } from 'src/common/enums/target-type.enum';
 
 @ApiTags('Favorites')
 @ApiBearerAuth('access-token')
@@ -30,73 +31,86 @@ export type FavoriteType = (typeof ALLOWED_TYPES)[number];
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
-  @ApiOperation({ summary: 'Добавить элемент в избранное' })
-  @Post(':type/:id')
-  async addToFavorites(
-    @Param('type') type: string,
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: Request,
-  ) {
+  private getUserId(req: Request): string {
     const userId = (req.user as any)?.sub;
-    if (!userId)
-      throw new BadRequestException('Не удалось определить пользователя');
+    if (!userId) throw new UnauthorizedException();
+    return userId;
+  }
 
-    if (!ALLOWED_TYPES.includes(type as FavoriteType)) {
-      throw new BadRequestException(`Недопустимый тип избранного: ${type}`);
-    }
-
-    return this.favoritesService.addToFavorites(
-      userId,
-      id,
-      type as FavoriteType,
-    );
+  @ApiOperation({ summary: 'Добавить элемент в избранное' })
+  @ApiBody({
+    type: CreateFavoriteDto,
+    examples: {
+      book: {
+        value: { targetType: 'book', targetId: 12 },
+      },
+      media: {
+        value: { targetType: 'media', targetId: 44 },
+      },
+    },
+  })
+  @Post()
+  async addToFavorites(@Body() dto: CreateFavoriteDto, @Req() req: Request) {
+    return this.favoritesService.addToFavorites(this.getUserId(req), dto);
   }
 
   @ApiOperation({ summary: 'Удалить элемент из избранного' })
-  @Delete(':type/:id')
+  @ApiBody({
+    type: RemoveFavoriteDto,
+    examples: {
+      book: {
+        value: { targetType: 'book', targetId: 12 },
+      },
+    },
+  })
+  @Delete()
   async removeFromFavorites(
-    @Param('type') type: string,
-    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RemoveFavoriteDto,
     @Req() req: Request,
   ) {
-    const userId = (req.user as any)?.sub;
-    if (!userId)
-      throw new BadRequestException('Не удалось определить пользователя');
+    return this.favoritesService.removeFromFavorites(this.getUserId(req), dto);
+  }
 
-    if (!ALLOWED_TYPES.includes(type as FavoriteType)) {
-      throw new BadRequestException(`Недопустимый тип избранного: ${type}`);
-    }
-
-    return this.favoritesService.removeFromFavorites(
-      userId,
-      id,
-      type as FavoriteType,
+  @ApiOperation({ summary: 'Получить избранное одного типа' })
+  @ApiResponse({
+    status: 200,
+    example: [
+      {
+        type: 'book',
+        id: 12,
+        data: { id: 12, title: 'Война и мир', cover: '/uploads/books/12.jpg' },
+      },
+    ],
+  })
+  @Get('by-type/:targetType')
+  async getUserFavoritesByType(
+    @Param('targetType', new ParseEnumPipe(TargetType)) targetType: TargetType,
+    @Req() req: Request,
+  ) {
+    return this.favoritesService.getUserFavoritesByType(
+      this.getUserId(req),
+      targetType,
     );
   }
 
-  @ApiOperation({ summary: 'Получить избранное по типу' })
-  @Get(':type')
-  async getUserFavorites(@Param('type') type: string, @Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId)
-      throw new BadRequestException('Не удалось определить пользователя');
-
-    if (type.endsWith('s')) type = type.slice(0, -1);
-
-    if (!ALLOWED_TYPES.includes(type as FavoriteType)) {
-      throw new BadRequestException(`Недопустимый тип: ${type}`);
-    }
-
-    return this.favoritesService.getUserFavorites(userId, type as FavoriteType);
-  }
-
-  @ApiOperation({ summary: 'Получить все избранное пользователя' })
+  @ApiOperation({ summary: 'Получить всё избранное пользователя' })
+  @ApiResponse({
+    status: 200,
+    example: [
+      {
+        type: 'book',
+        id: 12,
+        data: { id: 12, title: 'Война и мир' },
+      },
+      {
+        type: 'media',
+        id: 44,
+        data: { id: 44, title: 'Фильм о Петре I' },
+      },
+    ],
+  })
   @Get()
   async getAllUserFavorites(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId)
-      throw new BadRequestException('Не удалось определить пользователя');
-
-    return this.favoritesService.getAllUserFavorites(userId);
+    return this.favoritesService.getAllUserFavorites(this.getUserId(req));
   }
 }

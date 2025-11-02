@@ -35,6 +35,7 @@ export class QuotesController {
 
   // ✅ Публичные цитаты по личности
   @ApiOperation({ summary: 'Все цитаты по персоне' })
+  @Public()
   @Get('by-personality/:id')
   async getByPersonality(@Param('id', ParseIntPipe) id: number) {
     return this.quotesService.findByPersonality(id);

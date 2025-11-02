@@ -36,6 +36,7 @@ import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @ApiTags('Articles')
 @Controller('articles')
@@ -44,6 +45,7 @@ export class ArticlesController {
     private readonly articlesService: ArticlesService,
     private readonly ratingsService: RatingsService,
     private readonly commentsService: CommentsService,
+    private readonly favoritesService: FavoritesService,
   ) {}
 
   /** 📰 Последние статьи (публично) */
@@ -199,5 +201,32 @@ export class ArticlesController {
         data: await this.commentsService.findByTarget(TargetType.ARTICLE, id),
       })),
     );
+  }
+
+  /** 💛 Добавить статью в избранное */
+  @ApiOperation({ summary: 'Добавить статью в избранное' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/favorite')
+  async addToFavorites(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.favoritesService.addToFavorites(req.user.sub, {
+      targetType: TargetType.ARTICLE,
+      targetId: id,
+    });
+  }
+
+  /** 💔 Удалить статью из избранного */
+  @ApiOperation({ summary: 'Удалить статью из избранного' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/favorite')
+  async removeFromFavorites(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    return this.favoritesService.removeFromFavorites(req.user.sub, {
+      targetType: TargetType.ARTICLE,
+      targetId: id,
+    });
   }
 }

@@ -48,6 +48,7 @@ const DialectPage = () => {
     const fetchMedia = async () => {
       setLoading(true);
       const start = Date.now();
+      console.log("▶️ fetchMedia start, filters =", filters);
 
       try {
         const params: Record<string, string> = {};
@@ -55,35 +56,43 @@ const DialectPage = () => {
         if (filters.region) params.region = filters.region;
         if (filters.topics.length > 0) params.topics = filters.topics.join(",");
 
-        const res = await api.get("/media", { params });
+        console.log("📡 sending request with params:", params);
+
+        const res = await api.get<Media[]>("/media", { params });
+
+        console.log("✅ response received:", res.data);
 
         const elapsed = Date.now() - start;
-        const delay = Math.max(0, 400 - elapsed); // минимум 400мс скелета
+        const delay = Math.max(0, 400 - elapsed);
 
         setTimeout(() => {
-          if (!isMounted) return;
+          console.log("⏳ delayed processing");
 
-          const data = res.data as Media[];
-          setMediaList(data);
+          const data = res.data;
+          console.log("📌 data parsed:", data);
+
+          setMediaList(Array.isArray(data) ? data : []);
+
           setLoading(false);
           setLoadedOnce(true);
 
-          const uniqueRegions = [
-            ...new Set(
+          const uniqueRegions = Array.from(
+            new Set(
               data
                 .map((m) => m.dialect?.region)
                 .filter((r): r is string => Boolean(r))
-            ),
-          ];
+            )
+          );
+
+          console.log("🌍 regions extracted:", uniqueRegions);
+
           setRegions(uniqueRegions);
         }, delay);
       } catch (err) {
-        if (isMounted) {
-          console.error("Ошибка при загрузке медиа:", err);
-          setMediaList([]);
-          setLoading(false);
-          setLoadedOnce(true);
-        }
+        console.error("❌ Ошибка при загрузке медиа:", err);
+        setMediaList([]);
+        setLoading(false);
+        setLoadedOnce(true);
       }
     };
 

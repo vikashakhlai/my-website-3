@@ -8,11 +8,13 @@ import {
   MessageEvent,
   Req,
 } from '@nestjs/common';
+import { interval, Observable, switchMap, from, map } from 'rxjs';
+
 import { PersonalitiesService } from './personalities.service';
-import { Era } from './personality.entity';
 import { CommentsService } from 'src/comments/comments.service';
 import { RatingsService } from 'src/ratings/ratings.service';
-import { interval, Observable, switchMap, from, map } from 'rxjs';
+
+import { Era } from './personality.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 
@@ -52,7 +54,7 @@ export class PersonalitiesController {
     );
   }
 
-  /** ⭐ Средний рейтинг одной личности (публично) */
+  /** ⭐ Средний рейтинг (публично) */
   @Public()
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
@@ -67,7 +69,7 @@ export class PersonalitiesController {
     return this.personalitiesService.getRandom(isNaN(num) ? 3 : num);
   }
 
-  /** 📋 Список личностей (публично) */
+  /** 📋 Список личностей с пагинацией (публично) */
   @Public()
   @Get()
   async findAll(
@@ -75,11 +77,16 @@ export class PersonalitiesController {
     @Query('limit') limit = '12',
     @Query('search') search?: string,
     @Query('era') era?: string,
+    @Req() req?: any,
   ) {
-    const p = parseInt(page, 10) || 1;
-    const l = Math.min(parseInt(limit, 10) || 12, 50);
-
-    return this.personalitiesService.findAll(p, l, search, era as Era);
+    const userId = req?.user?.sub ?? null;
+    return this.personalitiesService.findAll(
+      Number(page) || 1,
+      Math.min(Number(limit) || 12, 50),
+      search,
+      era as Era,
+      userId,
+    );
   }
 
   /** 👥 Современники (публично) */
@@ -89,7 +96,7 @@ export class PersonalitiesController {
     return this.personalitiesService.getContemporaries(id);
   }
 
-  /** 🔍 Одна личность (публично, но с учётом авторизации для лайков) */
+  /** 🔍 Одна личность (публично, но учитывает авторизацию для рейтинга/избранного) */
   @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {

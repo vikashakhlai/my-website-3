@@ -23,16 +23,18 @@ import { interval, Observable, switchMap } from 'rxjs';
 
 import { MediaService } from './media.service';
 import { Media } from './media.entity';
-import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
+
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from 'src/auth/roles.enum';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { UpdateMediaDto } from './dto/update-media.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Media')
 @Controller('media')
@@ -41,10 +43,12 @@ export class MediaController {
     private readonly mediaService: MediaService,
     private readonly ratingsService: RatingsService,
     private readonly commentsService: CommentsService,
+    private readonly favoritesService: FavoritesService,
   ) {}
 
   /** 📜 Публичный список медиа с фильтрами */
   @ApiOperation({ summary: 'Список медиа (публично)' })
+  @Public()
   @Get()
   async findAll(
     @Query('name') name?: string,
@@ -54,12 +58,24 @@ export class MediaController {
     const topicIds = (topics ?? '')
       .split(',')
       .map((v) => Number(v))
-      .filter((v) => !Number.isNaN(v));
+      .filter((v) => v > 0); // отбрасываем 0 и любые невалидные
 
+    const hasFilters =
+      (name ?? '').trim().length > 0 ||
+      (region ?? '').trim().length > 0 ||
+      topicIds.length > 0;
+    console.log('📌 hasFilters =', hasFilters, { name, region, topicIds });
+
+    if (!hasFilters) {
+      console.log('🔥 calling findAll()');
+      return this.mediaService.findAll();
+    }
+
+    console.log('🔥 calling findAllWithFilters()');
     return this.mediaService.findAllWithFilters({
-      name: name || undefined,
-      region: region || undefined,
-      topics: topicIds.length ? topicIds : undefined,
+      name: name?.trim(),
+      region: region?.trim(),
+      topics: topicIds,
     });
   }
 
@@ -72,7 +88,7 @@ export class MediaController {
     return this.mediaService.findOneWithRating(id, req.user.sub);
   }
 
-  /** ⬆️ Загрузка файла (ADMIN+) */
+  /** 📥 Загрузка файла (ADMIN+) */
   @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -116,7 +132,7 @@ export class MediaController {
     });
   }
 
-  /** 🔄 Обновить (ADMIN+) — topics: sync; preview: auto при смене mediaUrl */
+  /** 🔄 Обновить (ADMIN+) */
   @ApiOperation({ summary: 'Обновить медиа (ADMIN+)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -137,28 +153,6 @@ export class MediaController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.remove(id);
-  }
-
-  /** 🧩 Exercises — только авторизованные */
-  @ApiOperation({ summary: 'Список упражнений (только авторизованные)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/exercises')
-  async findExercises(@Param('id', ParseIntPipe) id: number) {
-    return this.mediaService.findExercisesByMedia(id);
-  }
-
-  @ApiOperation({
-    summary: 'Добавить упражнение к медиа (только авторизованные)',
-  })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/exercises')
-  async addExerciseToMedia(
-    @Param('id', ParseIntPipe) mediaId: number,
-    @Body() dto: CreateExerciseDto,
-  ) {
-    return this.mediaService.addExerciseToMedia(mediaId, dto);
   }
 
   /** ⭐ Средний рейтинг (публично) */
@@ -196,5 +190,32 @@ export class MediaController {
         return { data: { average, votes } };
       }),
     );
+  }
+
+  /** 💛 Добавить в избранное */
+  @ApiOperation({ summary: 'Добавить медиа в избранное' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/favorite')
+  async addToFavorites(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.favoritesService.addToFavorites(req.user.sub, {
+      targetType: TargetType.MEDIA,
+      targetId: id,
+    });
+  }
+
+  /** 💔 Удалить из избранного */
+  @ApiOperation({ summary: 'Удалить медиа из избранного' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/favorite')
+  async removeFromFavorites(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+  ) {
+    return this.favoritesService.removeFromFavorites(req.user.sub, {
+      targetType: TargetType.MEDIA,
+      targetId: id,
+    });
   }
 }

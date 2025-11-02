@@ -5,17 +5,21 @@ import "./FavoriteButton.css";
 interface FavoriteButtonProps {
   isFavorite: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }
 
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   isFavorite,
   onToggle,
+  disabled = false,
 }) => {
   return (
     <button
       onClick={onToggle}
+      disabled={disabled}
       className={`favorite-btn ${isFavorite ? "active" : ""}`}
       title={isFavorite ? "Удалить из избранного" : "Добавить в избранное"}
+      aria-label={isFavorite ? "Удалить из избранного" : "Добавить в избранное"}
     >
       <Heart className="icon" />
     </button>

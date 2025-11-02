@@ -10,15 +10,17 @@ export class GlobalJwtAuthGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
-    // 👇 Если стоит @Public() — пропускаем без проверки токена
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (isPublic) return true;
+    // ✅ Если публичный — просто пропускаем, но НЕ ломаем flow
+    if (isPublic) {
+      return true;
+    }
 
-    // иначе работаем как обычный JWT guard
+    // ✅ иначе обычная JWT проверка
     return super.canActivate(context);
   }
 }

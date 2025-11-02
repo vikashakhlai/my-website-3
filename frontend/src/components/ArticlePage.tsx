@@ -22,6 +22,7 @@ import FavoriteButton from "../components/FavoriteButton";
 import { StarRating } from "../components/StarRating";
 import { CommentsSection } from "../components/CommentsSection";
 import { api } from "../api/auth";
+import { favoritesApi } from "../api/favorites";
 
 const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,23 +53,30 @@ const ArticlePage = () => {
   // ✅ Проверяем избранное
   useEffect(() => {
     if (!id) return;
-    api
-      .get("/favorites/article")
-      .then((res) => {
-        setIsFavorite(res.data.some((f: any) => f.id === Number(id)));
+    favoritesApi
+      .getFavorites("article")
+      .then((items) => {
+        setIsFavorite(items.some((f) => f.id === Number(id)));
       })
       .catch(() => {});
   }, [id]);
 
-  // ✅ Тоггл избранного
+  // ✅ Новый toggle
   const toggleFavorite = async () => {
+    if (!id) return;
+    const articleId = Number(id);
+
     try {
-      const method = isFavorite ? "delete" : "post";
-      await api[method](`/favorites/article/${id}`);
-      setIsFavorite((prev) => !prev);
+      if (isFavorite) {
+        await favoritesApi.remove("article", articleId);
+        setIsFavorite(false);
+      } else {
+        await favoritesApi.add("article", articleId);
+        setIsFavorite(true);
+      }
     } catch (err) {
       console.error("Ошибка избранного:", err);
-      alert("Ошибка! Нужно войти.");
+      alert("Ошибка! Возможно, нужно войти.");
     }
   };
 

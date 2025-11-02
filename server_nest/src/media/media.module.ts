@@ -7,21 +7,20 @@ import { MediaController } from './media.controller';
 import { DialectTopicsModule } from 'src/dialect_topics/dialect_topics.module';
 import { RatingsModule } from 'src/ratings/ratings.module';
 import { CommentsModule } from 'src/comments/comments.module';
+import { FavoritesModule } from 'src/favorites/favorites.module';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Media, Exercise]),
 
-    // 🗣️ Связанные модули
     DialectTopicsModule,
 
-    // ✅ JWT для извлечения userId из токена
     JwtModule.register({}),
 
-    // ✅ Рейтинги и комментарии (через forwardRef — если есть взаимозависимости)
     forwardRef(() => RatingsModule),
     forwardRef(() => CommentsModule),
+    forwardRef(() => FavoritesModule), // ✅ добавлено
   ],
   controllers: [MediaController],
   providers: [MediaService],
