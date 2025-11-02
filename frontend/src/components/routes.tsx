@@ -21,36 +21,27 @@ const routes = [
   {
     element: <Layout />,
     children: [
-      // 🔐 Защищённые маршруты
+      // ✅ Публичные маршруты
+      { path: "/", element: <HomePage /> },
+      { path: "/DictionaryPage", element: <DictionaryPage /> },
+      { path: "/ArticlesPage", element: <ArticlesPage /> },
+      { path: "/BooksPage", element: <BooksPage /> },
+      { path: "/StudentBooksPage", element: <StudentBooksPage /> },
+
+      { path: "/articles/:id", element: <ArticlePage /> },
+      { path: "/books/:id", element: <BookPage /> },
+      { path: "/textbooks/:id", element: <TextbookPage /> },
+
+      { path: "/authors/:id", element: <AuthorPage /> },
+      { path: "/personalities/:id", element: <PersonalityPage /> },
+      { path: "/personalities", element: <AllPersonalitiesPage /> },
+
+      // 🔒 Защищённые маршруты (только авторизованные)
       {
-        path: "/",
+        path: "/CoursesPage",
         element: (
           <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/DictionaryPage",
-        element: (
-          <ProtectedRoute>
-            <DictionaryPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/ArticlesPage",
-        element: (
-          <ProtectedRoute>
-            <ArticlesPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/BooksPage",
-        element: (
-          <ProtectedRoute>
-            <BooksPage />
+            <CoursesPage />
           </ProtectedRoute>
         ),
       },
@@ -63,70 +54,6 @@ const routes = [
         ),
       },
       {
-        path: "/CoursesPage",
-        element: (
-          <ProtectedRoute>
-            <CoursesPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/StudentBooksPage",
-        element: (
-          <ProtectedRoute>
-            <StudentBooksPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/articles/:id",
-        element: (
-          <ProtectedRoute>
-            <ArticlePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/books/:id",
-        element: (
-          <ProtectedRoute>
-            <BookPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/textbooks/:id",
-        element: (
-          <ProtectedRoute>
-            <TextbookPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/authors/:id",
-        element: (
-          <ProtectedRoute>
-            <AuthorPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/personalities/:id",
-        element: (
-          <ProtectedRoute>
-            <PersonalityPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/personalities",
-        element: (
-          <ProtectedRoute>
-            <AllPersonalitiesPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
         path: "/dialects/:slug/media/:id",
         element: (
           <ProtectedRoute>
@@ -135,9 +62,19 @@ const routes = [
         ),
       },
 
-      // 🔓 Незащищённые маршруты
+      // 🔐 Auth
       { path: "/login", element: <AuthPage /> },
       { path: "/register", element: <AuthPage /> },
+
+      // ❗ Личный кабинет если будет
+      // {
+      //   path: "/profile",
+      //   element: (
+      //     <ProtectedRoute>
+      //       <ProfilePage />
+      //     </ProtectedRoute>
+      //   ),
+      // },
     ],
   },
 ];

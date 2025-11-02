@@ -21,11 +21,13 @@ import { RatingsService } from 'src/ratings/ratings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from 'src/auth/decorators/public.decorator'; // ✅ важно
 import { CreateTextbookDto } from './dto/create-textbook.dto';
 import { UpdateTextbookDto } from './dto/update-textbook.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from 'src/auth/roles.enum';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
 
 @ApiTags('Textbooks')
 @Controller('textbooks')
@@ -35,6 +37,8 @@ export class TextbooksController {
     private readonly ratingsService: RatingsService,
   ) {}
 
+  /** 📚 Список учебников (публично) */
+  @Public()
   @ApiOperation({ summary: 'Список учебников (публично)' })
   @Get()
   async getAll(
@@ -46,22 +50,34 @@ export class TextbooksController {
     return this.textbooksService.getAll({ page, limit, sort, level });
   }
 
-  @ApiOperation({ summary: 'Получить учебник (требует авторизацию)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  /** 📖 Просмотр одного учебника (публично, со свойством canDownload) */
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Получить учебник (публично, с canDownload)' })
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user?.sub;
-    return this.textbooksService.getById(id, userId);
+  async getPublic(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const userId = req.user?.sub ?? null;
+    return this.textbooksService.getPublicView(id, userId);
   }
 
+  /** 📥 Скачать PDF — только авторизованные */
+  @ApiOperation({ summary: 'Скачать учебник (только авторизованные)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/download')
+  async download(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.textbooksService.getDownloadFile(id, req.user.sub);
+  }
+
+  /** 🎲 Случайный учебник — публично */
+  @Public()
   @ApiOperation({ summary: 'Случайный учебник (публично)' })
   @Get('random/one')
   getRandom() {
     return this.textbooksService.getRandom();
   }
 
-  @ApiOperation({ summary: 'Создать новый учебник (только SUPER_ADMIN)' })
+  /** 🛠 Создать (SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Создать новый учебник (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -70,7 +86,8 @@ export class TextbooksController {
     return this.textbooksService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Обновить учебник (только SUPER_ADMIN)' })
+  /** 🛠 Обновить (SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Обновить учебник (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -82,7 +99,8 @@ export class TextbooksController {
     return this.textbooksService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Удалить учебник (только SUPER_ADMIN)' })
+  /** 🗑 Удалить (SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Удалить учебник (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -91,7 +109,8 @@ export class TextbooksController {
     return this.textbooksService.remove(id);
   }
 
-  /** 📡 SSE Live рейтинг учебника */
+  /** 📡 SSE Live рейтинг (публично) */
+  @Public()
   @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
   @Sse('stream/:id/rating')
   streamRatings(

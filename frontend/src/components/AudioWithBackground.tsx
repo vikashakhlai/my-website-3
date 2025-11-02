@@ -10,24 +10,18 @@ import bgTravel from "../assets/bg_travel.png";
 
 import "./AudioWithBackground.css";
 
+import type { Media } from "../types/media"; // ✅ правильный импорт
+
 interface Topic {
   id: number;
   name: string;
-}
-
-interface Media {
-  id: number;
-  title: string;
-  mediaUrl: string;
-  type: "video" | "audio" | "text";
-  topics?: Topic[];
 }
 
 const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const prevId = useRef<number | null>(null);
 
-  // Если сменилось медиа — сбрасываем состояние
+  // Сбрасываем состояние при смене трека
   useEffect(() => {
     if (prevId.current !== media.id) {
       setIsPlaying(false);

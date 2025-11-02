@@ -14,6 +14,7 @@ import { CommentsService } from 'src/comments/comments.service';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { interval, Observable, switchMap, from, map } from 'rxjs';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('personalities')
 export class PersonalitiesController {
@@ -23,9 +24,9 @@ export class PersonalitiesController {
     private readonly ratingsService: RatingsService,
   ) {}
 
-  /** 🔴 SSE: поток комментариев */
-  @Get('stream/:id/comments')
-  @Sse()
+  /** 🔴 SSE: поток комментариев (публично) */
+  @Public()
+  @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
   ): Observable<MessageEvent> {
@@ -37,9 +38,9 @@ export class PersonalitiesController {
     );
   }
 
-  /** 🟡 SSE: поток рейтинга */
-  @Get('stream/:id/rating')
-  @Sse()
+  /** 🟡 SSE: live рейтинг (публично) */
+  @Public()
+  @Sse('stream/:id/rating')
   streamRating(
     @Param('id', ParseIntPipe) id: number,
   ): Observable<MessageEvent> {
@@ -51,20 +52,23 @@ export class PersonalitiesController {
     );
   }
 
-  /** ⭐ Средний рейтинг личности */
+  /** ⭐ Средний рейтинг одной личности (публично) */
+  @Public()
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
     return this.ratingsService.getAverage(TargetType.PERSONALITY, id);
   }
 
-  /** 🎲 Случайные личности */
+  /** 🎲 Случайные личности (публично) */
+  @Public()
   @Get('random')
   async getRandom(@Query('limit') limit?: string) {
     const num = Number(limit);
     return this.personalitiesService.getRandom(isNaN(num) ? 3 : num);
   }
 
-  /** 📋 Список */
+  /** 📋 Список личностей (публично) */
+  @Public()
   @Get()
   async findAll(
     @Query('page') page = '1',
@@ -78,15 +82,17 @@ export class PersonalitiesController {
     return this.personalitiesService.findAll(p, l, search, era as Era);
   }
 
-  /** 👥 Современники */
+  /** 👥 Современники (публично) */
+  @Public()
   @Get(':id/contemporaries')
   async getContemporaries(@Param('id', ParseIntPipe) id: number) {
     return this.personalitiesService.getContemporaries(id);
   }
 
-  /** 🔍 Одна личность */
+  /** 🔍 Одна личность (публично, но с учётом авторизации для лайков) */
+  @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.personalitiesService.findOne(id, req.user?.sub);
+    return this.personalitiesService.findOne(id, req.user?.sub ?? null);
   }
 }

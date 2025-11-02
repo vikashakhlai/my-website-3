@@ -5,18 +5,20 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
-import { Media } from './media.entity';
-import { Exercise } from 'src/articles/entities/exercise.entity';
-import { makeAbsoluteUrl } from 'src/utils/media-url.util';
 import { spawn } from 'child_process';
-import ffmpegPath from 'ffmpeg-static';
 import { join, parse, dirname } from 'path';
 import { promises as fs } from 'fs';
-import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
+import ffmpegPath from 'ffmpeg-static';
+
+import { Media } from './media.entity';
+import { Exercise } from 'src/articles/entities/exercise.entity';
 import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
+import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
+
 import { RatingsService } from 'src/ratings/ratings.service';
-import { CommentsService } from 'src/comments/comments.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { makeAbsoluteUrl } from 'src/utils/media-url.util';
+import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
 export class MediaService {
@@ -28,31 +30,26 @@ export class MediaService {
     private readonly exerciseRepository: Repository<Exercise>,
 
     private readonly ratingsService: RatingsService,
-    private readonly commentsService: CommentsService,
   ) {}
 
-  /** 📜 Получить все медиа */
+  /* =========================================
+   * SELECTS
+   * ========================================= */
+
   async findAll(): Promise<Media[]> {
     const medias = await this.mediaRepository.find({
-      relations: ['dialect', 'topics'], // ✅ добавили связь
+      relations: ['dialect', 'topics'],
       order: { createdAt: 'DESC' },
     });
-
-    // 🧭 Преобразуем пути в абсолютные URL
-    return medias.map((media) => this.normalizeMediaPaths(media));
+    return medias.map((m) => this.normalizeMediaPaths(m));
   }
 
-  /** 🎬 Получить одно медиа по ID */
   async findOne(id: number): Promise<Media> {
     const media = await this.mediaRepository.findOne({
       where: { id },
-      relations: ['dialect', 'topics', 'exercises', 'exercises.items'], // ✅ добавили topics
+      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
     });
-
-    if (!media) {
-      throw new NotFoundException(`Медиа с ID ${id} не найдено`);
-    }
-
+    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
     return this.normalizeMediaPaths(media);
   }
 
@@ -61,94 +58,171 @@ export class MediaService {
     region?: string;
     topics?: number[];
   }): Promise<Media[]> {
-    const query = this.mediaRepository
+    const qb = this.mediaRepository
       .createQueryBuilder('media')
       .leftJoinAndSelect('media.dialect', 'dialect')
       .leftJoinAndSelect('media.topics', 'topics')
       .orderBy('media.createdAt', 'DESC');
 
-    // === фильтр по названию ===
     if (filters.name) {
-      query.andWhere('LOWER(media.title) LIKE LOWER(:name)', {
+      qb.andWhere('LOWER(media.title) LIKE LOWER(:name)', {
         name: `%${filters.name}%`,
       });
     }
 
-    // === фильтр по региону ===
     if (filters.region) {
-      query.andWhere('LOWER(dialect.region) LIKE LOWER(:region)', {
+      qb.andWhere('LOWER(dialect.region) LIKE LOWER(:region)', {
         region: `%${filters.region}%`,
       });
     }
 
-    // === фильтр по темам (логика AND через подзапрос) ===
-    const topics = filters.topics ?? [];
 
+    const topics = filters.topics ?? [];
     if (topics.length > 0) {
-      query.andWhere((qb) => {
-        const subQuery = qb
+      qb.andWhere((sub) => {
+        const sq = sub
           .subQuery()
           .select('mt.media_id')
           .from('media_topics', 'mt')
           .where('mt.topic_id IN (:...topics)', { topics })
           .groupBy('mt.media_id')
-          .having('COUNT(DISTINCT mt.topic_id) = :topicsCount', {
-            topicsCount: topics.length,
+          .having('COUNT(DISTINCT mt.topic_id) = :cnt', {
+            cnt: topics.length,
           })
           .getQuery();
-
-        return 'media.id IN ' + subQuery;
+        return `media.id IN ${sq}`;
       });
     }
 
-    const medias = await query.getMany();
-    return medias.map((m) => this.normalizeMediaPaths(m));
+    const list = await qb.getMany();
+    return list.map((m) => this.normalizeMediaPaths(m));
   }
 
-  /** 🔧 Преобразует относительные пути в абсолютные */
-  private normalizeMediaPaths(media: Media): Media {
-    media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);
-    media.subtitlesLink = makeAbsoluteUrl(media.subtitlesLink);
-    if (media.previewUrl) {
-      media.previewUrl = makeAbsoluteUrl(media.previewUrl);
-    }
-    return media;
+  async findOneWithRating(id: number, userId?: string) {
+    const media = await this.mediaRepository.findOne({
+      where: { id },
+      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
+    });
+    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
+
+    const [avg, allRatings] = await Promise.all([
+      this.ratingsService.getAverage(TargetType.MEDIA, id),
+      this.ratingsService.findByTarget(TargetType.MEDIA, id),
+    ]);
+
+    const userRating =
+      userId !== undefined
+        ? (allRatings.find((r) => r.user_id === userId || r.user?.id === userId)
+            ?.value ?? null)
+        : null;
+
+    return {
+      ...this.normalizeMediaPaths(media),
+      averageRating: avg.average ?? 0,
+      votes: avg.votes ?? 0,
+      userRating,
+    };
   }
 
-  /** ➕ Создать запись */
+  /* =========================================
+   * CREATE / UPDATE / DELETE
+   * ========================================= */
+
   async create(data: Partial<Media>): Promise<Media> {
-    const newMedia = this.mediaRepository.create(data);
-    const saved = await this.mediaRepository.save(newMedia);
+    const entity = this.mediaRepository.create(data);
+    let saved = await this.mediaRepository.save(entity);
 
-    // ⚙️ Если это видео — создаём превью
     if (saved.type === 'video' && saved.mediaUrl) {
       try {
-        const previewPath = await this.generatePreview(saved.mediaUrl);
-        saved.previewUrl = previewPath;
-        await this.mediaRepository.save(saved);
-      } catch (err) {
-        console.error('❌ Ошибка при создании превью:', err);
+        const preview = await this.generatePreview(saved.mediaUrl);
+        saved.previewUrl = preview;
+        saved = await this.mediaRepository.save(saved);
+      } catch (e) {
+        console.error('[preview:create] FFmpeg error:', e);
       }
     }
 
     return this.normalizeMediaPaths(saved);
   }
 
-  /** ♻️ Обновить запись */
-  async update(id: number, data: Partial<Media>): Promise<Media> {
-    const media = await this.findOne(id);
-    Object.assign(media, data);
-    const updated = await this.mediaRepository.save(media);
-    return this.normalizeMediaPaths(updated);
+  async update(id: number, dto: UpdateMediaDto): Promise<Media> {
+    const media = await this.mediaRepository.findOne({
+      where: { id },
+      relations: ['topics', 'dialect'],
+    });
+    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
+
+    const prevMediaUrl = media.mediaUrl;
+
+    // simple fields
+    if (dto.title !== undefined) media.title = dto.title;
+    if (dto.mediaUrl !== undefined) media.mediaUrl = dto.mediaUrl;
+    if (dto.previewUrl !== undefined) media.previewUrl = dto.previewUrl;
+    if (dto.subtitlesLink !== undefined)
+      media.subtitlesLink = dto.subtitlesLink;
+
+    if (dto.type !== undefined) media.type = dto.type;
+
+    if (dto.licenseType !== undefined) media.licenseType = dto.licenseType;
+    if (dto.licenseAuthor !== undefined)
+      media.licenseAuthor = dto.licenseAuthor;
+
+    if (dto.level !== undefined) media.level = dto.level as any;
+
+    if (dto.dialogueGroupId !== undefined)
+      media.dialogueGroupId = dto.dialogueGroupId;
+
+    if (dto.duration !== undefined) media.duration = dto.duration ?? undefined;
+    if (dto.speaker !== undefined) media.speaker = dto.speaker ?? undefined;
+    if (dto.sourceRole !== undefined)
+      media.sourceRole = dto.sourceRole ?? undefined;
+
+    if (dto.grammarLink !== undefined)
+      media.grammarLink = dto.grammarLink ?? undefined;
+    if (dto.resources !== undefined)
+      media.resources = dto.resources ?? undefined;
+
+    if (dto.dialectId !== undefined) {
+      media.dialectId = dto.dialectId || null;
+      media.dialect = dto.dialectId ? ({ id: dto.dialectId } as any) : null;
+    }
+
+    if (dto.topicIds !== undefined) {
+      const normalized = (dto.topicIds ?? [])
+        .map((v) => Number(v))
+        .filter((v) => !Number.isNaN(v));
+      await this.syncMediaTopics(media.id, normalized);
+    }
+
+    let saved = await this.mediaRepository.save(media);
+
+    if (
+      saved.type === 'video' &&
+      saved.mediaUrl &&
+      prevMediaUrl !== saved.mediaUrl
+    ) {
+      try {
+        const preview = await this.generatePreview(saved.mediaUrl);
+        saved.previewUrl = preview;
+        saved = await this.mediaRepository.save(saved);
+      } catch (e) {
+        console.error('[preview:update] FFmpeg error:', e);
+      }
+    }
+
+    return this.normalizeMediaPaths(saved);
   }
 
-  /** 🗑 Удалить запись */
   async remove(id: number): Promise<void> {
-    const media = await this.findOne(id);
+    const media = await this.mediaRepository.findOne({ where: { id } });
+    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
     await this.mediaRepository.remove(media);
   }
 
-  /** 🧩 Получить упражнения, связанные с конкретным видео/аудио */
+  /* =========================================
+   * EXERCISES
+   * ========================================= */
+
   async findExercisesByMedia(mediaId: number): Promise<Exercise[]> {
     return this.exerciseRepository.find({
       where: { media: { id: mediaId } },
@@ -157,16 +231,12 @@ export class MediaService {
     });
   }
 
-  async addExerciseToMedia(
-    mediaId: number,
-    dto: CreateExerciseDto,
-  ): Promise<Exercise> {
+  async addExerciseToMedia(mediaId: number, dto: CreateExerciseDto) {
     const media = await this.mediaRepository.findOne({
       where: { id: mediaId },
     });
     if (!media) throw new NotFoundException(`Медиа с ID ${mediaId} не найдено`);
 
-    // 🧩 устраняем дубликаты по questionRu
     if (dto.items) {
       dto.items = dto.items.filter(
         (v, i, arr) =>
@@ -178,29 +248,39 @@ export class MediaService {
       type: dto.type,
       instructionRu: dto.instructionRu,
       instructionAr: dto.instructionAr,
-      media, // связь ManyToOne
+      media,
       distractorPoolId: dto.distractorPoolId,
-      items: dto.items?.map((item, index) => {
-        const entity = new ExerciseItem();
-        entity.position = index + 1;
-        entity.questionRu = item.questionRu ?? undefined;
-        entity.questionAr = item.questionAr ?? undefined;
-        entity.partBefore = item.partBefore ?? undefined;
-        entity.partAfter = item.partAfter ?? undefined;
-        entity.correctAnswer = item.correctAnswer ?? undefined;
-        entity.wordRu = item.wordRu ?? undefined;
-        entity.wordAr = item.wordAr ?? undefined;
-        entity.distractors = item.distractors ?? [];
-        return entity;
-      }) as DeepPartial<ExerciseItem>[],
+      items: (dto.items ?? []).map((item, i) => {
+        const e = new ExerciseItem();
+        e.position = i + 1;
+        e.questionRu = item.questionRu ?? undefined;
+        e.questionAr = item.questionAr ?? undefined;
+        e.partBefore = item.partBefore ?? undefined;
+        e.partAfter = item.partAfter ?? undefined;
+        e.correctAnswer = item.correctAnswer ?? undefined;
+        e.wordRu = item.wordRu ?? undefined;
+        e.wordAr = item.wordAr ?? undefined;
+        e.distractors = item.distractors ?? [];
+        return e;
+      }) as any,
     };
 
-    const entity = this.exerciseRepository.create(exercise);
-    return await this.exerciseRepository.save(entity);
+    return this.exerciseRepository.save(
+      this.exerciseRepository.create(exercise),
+    );
   }
 
-  /** 🎞 Генерация превью с помощью ffmpeg */
-  /** 🎞 Генерация превью с помощью ffmpeg */
+  /* =========================================
+   * HELPERS
+   * ========================================= */
+
+  private normalizeMediaPaths(media: Media): Media {
+    media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);
+    media.subtitlesLink = makeAbsoluteUrl(media.subtitlesLink);
+    if (media.previewUrl) media.previewUrl = makeAbsoluteUrl(media.previewUrl);
+    return media;
+  }
+
   async generatePreview(mediaUrl: string): Promise<string> {
     try {
       const uploadsRoot = join(process.cwd(), 'uploads');
@@ -209,17 +289,14 @@ export class MediaService {
         : join(uploadsRoot, mediaUrl.replace(/^\/?uploads[\\/]/, ''));
 
       const { name } = parse(videoPath);
-      const outputDir = join(dirname(videoPath), '..', 'thumbnails');
-      await fs.mkdir(outputDir, { recursive: true });
+      const outDir = join(dirname(videoPath), '..', 'thumbnails');
+      await fs.mkdir(outDir, { recursive: true });
 
-      const outputPath = join(outputDir, `${name}-preview.jpg`);
-
-      // Проверяем, существует ли файл видео
+      const outputPath = join(outDir, `${name}-preview.jpg`);
       await fs.access(videoPath);
 
-      // 🧠 Запускаем ffmpeg и ожидаем завершения
       await new Promise<void>((resolve, reject) => {
-        const ffmpeg = spawn(ffmpegPath as string, [
+        const ff = spawn(ffmpegPath as string, [
           '-i',
           videoPath,
           '-ss',
@@ -231,66 +308,73 @@ export class MediaService {
           outputPath,
         ]);
 
-        ffmpeg.on('close', (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(
-              new InternalServerErrorException(
-                `FFmpeg завершился с кодом ${code} и не смог создать превью`,
+        ff.on('close', (code) =>
+          code === 0
+            ? resolve()
+            : reject(
+                new InternalServerErrorException(
+                  `FFmpeg exited with code ${code}`,
+                ),
               ),
-            );
-          }
-        });
+        );
 
-        ffmpeg.on('error', (err) => {
+        ff.on('error', (err) =>
           reject(
-            new InternalServerErrorException(
-              `Ошибка запуска FFmpeg: ${err.message}`,
-            ),
-          );
-        });
+            new InternalServerErrorException(`FFmpeg spawn error: ${err}`),
+          ),
+        );
       });
 
-      console.log('✅ Превью создано:', outputPath);
-
-      // Возвращаем относительный путь
       return outputPath.replace(uploadsRoot, '/uploads').replace(/\\/g, '/');
-    } catch (err) {
-      console.error('❌ Ошибка генерации превью:', err);
-      throw err;
+    } catch (e) {
+      console.error('[ffmpeg] preview error:', e);
+      throw e;
     }
   }
 
-  /** 🎬 Получить медиа с рейтингом и рейтингом пользователя */
-  async findOneWithRating(id: number, userId?: string): Promise<any> {
-    // 1️⃣ Загружаем само медиа
-    const media = await this.mediaRepository.findOne({
-      where: { id },
-      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
+  private async syncMediaTopics(mediaId: number, nextTopicIds: number[]) {
+    const manager = this.mediaRepository.manager;
+
+    const rows = await manager
+      .createQueryBuilder()
+      .select('mt.topic_id', 'topic_id')
+      .from('media_topics', 'mt')
+      .where('mt.media_id = :mediaId', { mediaId })
+      .getRawMany<{ topic_id: number }>();
+
+    const current = new Set(rows.map((r) => Number(r.topic_id)));
+    const wanted = new Set(nextTopicIds);
+
+    const toAdd: number[] = [];
+    const toDel: number[] = [];
+
+    wanted.forEach((id) => {
+      if (!current.has(id)) toAdd.push(id);
+    });
+    current.forEach((id) => {
+      if (!wanted.has(id)) toDel.push(id);
     });
 
-    if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
+    if (toDel.length) {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from('media_topics')
+        .where('media_id = :mediaId AND topic_id IN (:...ids)', {
+          mediaId,
+          ids: toDel,
+        })
+        .execute();
+    }
 
-    // 2️⃣ Получаем средний рейтинг и все оценки
-    const [average, allRatings] = await Promise.all([
-      this.ratingsService.getAverage(TargetType.MEDIA, id),
-      this.ratingsService.findByTarget(TargetType.MEDIA, id),
-    ]);
-
-    // 3️⃣ Ищем пользовательскую оценку (UUID — сравнение строк)
-    const userRating =
-      userId !== undefined
-        ? (allRatings.find((r) => r.user_id === userId || r.user?.id === userId)
-            ?.value ?? null)
-        : null;
-
-    // 4️⃣ Возвращаем итоговый объект
-    return {
-      ...this.normalizeMediaPaths(media),
-      averageRating: average.average ?? 0,
-      votes: average.votes ?? 0,
-      userRating,
-    };
+    if (toAdd.length) {
+      const values = toAdd.map((topic_id) => ({ media_id: mediaId, topic_id }));
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into('media_topics')
+        .values(values as any)
+        .execute();
+    }
   }
 }

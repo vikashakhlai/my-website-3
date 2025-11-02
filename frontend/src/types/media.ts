@@ -1,18 +1,24 @@
-import { Dialect } from "./dialect";
+export type MediaType = "video" | "audio" | "text";
 
 export interface Media {
   id: number;
   title: string;
-  mediaUrl: string;
+  name?: string;
   previewUrl?: string;
-  type: "audio" | "video";
+  mediaUrl: string;
+  subtitlesLink?: string | null;
+  dialectId: number | null;
   licenseType?: string;
   licenseAuthor?: string;
-  subtitlesLink?: string;
-  dialect?: Dialect;
-  level?: "beginner" | "intermediate" | "advanced";
-  topics?: { id: number; name: string }[];
+  type: MediaType;
+  tags?: string[];
+  dialogueGroupId?: number | null;
+  dialect?: { name: string };
   duration?: string;
+  level?: "beginner" | "intermediate" | "advanced" | null;
   speaker?: string;
-  sourceRole?: string;
+  isFavorite?: boolean;
+  averageRating?: number | null;
+  userRating?: number | null;
+  ratingCount?: number;
 }

@@ -5,14 +5,7 @@ import "video.js/dist/video-js.css";
 import "./MediaPlayer.css";
 import "@videojs/themes/dist/fantasy/index.css";
 
-interface Media {
-  id: number;
-  title: string;
-  mediaUrl: string;
-  previewUrl?: string | null;
-  subtitlesLink?: string | null;
-  type: "video" | "audio" | "text";
-}
+import type { Media } from "../types/media"; // ✅ правильный импорт
 
 interface Props {
   media: Media;
@@ -31,10 +24,10 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
 
     const isAudio = media.type === "audio";
 
-    // Если плеер уже инициализирован для этого же media.id — не пересоздаём
+    // 🔁 Если плеер уже создан для этого же видео — не пересоздаём
     if (playerRef.current && lastMediaId.current === media.id) return;
 
-    // Уничтожаем старый плеер, если другой ID
+    // Уничтожаем старый плеер, если новый ID
     if (playerRef.current) {
       playerRef.current.dispose();
       playerRef.current = null;
@@ -43,8 +36,6 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
     const player = videojs(el, {
       controls: true,
       preload: "auto",
-      fluid: false,
-      responsive: false,
       width: isAudio ? 480 : 885,
       height: isAudio ? 60 : 510,
       playbackRates: [0.5, 1, 1.25, 1.5, 2],
@@ -57,24 +48,24 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
       poster: !isAudio ? media.previewUrl || "" : undefined,
     });
 
-    // Навешиваем коллбеки
+    // 🎬 callbacks
     if (onPlay) player.on("play", onPlay);
     if (onPause) player.on("pause", onPause);
 
-    // Подгружаем субтитры
+    // 📝 Subtitles
     if (!isAudio && media.subtitlesLink) {
       player.addRemoteTextTrack(
         {
           kind: "subtitles",
-          src: media.subtitlesLink!,
+          src: media.subtitlesLink,
           srclang: "ar",
           label: "Арабский",
-          default: false,
         },
         false
       );
     }
 
+    // 🎨 для аудио убираем фон
     player.ready(() => {
       if (isAudio && player.el()) {
         player.el()!.style.background = "transparent";
@@ -84,13 +75,13 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
     playerRef.current = player;
     lastMediaId.current = media.id;
 
-    // 💾 === КЭШИРОВАНИЕ ПОЗИЦИИ ===
+    // 💾 Восстановление позиции
     const savedTime = localStorage.getItem(`mediaTime_${media.id}`);
-    if (savedTime && !isNaN(parseFloat(savedTime))) {
-      player.currentTime(parseFloat(savedTime));
+    if (savedTime) {
+      const seconds = parseFloat(savedTime);
+      if (!isNaN(seconds)) player.currentTime(seconds);
     }
 
-    // сохраняем время каждые ~1 сек
     const saveProgress = () => {
       const current = player.currentTime();
       if (!isNaN(current)) {
@@ -100,14 +91,11 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
 
     player.on("timeupdate", saveProgress);
 
-    // если дошёл до конца — сбрасываем
     player.on("ended", () => {
       localStorage.removeItem(`mediaTime_${media.id}`);
     });
 
     return () => {
-      // ⚠️ Не удаляем player при каждом ререндере
-      // Только если размонтируем компонент
       if (playerRef.current) {
         playerRef.current.off("play", onPlay);
         playerRef.current.off("pause", onPause);
@@ -119,10 +107,10 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
     media.id,
     media.mediaUrl,
     media.type,
-    onPlay,
-    onPause,
     media.previewUrl,
     media.subtitlesLink,
+    onPlay,
+    onPause,
   ]);
 
   return (
@@ -139,7 +127,7 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
       ) : (
         <video
           ref={videoRef}
-          className="video-js vjs-big-play-centered vjs-theme-city"
+          className="video-js vjs-big-play-centered vjs-theme-fantasy"
           controls
         />
       )}

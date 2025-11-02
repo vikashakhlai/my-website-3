@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Textbook } from './textbook.entity';
 import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { makeAbsoluteUrl } from 'src/utils/media-url.util';
 
 @Injectable()
 export class TextbooksService {
@@ -42,26 +48,24 @@ export class TextbooksService {
         't.description AS description',
         't.level AS level',
         't.pdf_url AS pdf_url',
-        `(SELECT AVG(r.value) 
-          FROM ratings r 
-          WHERE r.target_id = t.id 
+        `(SELECT AVG(r.value)
+          FROM ratings r
+          WHERE r.target_id = t.id
           AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
-        `(SELECT COUNT(*) 
-          FROM ratings r 
-          WHERE r.target_id = t.id 
+        `(SELECT COUNT(*)
+          FROM ratings r
+          WHERE r.target_id = t.id
           AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
-        `(SELECT COUNT(*) 
-          FROM comments c 
-          WHERE c.target_id = t.id 
+        `(SELECT COUNT(*)
+          FROM comments c
+          WHERE c.target_id = t.id
           AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
       ])
       .orderBy('t.id', sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
 
-    if (levelFilter) {
-      qb.where('t.level = :level', { level: levelFilter });
-    }
+    if (levelFilter) qb.where('t.level = :level', { level: levelFilter });
 
     const [data, total] = await Promise.all([
       qb.getRawMany(),
@@ -77,10 +81,10 @@ export class TextbooksService {
       publication_year: t.publication_year
         ? Number(t.publication_year)
         : undefined,
-      cover_image_url: t.cover_image_url,
+      cover_image_url: makeAbsoluteUrl(t.cover_image_url),
       description: t.description,
       level: t.level,
-      pdf_url: t.pdf_url,
+      pdf_url: makeAbsoluteUrl(t.pdf_url),
       averageRating: t.averageRating ? parseFloat(t.averageRating) : null,
       ratingCount: Number(t.ratingCount),
       commentCount: Number(t.commentCount),
@@ -94,8 +98,8 @@ export class TextbooksService {
     };
   }
 
-  /** 🔍 Получить учебник по ID с рейтингом и комментариями */
-  async getById(id: number, userId?: string) {
+  /** 🔍 Публичное получение — pdf_url есть, но скачать нельзя без авторизации */
+  async getPublicView(id: number, userId?: string | null) {
     const book = await this.textbookRepo.findOne({ where: { id } });
     if (!book) throw new NotFoundException('Учебник не найден');
 
@@ -118,10 +122,28 @@ export class TextbooksService {
 
     return {
       ...book,
+      cover_image_url: makeAbsoluteUrl(book.cover_image_url),
+      pdf_url: makeAbsoluteUrl(book.pdf_url),
+      canDownload: Boolean(userId),
       averageRating: average,
       ratingCount: ratings.length,
       userRating,
       commentCount: commentsCount,
+    };
+  }
+
+  /** 📥 Скачивание PDF — только авторизованные */
+  async getDownloadFile(id: number, userId: string) {
+    if (!userId)
+      throw new ForbiddenException('Требуется авторизация для скачивания');
+
+    const textbook = await this.textbookRepo.findOne({ where: { id } });
+    if (!textbook) throw new NotFoundException('Учебник не найден');
+
+    if (!textbook.pdf_url) throw new NotFoundException('PDF-файл отсутствует');
+
+    return {
+      url: `/uploads/textbooks-pdfs/${textbook.pdf_url}`, // ✅ прямой путь к файлу
     };
   }
 
@@ -134,7 +156,12 @@ export class TextbooksService {
       .getOne();
 
     if (!book) throw new NotFoundException('Нет учебников с PDF');
-    return book;
+
+    return {
+      ...book,
+      cover_image_url: makeAbsoluteUrl(book.cover_image_url),
+      pdf_url: makeAbsoluteUrl(book.pdf_url),
+    };
   }
 
   async create(data: Partial<Textbook>) {

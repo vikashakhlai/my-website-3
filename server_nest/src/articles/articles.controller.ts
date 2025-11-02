@@ -35,6 +35,7 @@ import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Articles')
 @Controller('articles')
@@ -143,6 +144,7 @@ export class ArticlesController {
   }
 
   @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
+  @Public()
   @Sse('stream/:id/rating')
   streamRating(
     @Param('id', ParseIntPipe) id: number,
@@ -187,6 +189,7 @@ export class ArticlesController {
   }
 
   @ApiOperation({ summary: 'Live-комментарии (публично, SSE)' })
+  @Public()
   @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,

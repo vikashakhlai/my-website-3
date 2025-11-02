@@ -6,10 +6,11 @@ import { PersonalitiesController } from './personalities.controller';
 import { CommentsModule } from 'src/comments/comments.module';
 import { Comment } from 'src/comments/comment.entity';
 import { RatingsModule } from 'src/ratings/ratings.module';
+import { Rating } from 'src/ratings/rating.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Personality, Comment]),
+    TypeOrmModule.forFeature([Personality, Comment, Rating]),
     CommentsModule,
     RatingsModule,
   ],

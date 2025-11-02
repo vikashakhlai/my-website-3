@@ -110,7 +110,7 @@
   display: inline-block;
   margin-top: 1.5rem;
   padding: 0.9rem 1.8rem;
-  background-color: #6b46c1;
+  background-color: #6366f1;
   color: #fff;
   border: none;
   border-radius: 0.5rem;
@@ -125,7 +125,7 @@
 }
 
 .download-btn:hover {
-  background-color: #805ad5;
+  background-color: #6366f1;
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(107, 70, 193, 0.4);
 }

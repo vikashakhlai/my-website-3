@@ -9,4 +9,5 @@ export interface TextBookProps {
   pdf_url: string | null;
   averageRating: number | null;
   userRating: number | null;
+  canDownload: boolean;
 }

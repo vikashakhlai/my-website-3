@@ -21,6 +21,7 @@ export interface Textbook {
   ratingCount?: number;
   userRating?: number | null;
   isFavorite?: boolean;
+  canDownload?: boolean;
 }
 
 const TextbookPage = () => {
@@ -47,6 +48,7 @@ const TextbookPage = () => {
 
       setTextbook({
         ...data,
+        canDownload: data.canDownload ?? false,
         averageRating: data.averageRating ? Number(data.averageRating) : null,
         ratingCount: data.ratingCount ? Number(data.ratingCount) : 0,
         userRating: data.userRating ? Number(data.userRating) : null,
@@ -81,7 +83,7 @@ const TextbookPage = () => {
   useEffect(() => {
     if (!id) return;
     const eventSource = new EventSource(
-      `/api-nest/textbooks/stream/textbook/${id}`
+      `/api-nest/textbooks/stream/${id}/rating`
     );
 
     eventSource.onmessage = (event) => {
@@ -164,14 +166,40 @@ const TextbookPage = () => {
           </div>
 
           {/* 📘 Кнопка скачивания PDF */}
+          {/* 📘 Кнопка скачивания PDF */}
           {textbook.pdf_url ? (
-            <a
-              href={`/uploads/textbooks-pdfs/${textbook.pdf_url}`}
-              download
-              className="download-btn"
-            >
-              📘 Скачать PDF
-            </a>
+            textbook.canDownload ? (
+              <button
+                className="download-btn"
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  try {
+                    const res = await fetch(
+                      `/api-nest/textbooks/${textbook.id}/download`,
+                      {
+                        headers: { Authorization: `Bearer ${token}` },
+                      }
+                    );
+                    if (!res.ok) throw new Error("Ошибка скачивания");
+
+                    const data = await res.json();
+                    window.location.href = data.url; // реальный файл
+                  } catch (e) {
+                    alert("Ошибка: не удалось скачать файл");
+                    console.error(e);
+                  }
+                }}
+              >
+                📘 Скачать PDF
+              </button>
+            ) : (
+              <button
+                className="download-btn locked"
+                onClick={() => (window.location.href = "/Login")}
+              >
+                🔒 Войти, чтобы скачать
+              </button>
+            )
           ) : (
             <p className="no-pdf">PDF не доступен</p>
           )}

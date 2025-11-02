@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Personality, Era } from './personality.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { Rating } from 'src/ratings/rating.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Injectable()
@@ -13,20 +14,13 @@ export class PersonalitiesService {
 
     @InjectRepository(Comment)
     private readonly commentRepo: Repository<Comment>,
+
+    @InjectRepository(Rating)
+    private readonly ratingRepo: Repository<Rating>,
   ) {}
 
-  // ✅ Список с фильтрацией и пагинацией
-  async findAll(
-    page = 1,
-    limit = 12,
-    search?: string,
-    era?: Era,
-  ): Promise<{
-    data: Personality[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+  /** ✅ Список с фильтрацией и пагинацией */
+  async findAll(page = 1, limit = 12, search?: string, era?: Era) {
     const skip = (page - 1) * limit;
 
     const qb = this.personalityRepo
@@ -54,8 +48,8 @@ export class PersonalitiesService {
     };
   }
 
-  // ✅ Одна личность с комментариями и рейтингом
-  async findOne(id: number, userId?: string): Promise<any> {
+  /** ✅ Одна личность с рейтингом, комментариями и правами */
+  async findOne(id: number, userId?: string) {
     const personality = await this.personalityRepo.findOne({
       where: { id },
       relations: ['articles', 'books'],
@@ -63,20 +57,51 @@ export class PersonalitiesService {
 
     if (!personality) throw new NotFoundException('Личность не найдена');
 
+    // --- Комментарии ---
     const comments = await this.commentRepo.find({
       where: { target_type: TargetType.PERSONALITY, target_id: id },
       order: { created_at: 'DESC' },
       relations: ['user'],
     });
 
+    // --- Рейтинг ---
+    const [avgRow, userRating] = await Promise.all([
+      this.ratingRepo
+        .createQueryBuilder('r')
+        .select('AVG(r.value)', 'average')
+        .addSelect('COUNT(*)', 'count')
+        .where('r.target_id = :id', { id })
+        .andWhere('r.target_type = :type', {
+          type: TargetType.PERSONALITY,
+        })
+        .getRawOne(),
+
+      userId
+        ? this.ratingRepo.findOne({
+            where: {
+              target_id: id,
+              target_type: TargetType.PERSONALITY,
+              user_id: userId,
+            },
+          })
+        : null,
+    ]);
+
     return {
       ...personality,
       comments,
       commentCount: comments.length,
+
+      averageRating: avgRow?.average ? Number(avgRow.average) : null,
+      ratingCount: avgRow?.count ? Number(avgRow.count) : 0,
+      userRating: userRating ? userRating.value : null,
+
+      canRate: Boolean(userId),
+      canComment: Boolean(userId),
     };
   }
 
-  // ✅ Случайные личности
+  /** ✅ Случайные личности */
   async getRandom(limit = 3): Promise<Personality[]> {
     return this.personalityRepo
       .createQueryBuilder('p')
@@ -87,7 +112,7 @@ export class PersonalitiesService {
       .getMany();
   }
 
-  // ✅ Современники
+  /** ✅ Современники */
   async getContemporaries(targetId: number): Promise<Personality[]> {
     const target = await this.personalityRepo.findOne({
       where: { id: targetId },

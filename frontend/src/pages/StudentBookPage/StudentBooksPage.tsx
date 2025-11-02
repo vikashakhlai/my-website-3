@@ -21,9 +21,9 @@ const StudentBooksPage: React.FC = () => {
 
   // ✅ Маппинг фильтров (чтобы совпадали с базой)
   const LEVEL_MAP: Record<string, string> = {
-    начинающий: "Начинающий",
-    средний: "Средний",
-    продвинутый: "Продвинутый",
+    начинающий: "beginner",
+    средний: "intermediate",
+    продвинутый: "advanced",
   };
 
   useEffect(() => {
@@ -36,7 +36,6 @@ const StudentBooksPage: React.FC = () => {
           params: {
             page,
             limit,
-            // ⚡ Преобразуем уровень к виду, как в БД
             level: filters.level ? LEVEL_MAP[filters.level] : undefined,
           },
         });

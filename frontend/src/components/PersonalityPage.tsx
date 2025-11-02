@@ -11,6 +11,8 @@ import { Quote } from "./QuotesBlock";
 import FavoriteButton from "../components/FavoriteButton";
 import { useFavorites } from "../hooks/useFavorites";
 import { CommentsSection } from "./CommentsSection";
+import { StarRating } from "./StarRating";
+
 const PersonalityPage = () => {
   const { id } = useParams<{ id: string }>();
   const [personality, setPersonality] = useState<Personality | null>(null);
@@ -34,7 +36,12 @@ const PersonalityPage = () => {
         const response = await fetch(`/api-nest/personalities/${id}`);
         if (!response.ok) throw new Error(`Ошибка ${response.status}`);
         const data: Personality = await response.json();
-        setPersonality(data);
+        setPersonality({
+          ...data,
+          averageRating: data.averageRating ? Number(data.averageRating) : null,
+          ratingCount: data.ratingCount ? Number(data.ratingCount) : 0,
+          userRating: data.userRating ? Number(data.userRating) : null,
+        });
       } catch (err) {
         console.error("Ошибка загрузки личности:", err);
         setError(err instanceof Error ? err.message : "Неизвестная ошибка");
@@ -44,6 +51,29 @@ const PersonalityPage = () => {
     };
 
     fetchPersonality();
+  }, [id]);
+
+  // 🔄 SSE — live обновление рейтинга
+  useEffect(() => {
+    if (!id) return;
+    const eventSource = new EventSource(
+      `/api-nest/personalities/stream/${id}/rating`
+    );
+
+    eventSource.onmessage = (event) => {
+      const { average, votes } = JSON.parse(event.data);
+      setPersonality((prev) =>
+        prev
+          ? {
+              ...prev,
+              averageRating: average != null ? Number(average) : null,
+              ratingCount: votes ? Number(votes) : 0,
+            }
+          : prev
+      );
+    };
+
+    return () => eventSource.close();
   }, [id]);
 
   // 📜 Цитаты
@@ -185,6 +215,20 @@ const PersonalityPage = () => {
               />
             )}
           </div>
+        </div>
+
+        <div className={styles.ratingSection}>
+          <StarRating
+            targetType="personality"
+            targetId={personality.id}
+            average={personality.averageRating ?? null}
+            userRating={personality.userRating ?? null}
+            onRated={(val) =>
+              setPersonality((prev) =>
+                prev ? { ...prev, userRating: val } : prev
+              )
+            }
+          />
         </div>
 
         {/* 💬 Комментарии */}

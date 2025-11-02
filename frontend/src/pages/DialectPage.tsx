@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import DialectCard from "../components/DialectCard";
 import Filters from "../components/Filters";
 import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
 import useScrollToTop from "../hooks/useScrollToTop";
+import { api } from "../api/auth";
 
 interface Topic {
   id: number;
@@ -33,20 +33,15 @@ const DialectPage = () => {
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
-  // === 1. Загрузка тем ===
+  /** === 1. Загрузка тем === */
   useEffect(() => {
-    const fetchTopics = async () => {
-      try {
-        const res = await axios.get("/api-nest/dialect-topics");
-        setTopics((res.data || []) as Topic[]);
-      } catch (e) {
-        console.error("Ошибка при загрузке тем", e);
-      }
-    };
-    fetchTopics();
+    api
+      .get("/dialect-topics")
+      .then((res) => setTopics(res.data || []))
+      .catch((e) => console.error("Ошибка при загрузке тем", e));
   }, []);
 
-  // === 2. Загрузка медиа ===
+  /** === 2. Загрузка медиа === */
   useEffect(() => {
     let isMounted = true;
 
@@ -60,20 +55,19 @@ const DialectPage = () => {
         if (filters.region) params.region = filters.region;
         if (filters.topics.length > 0) params.topics = filters.topics.join(",");
 
-        const response = await axios.get("/api-nest/media", { params });
+        const res = await api.get("/media", { params });
 
         const elapsed = Date.now() - start;
-        const minDelay = 400; // минимальное время показа скелета
-        const delay = Math.max(0, minDelay - elapsed);
+        const delay = Math.max(0, 400 - elapsed); // минимум 400мс скелета
 
         setTimeout(() => {
           if (!isMounted) return;
-          const data = (response.data || []) as Media[];
+
+          const data = res.data as Media[];
           setMediaList(data);
           setLoading(false);
           setLoadedOnce(true);
 
-          // === Вычисляем регионы динамически на основе пришедших данных ===
           const uniqueRegions = [
             ...new Set(
               data
@@ -83,9 +77,9 @@ const DialectPage = () => {
           ];
           setRegions(uniqueRegions);
         }, delay);
-      } catch (error) {
+      } catch (err) {
         if (isMounted) {
-          console.error("Ошибка при загрузке медиа:", error);
+          console.error("Ошибка при загрузке медиа:", err);
           setMediaList([]);
           setLoading(false);
           setLoadedOnce(true);
@@ -99,7 +93,7 @@ const DialectPage = () => {
     };
   }, [filters]);
 
-  // === Управление фильтрами ===
+  /** === Управление фильтрами === */
   const toggleTopic = (id: number) => {
     setFilters((prev) => {
       const topics = prev.topics.includes(id)
@@ -119,7 +113,6 @@ const DialectPage = () => {
     }));
   };
 
-  // === Фильтруем медиа по наличию диалекта ===
   const filteredMedia = mediaList.filter((m) => m.dialect && m.dialect.id);
   const visibleCount = filteredMedia.length;
   const isSingleFiltered = visibleCount === 1;
@@ -128,7 +121,6 @@ const DialectPage = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>Все упражнения по диалектам</h1>
 
-      {/* === Фильтры === */}
       <Filters
         fields={[
           {

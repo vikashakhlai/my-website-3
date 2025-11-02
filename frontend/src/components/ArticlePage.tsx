@@ -11,7 +11,6 @@ import {
   isOpenQuestionExercise,
 } from "../utils/exerciseUtils";
 
-// Компоненты упражнений
 import FillInTheBlanksExerciseComponent from "../components/Exercises/FillInTheBlanksExercise";
 import MultipleChoiceExercise from "../components/Exercises/MultipleChoiceExercise";
 import OpenQuestionExercise from "./Exercises/OpenQuestionExercise";
@@ -22,6 +21,7 @@ import useScrollToTop from "../hooks/useScrollToTop";
 import FavoriteButton from "../components/FavoriteButton";
 import { StarRating } from "../components/StarRating";
 import { CommentsSection } from "../components/CommentsSection";
+import { api } from "../api/auth";
 
 const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,34 +32,16 @@ const ArticlePage = () => {
 
   useScrollToTop();
 
-  // 🔹 Загружаем статью
+  // ✅ Загружаем статью
   useEffect(() => {
-    if (!id) {
-      navigate("/");
-      return;
-    }
+    if (!id) return navigate("/");
 
-    const articleId = parseInt(id, 10);
-    if (isNaN(articleId) || articleId <= 0) {
-      navigate("/");
-      return;
-    }
+    const articleId = Number(id);
+    if (!articleId) return navigate("/");
 
-    const token = localStorage.getItem("token");
-
-    fetch(`/api-nest/articles/${articleId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => {
-        if (!res.ok) {
-          if (res.status === 404) navigate("/");
-          else throw new Error("Ошибка загрузки статьи");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setArticle(data);
-      })
+    api
+      .get(`/articles/${articleId}`)
+      .then((res) => setArticle(res.data))
       .catch((err) => {
         console.error("Ошибка загрузки статьи:", err);
         navigate("/");
@@ -67,47 +49,26 @@ const ArticlePage = () => {
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  // 🔹 Проверяем избранное
+  // ✅ Проверяем избранное
   useEffect(() => {
-    const fetchFavoriteStatus = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token || !id) return;
-
-        const res = await fetch("/api-nest/favorites/article", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-
-        const favorites = await res.json();
-        setIsFavorite(favorites.some((f: any) => f.id === Number(id)));
-      } catch (err) {
-        console.error("Ошибка при загрузке избранного:", err);
-      }
-    };
-
-    fetchFavoriteStatus();
+    if (!id) return;
+    api
+      .get("/favorites/article")
+      .then((res) => {
+        setIsFavorite(res.data.some((f: any) => f.id === Number(id)));
+      })
+      .catch(() => {});
   }, [id]);
 
-  // 🔹 Добавление / удаление из избранного
+  // ✅ Тоггл избранного
   const toggleFavorite = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Для добавления в избранное нужно войти в аккаунт.");
-      return;
-    }
-
     try {
-      const method = isFavorite ? "DELETE" : "POST";
-      const res = await fetch(`/api-nest/favorites/article/${id}`, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Ошибка при изменении избранного");
-      setIsFavorite(!isFavorite);
+      const method = isFavorite ? "delete" : "post";
+      await api[method](`/favorites/article/${id}`);
+      setIsFavorite((prev) => !prev);
     } catch (err) {
       console.error("Ошибка избранного:", err);
+      alert("Ошибка! Нужно войти.");
     }
   };
 
@@ -116,20 +77,18 @@ const ArticlePage = () => {
 
   return (
     <div className="article-page">
-      {/* 🖼️ Картинка */}
       <img
         src={article.imageUrl}
         alt={article.titleRu}
         className="article-image"
       />
 
-      {/* 🏷️ Заголовок и избранное */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "10px",
           justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
         }}
       >
         <h1 className="article-title">{article.titleRu}</h1>
@@ -138,12 +97,11 @@ const ArticlePage = () => {
 
       <h2 className="article-title-arabic">{article.titleAr}</h2>
 
-      {/* 📚 Тема и ⭐ рейтинг */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "20px",
+          gap: 20,
           flexWrap: "wrap",
           margin: "10px 0",
         }}
@@ -152,7 +110,6 @@ const ArticlePage = () => {
           Тема: <span className="article-theme-label">{article.themeRu}</span>
         </div>
 
-        {/* ⭐ Универсальный рейтинг */}
         <StarRating
           targetType="article"
           targetId={article.id}
@@ -161,19 +118,16 @@ const ArticlePage = () => {
         />
       </div>
 
-      {/* 📝 Описание */}
       {article.description && (
         <p className="article-description">{article.description}</p>
       )}
 
-      {/* 📖 Основной текст */}
       <div
         className="article-content rtl"
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
 
-      {/* 🧩 Упражнения */}
-      {article.exercises && article.exercises.length > 0 && (
+      {article.exercises?.length > 0 && (
         <div className="article-exercises">
           <h3 className="article-exercises-title">Упражнения</h3>
           {article.exercises.map((exercise) => {
@@ -185,43 +139,33 @@ const ArticlePage = () => {
                 />
               );
             }
-
             if (isMultipleChoiceExercise(exercise)) {
               return (
                 <MultipleChoiceExercise key={exercise.id} exercise={exercise} />
               );
             }
-
             if (isOpenQuestionExercise(exercise)) {
               return (
                 <OpenQuestionExercise key={exercise.id} exercise={exercise} />
               );
             }
-
             if (isFlashcardsExercise(exercise)) {
               return (
                 <FlashcardsExercise key={exercise.id} exercise={exercise} />
               );
             }
-
             if (isMatchingPairsExercise(exercise)) {
               return (
                 <MatchingPairsExercise key={exercise.id} exercise={exercise} />
               );
             }
-
             return null;
           })}
         </div>
       )}
 
-      {/* 💬 Комментарии */}
-      <div style={{ marginTop: "50px" }}>
-        <CommentsSection
-          targetType="article"
-          targetId={article.id}
-          apiBase="/api-nest"
-        />
+      <div style={{ marginTop: 50 }}>
+        <CommentsSection targetType="article" targetId={article.id} />
       </div>
     </div>
   );
