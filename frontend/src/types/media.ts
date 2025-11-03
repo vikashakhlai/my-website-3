@@ -11,7 +11,7 @@ export interface Media {
   licenseType?: string;
   licenseAuthor?: string;
   type: MediaType;
-  tags?: string[];
+  topic?: string[];
   dialogueGroupId?: number | null;
   dialect?: { name: string };
   duration?: string;

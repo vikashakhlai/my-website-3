@@ -73,6 +73,9 @@ const DialectCard: React.FC<DialectCardProps> = ({
     "Марокканский арабский": "#F59E0B",
     "Саудовский арабский": "#3B82F6",
     "Суданский арабский": "#8B5CF6",
+    "Алжирский арабский": "#339438ff",
+    "Ливанский арабский": "#ffa704ff",
+    "Сирийский арабский": "#00d9ffff",
   };
 
   const regionColor = dialectColors[dialectName || ""] || "#6B7280";
@@ -169,6 +172,7 @@ const DialectCard: React.FC<DialectCardProps> = ({
             >
               {levelLabel}
             </span>
+
           )}
         </div>
 

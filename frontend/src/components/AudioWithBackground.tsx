@@ -5,17 +5,13 @@ import bgCity from "../assets/bg_city_work.png";
 import bgFamily from "../assets/bg_family_and_house.png";
 import bgFood from "../assets/bg_food_market.png";
 import bgNature from "../assets/bg_nature.png";
-import bgStudy from "../assets/bg_study_culture.png";
 import bgTravel from "../assets/bg_travel.png";
+import bgCulture from "../assets/bg_study_culture.webp";
+import bgTraditions from "../assets/bg_traditions_and_celebrations.png";
 
 import "./AudioWithBackground.css";
 
-import type { Media } from "../types/media"; // ✅ правильный импорт
-
-interface Topic {
-  id: number;
-  name: string;
-}
+import type { Media } from "../types/media";
 
 const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -40,10 +36,12 @@ const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
       return bgCity;
     if (topics.some((t) => ["природа", "экология", "животные"].includes(t)))
       return bgNature;
-    if (topics.some((t) => ["учёба", "культура", "традиции"].includes(t)))
-      return bgStudy;
+    if (topics.some((t) => ["учёба", "университет"].includes(t)))
+      return bgCulture;
     if (topics.some((t) => ["семья", "дом", "дети"].includes(t)))
       return bgFamily;
+    if (topics.some((t) => ["культура", "традиции", "религия"].includes(t)))
+      return bgTraditions;
     return bgNature;
   };
 

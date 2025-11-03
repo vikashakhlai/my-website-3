@@ -18,13 +18,18 @@ interface Dialogue {
   medias: Media[]; // ✅ теперь совместимо
 }
 
-const DialogueCompare: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
+const DialogueCompare: React.FC<{
+  dialogue: Dialogue;
+  selectedMediaId: number;
+}> = ({ dialogue, selectedMediaId }) => {
   useScrollToTop();
 
   if (!dialogue.medias || dialogue.medias.length < 2) return null;
 
-  const fusha = dialogue.medias.find((m) => !m.dialect);
-  const dialect = dialogue.medias.find((m) => m.dialect);
+  const fusha = dialogue.medias.find((m) => m.dialectId === null);
+
+  // ✅ выбираем ТОЛЬКО тот диалект, который соответствует открытой карточке
+  const dialect = dialogue.medias.find((m) => m.id === selectedMediaId);
 
   if (!fusha || !dialect) return null;
 

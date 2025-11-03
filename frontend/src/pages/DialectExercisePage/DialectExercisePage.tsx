@@ -14,6 +14,7 @@ import { CommentsSection } from "../../components/CommentsSection";
 import { api } from "../../api/auth";
 
 import type { Media } from "../../types/media";
+import OtherDialectVersions from "../../components/OtherDialectVersions";
 
 interface Dialogue {
   id: number;
@@ -28,6 +29,9 @@ const DIALECT_COLORS: Record<string, string> = {
   "Марокканский арабский": "#F59E0B",
   "Саудовский арабский": "#3B82F6",
   "Суданский арабский": "#8B5CF6",
+  "Алжирский арабский": "#339438ff",
+  "Ливанский арабский": "#ffa704ff",
+  "Сирийский арабский": "#00d9ffff",
 };
 
 export default function DialectExercisePage() {
@@ -232,7 +236,13 @@ export default function DialectExercisePage() {
         </div>
       </div>
 
-      {dialogue && <DialogueCompare dialogue={dialogue} />}
+      {dialogue && (
+        <DialogueCompare dialogue={dialogue} selectedMediaId={media.id} />
+      )}
+
+      {dialogue && dialogue.medias.length > 1 && (
+        <OtherDialectVersions medias={dialogue.medias} currentId={media.id} />
+      )}
 
       <div className="feedback-section">
         <h2 className="feedback-title">Обратная связь</h2>
@@ -251,7 +261,6 @@ export default function DialectExercisePage() {
             />
           </div>
         </div>
-
         <div className="comments-block">
           <CommentsSection targetType="media" targetId={media.id} />
         </div>

@@ -1,0 +1,164 @@
+/* ===== component-scoped reset (безопасно) ===== */
+.wrapper {
+  margin-top: 70px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrapper *,
+.wrapper *::before,
+.wrapper *::after {
+  box-sizing: border-box;
+}
+.wrapper a {
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+.wrapper a:focus {
+  outline: none;
+}
+.wrapper img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== layout ===== */
+.inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #1a1a1a;
+}
+
+.container {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.single .slider {
+  flex: 1;
+}
+
+/* ===== slider ===== */
+.slider {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 6px 6px 12px 6px; /* дают воздух слева/справа */
+}
+.slider::-webkit-scrollbar {
+  height: 6px;
+}
+.slider::-webkit-scrollbar-thumb {
+  background: #c9cdfd;
+  border-radius: 4px;
+}
+
+/* режим 1 карточки — без горизонтального скролла и на всю ширину */
+.sliderSingle {
+  overflow: visible;
+  gap: 0;
+}
+
+/* ===== card ===== */
+.card {
+  min-width: 280px;
+  max-width: 300px;
+  scroll-snap-align: start;
+  background: #fff;
+  padding: 20px 22px;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+  border: 1px solid #ececec;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+/* single card растягивается */
+.single .card {
+  width: 100%;
+  max-width: none;
+}
+
+/* ===== meta/badge ===== */
+.dialectBadge {
+  display: inline-block;
+  background: #6366f1;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.metaRow {
+  font-size: 14px;
+  margin-top: 6px;
+  color: #444;
+}
+.exclusive {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6366f1;
+  font-weight: 600;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ===== image to the right ===== */
+.imageWrap {
+  width: 340px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 22px;
+}
+.imageWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== responsive ===== */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column-reverse;
+  }
+  .imageWrap {
+    width: 100%;
+    height: 180px;
+  } /* было слишком большое — фиксируем высоту */
+  .slider {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .imageWrap {
+    height: 150px;
+    border-radius: 16px;
+  }
+  .card {
+    min-width: 260px;
+  }
+  .title {
+    font-size: 22px;
+  }
+}
