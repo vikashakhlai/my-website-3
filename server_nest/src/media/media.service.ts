@@ -18,7 +18,7 @@ import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { makeAbsoluteUrl } from 'src/utils/media-url.util';
-import { UpdateMediaDto } from './dto/update-media.dto';
+import { UpdateMediaRequestDto } from './dto/update-media.request.dto';
 
 @Injectable()
 export class MediaService {
@@ -37,23 +37,21 @@ export class MediaService {
    * ========================================= */
 
   async findAll(): Promise<Media[]> {
-    console.log('🔥 findAll() CALLED');
     const list = await this.mediaRepository
       .createQueryBuilder('media')
       .leftJoinAndSelect('media.dialect', 'dialect')
       .leftJoinAndSelect('media.topics', 'topics')
-      .where('media.dialectId IS NOT NULL') // ←←← ДОБАВЬТЕ ЭТУ СТРОКУ
+      .where('media.dialectId IS NOT NULL')
       .orderBy('media.createdAt', 'DESC')
       .getMany();
 
-    console.log('📌 RESULT COUNT =', list.length);
     return list.map((m) => this.normalizeMediaPaths(m));
   }
 
   async findOne(id: number): Promise<Media> {
     const media = await this.mediaRepository.findOne({
       where: { id },
-      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
+      relations: ['dialect', 'topics'],
     });
     if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
     return this.normalizeMediaPaths(media);
@@ -107,7 +105,7 @@ export class MediaService {
   async findOneWithRating(id: number, userId?: string) {
     const media = await this.mediaRepository.findOne({
       where: { id },
-      relations: ['dialect', 'topics', 'exercises', 'exercises.items'],
+      relations: ['dialect', 'topics'],
     });
     if (!media) throw new NotFoundException(`Медиа с ID ${id} не найдено`);
 
@@ -122,12 +120,15 @@ export class MediaService {
             ?.value ?? null)
         : null;
 
-    return {
-      ...this.normalizeMediaPaths(media),
+    const normalized = this.normalizeMediaPaths(media);
+
+    // Возвращаем то же, что и раньше + нормализованные пути.
+    return Object.assign(normalized, {
+      dialogueGroupId: media.dialogueGroupId ?? null,
       averageRating: avg.average ?? 0,
       votes: avg.votes ?? 0,
       userRating,
-    };
+    });
   }
 
   /* =========================================
@@ -151,7 +152,7 @@ export class MediaService {
     return this.normalizeMediaPaths(saved);
   }
 
-  async update(id: number, dto: UpdateMediaDto): Promise<Media> {
+  async update(id: number, dto: UpdateMediaRequestDto): Promise<Media> {
     const media = await this.mediaRepository.findOne({
       where: { id },
       relations: ['topics', 'dialect'],
@@ -167,26 +168,24 @@ export class MediaService {
     if (dto.subtitlesLink !== undefined)
       media.subtitlesLink = dto.subtitlesLink;
 
-    if (dto.type !== undefined) media.type = dto.type;
+    if (dto.type !== undefined) (media as any).type = dto.type;
 
     if (dto.licenseType !== undefined) media.licenseType = dto.licenseType;
     if (dto.licenseAuthor !== undefined)
       media.licenseAuthor = dto.licenseAuthor;
 
-    if (dto.level !== undefined) media.level = dto.level as any;
+    if (dto.level !== undefined) (media as any).level = dto.level;
 
     if (dto.dialogueGroupId !== undefined)
-      media.dialogueGroupId = dto.dialogueGroupId;
+      media.dialogueGroupId = dto.dialogueGroupId ?? null;
 
-    if (dto.duration !== undefined) media.duration = dto.duration ?? undefined;
-    if (dto.speaker !== undefined) media.speaker = dto.speaker ?? undefined;
-    if (dto.sourceRole !== undefined)
-      media.sourceRole = dto.sourceRole ?? undefined;
+    if (dto.duration !== undefined) media.duration = dto.duration ?? null;
+    if (dto.speaker !== undefined) media.speaker = dto.speaker ?? null;
+    if (dto.sourceRole !== undefined) media.sourceRole = dto.sourceRole ?? null;
 
     if (dto.grammarLink !== undefined)
-      media.grammarLink = dto.grammarLink ?? undefined;
-    if (dto.resources !== undefined)
-      media.resources = dto.resources ?? undefined;
+      media.grammarLink = dto.grammarLink ?? null;
+    if (dto.resources !== undefined) media.resources = dto.resources ?? null;
 
     if (dto.dialectId !== undefined) {
       media.dialectId = dto.dialectId || null;
@@ -203,7 +202,7 @@ export class MediaService {
     let saved = await this.mediaRepository.save(media);
 
     if (
-      saved.type === 'video' &&
+      (saved as any).type === 'video' &&
       saved.mediaUrl &&
       prevMediaUrl !== saved.mediaUrl
     ) {
@@ -229,7 +228,7 @@ export class MediaService {
    * EXERCISES
    * ========================================= */
 
-  async findExercisesByMedia(mediaId: number): Promise<Exercise[]> {
+  async findExercisesByMedia(mediaId: number) {
     return this.exerciseRepository.find({
       where: { media: { id: mediaId } },
       relations: ['items'],

@@ -25,7 +25,7 @@ const AudioWithBackground: React.FC<{ media: Media }> = ({ media }) => {
     }
   }, [media.id]);
 
-  const topics = (media.topics || []).map((t) => t.name.toLowerCase());
+  const topics = media.topics?.map((t) => t.name.toLowerCase()) ?? [];
 
   const getBackground = (): string => {
     if (topics.some((t) => ["еда", "покупки еды", "в магазине"].includes(t)))

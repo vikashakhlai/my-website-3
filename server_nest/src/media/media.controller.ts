@@ -22,7 +22,6 @@ import { extname } from 'path';
 import { interval, Observable, switchMap } from 'rxjs';
 
 import { MediaService } from './media.service';
-import { Media } from './media.entity';
 import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
@@ -31,10 +30,22 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from 'src/auth/roles.enum';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { TargetType } from 'src/common/enums/target-type.enum';
-import { UpdateMediaDto } from './dto/update-media.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiConsumes,
+} from '@nestjs/swagger';
+import { TargetType } from 'src/common/enums/target-type.enum';
+
+import { CreateMediaRequestDto } from './dto/create-media.request.dto';
+import { UpdateMediaRequestDto } from './dto/update-media.request.dto';
+import { MediaResponseDto } from './dto/media.response.dto';
+import { MediaWithRatingResponseDto } from './dto/media-with-rating.response.dto';
+
+import { mapToDto } from 'src/common/utils/map-to-dto.util';
 
 @ApiTags('Media')
 @Controller('media')
@@ -48,52 +59,63 @@ export class MediaController {
 
   /** 📜 Публичный список медиа с фильтрами */
   @ApiOperation({ summary: 'Список медиа (публично)' })
+  @ApiOkResponse({ type: MediaResponseDto, isArray: true })
   @Public()
   @Get()
   async findAll(
     @Query('name') name?: string,
     @Query('region') region?: string,
     @Query('topics') topics?: string,
-  ): Promise<Media[]> {
+  ): Promise<MediaResponseDto[]> {
     const topicIds = (topics ?? '')
       .split(',')
       .map((v) => Number(v))
-      .filter((v) => v > 0); // отбрасываем 0 и любые невалидные
+      .filter((v) => v > 0);
 
     const hasFilters =
       (name ?? '').trim().length > 0 ||
       (region ?? '').trim().length > 0 ||
       topicIds.length > 0;
-    console.log('📌 hasFilters =', hasFilters, { name, region, topicIds });
 
     if (!hasFilters) {
-      console.log('🔥 calling findAll()');
-      return this.mediaService.findAll();
+      const list = await this.mediaService.findAll();
+      return list.map((m) => mapToDto(MediaResponseDto, m));
     }
 
-    console.log('🔥 calling findAllWithFilters()');
-    return this.mediaService.findAllWithFilters({
+    const list = await this.mediaService.findAllWithFilters({
       name: name?.trim(),
       region: region?.trim(),
       topics: topicIds,
     });
+    return list.map((m) => mapToDto(MediaResponseDto, m));
   }
 
   /** 🎬 Просмотр конкретного медиа — только авторизованные */
-  @ApiOperation({ summary: 'Получить медиа (только авторизованные)' })
-  @ApiBearerAuth('access-token')
+  @ApiOkResponse({ type: MediaWithRatingResponseDto })
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.mediaService.findOneWithRating(id, req.user.sub);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+  ): Promise<MediaWithRatingResponseDto> {
+    const result = await this.mediaService.findOneWithRating(id, req.user.sub);
+
+    const dto = mapToDto(MediaWithRatingResponseDto, result);
+    dto.averageRating = (result as any).averageRating;
+    dto.votes = (result as any).votes;
+    dto.userRating = (result as any).userRating ?? null;
+
+    return dto;
   }
 
   /** 📥 Загрузка файла (ADMIN+) */
   @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
+  @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post('upload')
+  @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -121,28 +143,31 @@ export class MediaController {
   )
   async uploadVideo(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: Partial<Media>,
-  ): Promise<Media> {
+    @Body() body: CreateMediaRequestDto,
+  ): Promise<MediaResponseDto> {
     const videoPath = file.path.replace(/\\/g, '/');
     const previewPath = await this.mediaService.generatePreview(videoPath);
-    return this.mediaService.create({
+    const created = await this.mediaService.create({
       ...body,
       mediaUrl: videoPath,
       previewUrl: previewPath,
     });
+    return mapToDto(MediaResponseDto, created);
   }
 
   /** 🔄 Обновить (ADMIN+) */
   @ApiOperation({ summary: 'Обновить медиа (ADMIN+)' })
+  @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateMediaDto,
-  ) {
-    return this.mediaService.update(id, dto);
+    @Body() dto: UpdateMediaRequestDto,
+  ): Promise<MediaResponseDto> {
+    const updated = await this.mediaService.update(id, dto);
+    return mapToDto(MediaResponseDto, updated);
   }
 
   /** 🗑 Удалить (ADMIN+) */
@@ -152,7 +177,8 @@ export class MediaController {
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.mediaService.remove(id);
+    await this.mediaService.remove(id);
+    return { success: true };
   }
 
   /** ⭐ Средний рейтинг (публично) */

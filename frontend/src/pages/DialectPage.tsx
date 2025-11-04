@@ -43,12 +43,8 @@ const DialectPage = () => {
 
   /** === 2. Загрузка медиа === */
   useEffect(() => {
-    let isMounted = true;
-
     const fetchMedia = async () => {
       setLoading(true);
-      const start = Date.now();
-      console.log("▶️ fetchMedia start, filters =", filters);
 
       try {
         const params: Record<string, string> = {};
@@ -56,50 +52,30 @@ const DialectPage = () => {
         if (filters.region) params.region = filters.region;
         if (filters.topics.length > 0) params.topics = filters.topics.join(",");
 
-        console.log("📡 sending request with params:", params);
-
         const res = await api.get<Media[]>("/media", { params });
 
-        console.log("✅ response received:", res.data);
+        setMediaList(Array.isArray(res.data) ? res.data : []);
+        setLoadedOnce(true);
+        setLoading(false);
 
-        const elapsed = Date.now() - start;
-        const delay = Math.max(0, 400 - elapsed);
+        const uniqueRegions = Array.from(
+          new Set(
+            res.data
+              .map((m) => m.dialect?.region)
+              .filter((r): r is string => Boolean(r))
+          )
+        );
 
-        setTimeout(() => {
-          console.log("⏳ delayed processing");
-
-          const data = res.data;
-          console.log("📌 data parsed:", data);
-
-          setMediaList(Array.isArray(data) ? data : []);
-
-          setLoading(false);
-          setLoadedOnce(true);
-
-          const uniqueRegions = Array.from(
-            new Set(
-              data
-                .map((m) => m.dialect?.region)
-                .filter((r): r is string => Boolean(r))
-            )
-          );
-
-          console.log("🌍 regions extracted:", uniqueRegions);
-
-          setRegions(uniqueRegions);
-        }, delay);
+        setRegions(uniqueRegions);
       } catch (err) {
         console.error("❌ Ошибка при загрузке медиа:", err);
         setMediaList([]);
-        setLoading(false);
         setLoadedOnce(true);
+        setLoading(false);
       }
     };
 
     fetchMedia();
-    return () => {
-      isMounted = false;
-    };
   }, [filters]);
 
   /** === Управление фильтрами === */
@@ -122,7 +98,7 @@ const DialectPage = () => {
     }));
   };
 
-  const filteredMedia = mediaList.filter((m) => m.dialect && m.dialect.id);
+  const filteredMedia = mediaList.filter((m) => !!m.dialect);
   const visibleCount = filteredMedia.length;
   const isSingleFiltered = visibleCount === 1;
 
@@ -195,7 +171,6 @@ const DialectPage = () => {
           </div>
         )}
 
-        {/* Активные темы */}
         {filters.topics.length > 0 && (
           <div className={styles.activeFilters}>
             {filters.topics.map((id) => {
@@ -217,9 +192,7 @@ const DialectPage = () => {
 
       {/* === Контент === */}
       {loading && !loadedOnce && (
-        <div
-          className={`${styles.skeletonGrid} ${!loading ? styles.hidden : ""}`}
-        >
+        <div className={styles.skeletonGrid}>
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={styles.skeletonCard}></div>
           ))}
@@ -233,24 +206,7 @@ const DialectPage = () => {
       {!loading && visibleCount > 0 && (
         <div className={isSingleFiltered ? styles.gridSingle : styles.grid}>
           {filteredMedia.map((m) => (
-            <DialectCard
-              key={m.id}
-              id={m.id}
-              slug={m.dialect?.slug || ""}
-              title={m.title}
-              previewUrl={m.previewUrl}
-              mediaType={m.type}
-              dialectName={m.dialect?.name || "Неизвестный диалект"}
-              licenseType={m.licenseType}
-              licenseAuthor={m.licenseAuthor}
-              hasSubtitles={!!m.subtitlesLink}
-              level={m.level}
-              topics={m.topics}
-              activeTopics={filters.topics}
-              duration={m.duration}
-              speaker={m.speaker}
-              sourceRole={m.sourceRole}
-            />
+            <DialectCard key={m.id} media={m} activeTopics={filters.topics} />
           ))}
         </div>
       )}

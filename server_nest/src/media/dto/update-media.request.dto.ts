@@ -1,43 +1,41 @@
 import {
   IsArray,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
-  MaxLength,
   ArrayUnique,
-  IsIn,
+  MaxLength,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MediaType } from './media-type.enum';
+import { MediaLevel } from './media-level.enum';
 
-export class UpdateMediaDto {
-  @ApiPropertyOptional({ example: 'Dialogue in Egyptian Arabic' })
+export class UpdateMediaRequestDto {
+  @ApiPropertyOptional({ example: 'New video title' })
   @IsOptional()
   @IsString()
   @MaxLength(300)
   title?: string;
 
-  @ApiPropertyOptional({ example: '/uploads/media/1700000000_video.mp4' })
+  @ApiPropertyOptional({ example: '/uploads/media/updated.mp4' })
   @IsOptional()
   @IsString()
   mediaUrl?: string;
 
-  @ApiPropertyOptional({ example: '/uploads/media/thumbnails/1700000000.jpg' })
+  @ApiPropertyOptional({ example: '/uploads/media/thumbnails/updated.jpg' })
   @IsOptional()
   @IsString()
   previewUrl?: string;
 
-  @ApiPropertyOptional({ example: '/uploads/subs/1700000000.vtt' })
+  @ApiPropertyOptional({ example: '/uploads/subs/updated.vtt' })
   @IsOptional()
   @IsString()
   subtitlesLink?: string;
 
-  @ApiPropertyOptional({
-    example: 'video',
-    enum: MediaType,
-  })
+  @ApiPropertyOptional({ enum: MediaType, example: 'audio' })
   @IsOptional()
-  @IsIn(Object.values(MediaType))
+  @IsEnum(MediaType)
   type?: MediaType;
 
   @ApiPropertyOptional({ example: 12 })
@@ -45,7 +43,7 @@ export class UpdateMediaDto {
   @IsInt()
   dialectId?: number;
 
-  @ApiPropertyOptional({ example: 'original' })
+  @ApiPropertyOptional({ example: 'licensed' })
   @IsOptional()
   @IsString()
   licenseType?: string;
@@ -55,49 +53,48 @@ export class UpdateMediaDto {
   @IsString()
   licenseAuthor?: string;
 
-  @ApiPropertyOptional({ example: 'advanced' })
+  @ApiPropertyOptional({ enum: MediaLevel })
   @IsOptional()
-  @IsString()
-  level?: string | null;
+  @IsEnum(MediaLevel)
+  level?: MediaLevel;
 
   @ApiPropertyOptional({ example: 5 })
   @IsOptional()
   @IsInt()
-  dialogueGroupId?: number | null;
+  dialogueGroupId?: number;
 
   @ApiPropertyOptional({ example: '00:03:24' })
   @IsOptional()
   @IsString()
-  duration?: string | null;
+  duration?: string;
 
   @ApiPropertyOptional({ example: 'Mahmoud' })
   @IsOptional()
   @IsString()
-  speaker?: string | null;
+  speaker?: string;
 
   @ApiPropertyOptional({ example: 'partner' })
   @IsOptional()
   @IsString()
-  sourceRole?: string | null;
+  sourceRole?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/grammar/article' })
+  @ApiPropertyOptional({ example: 'https://example.com' })
   @IsOptional()
   @IsString()
-  grammarLink?: string | null;
+  grammarLink?: string;
 
   @ApiPropertyOptional({
-    example: { pdf: '/uploads/media/extra.pdf', glossary: '/uploads/glo.json' },
-    description: 'Произвольный JSON',
+    type: 'object',
+    additionalProperties: true,
+    example: { pdf: '/uploads/media/extra.pdf' },
   })
   @IsOptional()
-  resources?: Record<string, any> | null;
+  resources?: Record<string, any>;
 
-  @ApiPropertyOptional({
-    example: [2, 7, 9],
-    description: 'SYNC темы: новые добавятся, отсутствующие — удалятся',
-  })
+  @ApiPropertyOptional({ example: [2, 7, 9] })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
+  @IsInt({ each: true })
   topicIds?: number[];
 }

@@ -13,14 +13,14 @@ import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
 import { api } from "../../api/auth";
 
-import type { Media } from "../../types/media";
+import type { MediaWithRating } from "../../types/media";
 import OtherDialectVersions from "../../components/OtherDialectVersions";
 
 interface Dialogue {
   id: number;
   title: string;
   description?: string;
-  medias: any[];
+  medias: MediaWithRating[];
 }
 
 const DIALECT_COLORS: Record<string, string> = {
@@ -29,9 +29,9 @@ const DIALECT_COLORS: Record<string, string> = {
   "Марокканский арабский": "#F59E0B",
   "Саудовский арабский": "#3B82F6",
   "Суданский арабский": "#8B5CF6",
-  "Алжирский арабский": "#339438ff",
-  "Ливанский арабский": "#ffa704ff",
-  "Сирийский арабский": "#00d9ffff",
+  "Алжирский арабский": "#339438",
+  "Ливанский арабский": "#ffa704",
+  "Сирийский арабский": "#00d9ff",
 };
 
 export default function DialectExercisePage() {
@@ -39,7 +39,7 @@ export default function DialectExercisePage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const [media, setMedia] = useState<Media | null>(null);
+  const [media, setMedia] = useState<MediaWithRating | null>(null);
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function DialectExercisePage() {
       ? "Продвинутый"
       : null;
 
-  const dialectName = media?.dialect?.name || media?.name || "Арабский";
+  const dialectName = media?.dialect?.name || "Арабский";
   const dialectColor = DIALECT_COLORS[dialectName] || "#6366F1";
 
   const apiBase = useMemo(
@@ -87,21 +87,21 @@ export default function DialectExercisePage() {
       setErr(null);
 
       try {
-        const { data: mediaData } = await api.get<Media>(`/media/${id}`, {
-          signal,
-        });
+        const { data: mediaData } = await api.get<MediaWithRating>(
+          `/media/${id}`,
+          { signal }
+        );
         setMedia(mediaData);
 
         if (mediaData.dialogueGroupId) {
-          const { data: dialogues } = await api.get<Dialogue[]>(`/dialogues`, {
-            signal,
-          });
-          setDialogue(
-            dialogues.find((d) => d.id === mediaData.dialogueGroupId) || null
+          const { data: dialogueData } = await api.get<Dialogue>(
+            `/dialogues/${mediaData.dialogueGroupId}`,
+            { signal }
           );
+          setDialogue(dialogueData);
         }
 
-        // ✅ FIXED: получение избранного
+        // ✅ lowercase "media"
         const { data: favList } = await api.get(`/favorites/by-type/media`, {
           signal,
         });
@@ -126,12 +126,15 @@ export default function DialectExercisePage() {
     if (esRef.current) esRef.current.close();
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
 
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
     let stopped = false;
 
     const connect = () => {
       if (stopped) return;
 
-      const url = `${apiBase}/ratings/stream/media/${id}`;
+      const url = `${apiBase}/media/stream/${id}/rating?token=${token}`;
       const es = new EventSource(url);
       esRef.current = es;
 
@@ -143,7 +146,7 @@ export default function DialectExercisePage() {
               ? {
                   ...prev,
                   averageRating: payload.average,
-                  ratingCount: payload.votes,
+                  votes: payload.votes,
                 }
               : prev
           );
@@ -169,7 +172,6 @@ export default function DialectExercisePage() {
   // ===== 3) Favorite toggle =====
   const handleToggleFavorite = async () => {
     if (!media) return;
-
     try {
       if (fav) {
         await api.delete("/favorites", {
@@ -209,6 +211,7 @@ export default function DialectExercisePage() {
       <div className="exercise-meta">
         <div className="meta-inline">
           <BackZone to="/dialects" />
+
           {media.licenseType === "original" && (
             <div className="exclusive">Эксклюзив Oasis</div>
           )}
@@ -220,14 +223,14 @@ export default function DialectExercisePage() {
             {dialectName}
           </span>
 
-          <span className="meta-item">
-            🎙 <strong>{media.speaker || "Партнёр проекта"}</strong>
-          </span>
+          {media.speaker && (
+            <span className="meta-item">
+              🎙 <strong>{media.speaker}</strong>
+            </span>
+          )}
 
           {levelLabel && (
-            <span
-              className={`meta-item level ${media.level?.toLowerCase() || ""}`}
-            >
+            <span className={`meta-item level ${media.level}`}>
               {levelLabel}
             </span>
           )}
@@ -240,7 +243,7 @@ export default function DialectExercisePage() {
         <DialogueCompare dialogue={dialogue} selectedMediaId={media.id} />
       )}
 
-      {dialogue && dialogue.medias.length > 1 && (
+      {dialogue?.medias?.length > 1 && (
         <OtherDialectVersions medias={dialogue.medias} currentId={media.id} />
       )}
 
@@ -250,19 +253,26 @@ export default function DialectExercisePage() {
         <div className="rating-block">
           <h3>Оцените материал</h3>
           <div className="rating-wrapper">
-            <StarRating
-              targetType="media"
-              targetId={media.id}
-              average={media.averageRating ?? null}
-              userRating={media.userRating ?? null}
-              onRated={(val) =>
-                setMedia((prev) => (prev ? { ...prev, userRating: val } : prev))
-              }
-            />
+            {media?.id && (
+              <StarRating
+                targetType="media"
+                targetId={media.id}
+                average={media.averageRating ?? null}
+                userRating={media.userRating ?? null}
+                onRated={(val) =>
+                  setMedia((prev) =>
+                    prev ? { ...prev, userRating: val } : prev
+                  )
+                }
+              />
+            )}
           </div>
         </div>
+
         <div className="comments-block">
-          <CommentsSection targetType="media" targetId={media.id} />
+          {media?.id && (
+            <CommentsSection targetType="media" targetId={media.id} />
+          )}
         </div>
       </div>
     </div>

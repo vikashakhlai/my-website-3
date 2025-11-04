@@ -1,24 +1,22 @@
 import { Link } from "react-router-dom";
 import styles from "./OtherDialectVersions.module.css";
 import bgImg from "../assets/bg_other_versions.webp";
+import type { Media } from "../types/media";
 
-interface MediaItem {
-  id: number;
-  title: string;
-  dialect?: { name: string; slug: string };
-  duration?: string;
-  speaker?: string;
-  licenseType?: string;
+interface Props {
+  medias: Media[];
+  currentId: number;
 }
 
-export default function OtherDialectVersions({
-  medias,
-  currentId,
-}: {
-  medias: MediaItem[];
-  currentId: number;
-}) {
-  const filtered = medias.filter((m) => m.id !== currentId && m.dialect?.slug);
+export default function OtherDialectVersions({ medias, currentId }: Props) {
+  const filtered = medias.filter(
+    (m) =>
+      m.id !== currentId &&
+      m.dialect &&
+      typeof m.dialect.slug === "string" &&
+      m.dialect.slug.trim() !== ""
+  );
+
   if (filtered.length === 0) return null;
 
   const single = filtered.length === 1;
@@ -40,12 +38,17 @@ export default function OtherDialectVersions({
               >
                 <span className={styles.dialectBadge}>{m.dialect!.name}</span>
 
-                <div className={styles.metaRow}>
-                  <span>⏱ {m.duration || "—"}</span>
-                </div>
-                <div className={styles.metaRow}>
-                  <span>🎙 {m.speaker || "Партнёр проекта"}</span>
-                </div>
+                {m.duration && (
+                  <div className={styles.metaRow}>
+                    <span>⏱ {m.duration}</span>
+                  </div>
+                )}
+
+                {m.speaker && (
+                  <div className={styles.metaRow}>
+                    <span>🎙 {m.speaker}</span>
+                  </div>
+                )}
 
                 {m.licenseType === "original" && (
                   <div className={styles.exclusive}>
