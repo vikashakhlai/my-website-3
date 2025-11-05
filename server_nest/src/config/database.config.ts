@@ -1,11 +1,10 @@
-// src/config/database.config.ts
 import { registerAs } from '@nestjs/config';
 import { DatabaseConfig } from './configuration.types';
 
 export default registerAs<DatabaseConfig>('database', () => ({
-  host: process.env.DB_HOST ?? 'localhost',
-  port: parseInt(process.env.DB_PORT ?? '5432', 10),
-  username: process.env.DB_USERNAME ?? 'postgres',
-  password: process.env.DB_PASSWORD ?? '',
-  database: process.env.DB_NAME ?? 'postgres',
+  host: process.env.DB_HOST!,
+  port: Number(process.env.DB_PORT!),
+  username: process.env.DB_USER!,
+  password: process.env.DB_PASSWORD!,
+  database: process.env.DB_NAME!,
 }));
