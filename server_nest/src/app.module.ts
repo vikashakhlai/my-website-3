@@ -1,14 +1,17 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
-import { AppController } from './app.controller';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
 import databaseConfig from './config/database.config';
 import { AllConfigType, DatabaseConfig } from './config/configuration.types';
 
+// modules
+import { AppController } from './app.controller';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 import { BookModule } from './books/books.module';
 import { AuthorsModule } from './authors/authors.module';
 import { TagsModule } from './tags/tags.module';
@@ -27,6 +30,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { CommentsModule } from './comments/comments.module';
 import { RatingsModule } from './ratings/ratings.module';
 
+import { ConfigService } from '@nestjs/config';
+import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
+
 @Module({
   imports: [
     // ✅ .env config
@@ -38,17 +44,16 @@ import { RatingsModule } from './ratings/ratings.module';
 
     // ✅ TypeORM
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
-        const dbConfig = configService.getOrThrow<DatabaseConfig>('database');
+        const db = configService.getOrThrow<DatabaseConfig>('database');
         return {
           type: 'postgres',
-          host: dbConfig.host,
-          port: dbConfig.port,
-          username: dbConfig.username,
-          password: dbConfig.password,
-          database: dbConfig.database,
+          host: db.host,
+          port: db.port,
+          username: db.username,
+          password: db.password,
+          database: db.database,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: false,
           logging: process.env.NODE_ENV === 'development',
@@ -60,16 +65,14 @@ import { RatingsModule } from './ratings/ratings.module';
       },
     }),
 
-    // ✅ Throttler v4 (глобальный лимит)
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          name: 'global',
-          ttl: 60, // 60 секунд
-          limit: 20, // 20 запросов
-        },
-      ],
-    }),
+    // ✅ Throttler (rate limit, глобально через APP_GUARD)
+    ThrottlerModule.forRoot([
+      {
+        name: 'global',
+        ttl: 60, // окно 60с
+        limit: 100, // 100 запросов/мин на IP (подстрой при необходимости)
+      },
+    ]),
 
     // ✅ App modules
     UserModule,
@@ -93,5 +96,10 @@ import { RatingsModule } from './ratings/ratings.module';
     RatingsModule,
   ],
   controllers: [AppController],
+  providers: [
+    // ✅ Глобально: сначала JWT, сверху над ThrottlerGuard важен порядок
+    { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

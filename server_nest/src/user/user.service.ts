@@ -1,3 +1,4 @@
+// src/user/user.service.ts
 import {
   BadRequestException,
   Injectable,
@@ -16,6 +17,11 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  // ✅ Новый универсальный update (нужен для AuthService)
+  async update(id: string, data: Partial<User>): Promise<void> {
+    await this.userRepository.update({ id }, data);
+  }
 
   // 🔹 Создание пользователя (всегда USER, без внешней роли)
   async create(email: string, password: string): Promise<User> {
@@ -60,10 +66,7 @@ export class UserService {
 
   // 🔹 Поиск пользователя по ID (пароль не возвращается 💡)
   async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
-
+    const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
@@ -86,6 +89,8 @@ export class UserService {
         'accessLevel',
         'createdAt',
         'updatedAt',
+        'refreshTokenHash',
+        'tokenVersion',
       ],
     });
   }
@@ -101,11 +106,9 @@ export class UserService {
   // 🔹 Повышение до ADMIN (только SUPER_ADMIN)
   async promoteToAdmin(userId: string): Promise<User> {
     const user = await this.findById(userId);
-
     if (user.role === Role.SUPER_ADMIN) {
       throw new BadRequestException('Нельзя менять роль SUPER_ADMIN');
     }
-
     user.role = Role.ADMIN;
     return this.userRepository.save(user);
   }
@@ -113,11 +116,9 @@ export class UserService {
   // 🔹 Отзыв прав ADMIN (только SUPER_ADMIN)
   async revokeAdminRights(userId: string): Promise<User> {
     const user = await this.findById(userId);
-
     if (user.role !== Role.ADMIN) {
       throw new BadRequestException('Пользователь не является ADMIN');
     }
-
     user.role = Role.USER;
     return this.userRepository.save(user);
   }
@@ -125,11 +126,7 @@ export class UserService {
   // 🔹 Назначение автора (ADMIN или SUPER_ADMIN)
   async makeAuthor(userId: string): Promise<User> {
     const user = await this.findById(userId);
-
-    if (user.isAuthor) {
-      return user;
-    }
-
+    if (user.isAuthor) return user;
     user.isAuthor = true;
     return this.userRepository.save(user);
   }
@@ -137,11 +134,9 @@ export class UserService {
   // 🔹 Удаление пользователя (только SUPER_ADMIN)
   async deleteUser(userId: string): Promise<{ message: string }> {
     const user = await this.findById(userId);
-
     if (user.role === Role.SUPER_ADMIN) {
       throw new BadRequestException('Нельзя удалить SUPER_ADMIN');
     }
-
     await this.userRepository.remove(user);
     return { message: `User ${user.email} has been deleted` };
   }

@@ -1,4 +1,4 @@
-// src/users/user.entity.ts
+// src/user/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,9 +7,10 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+
 import { Comment } from 'src/comments/comment.entity';
 import { Rating } from 'src/ratings/rating.entity';
-import { Role } from 'src/auth/roles.enum'; // ✅ общий enum ролей
+import { Role } from 'src/auth/roles.enum';
 
 export enum AccessLevel {
   BASIC = 'BASIC',
@@ -25,11 +26,11 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  // ✅ Не возвращаем пароль по умолчанию из запросов (утечки / автосериализация)
+  // ✅ Никогда не возвращаем пароль в API/QueryBuilder
   @Column({ select: false })
   password!: string;
 
-  // ✅ Используем общий enum ролей, добавлен TUTOR
+  // ✅ Роли: USER / ADMIN / SUPER_ADMIN / TUTOR / etc
   @Column({
     type: 'enum',
     enum: Role,
@@ -47,13 +48,21 @@ export class User {
   })
   accessLevel!: AccessLevel;
 
+  // ✅ HASH от refresh-токена (cookie-based) — null после logoutAll
+  @Column({ type: 'text', nullable: true })
+  refreshTokenHash!: string | null;
+
+  // ✅ Версия токена (инвалидирует ВСЕ access при logoutAll / смене пароля)
+  @Column({ type: 'bigint', nullable: true })
+  tokenVersion!: number | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  // === Связи ===
+  // === Relations ===
   @OneToMany(() => Comment, (comment) => comment.user, { cascade: true })
   comments!: Comment[];
 

@@ -1,40 +1,39 @@
+// src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
 import { UserModule } from '../user/user.module';
 
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-
-import { jwtConstants } from './constants';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({
   imports: [
     UserModule,
+    ConfigModule,
 
-    // ✅ Passport с jwt по умолчанию
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
-    // ✅ Глобальный JWT модуль
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: jwtConstants.expiresIn as any },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): JwtModuleOptions => ({
+        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        signOptions: {
+          expiresIn: config.get('JWT_ACCESS_TTL') ?? '15m' as any,
+        },
+      }),
     }),
   ],
 
-  providers: [
-    AuthService,
-    LocalStrategy, // для /login по логину/паролю
-    JwtStrategy, // для всех защищённых маршрутов
-  ],
-
   controllers: [AuthController],
-
-  // ✅ Экспортируем чтобы другие модули могли использовать JWT и AuthService
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
