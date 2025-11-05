@@ -3,8 +3,10 @@ import ArticleCard from "../components/ArticleCard";
 import { Article } from "../types/article";
 import styles from "./AllPersonalitiesPage.module.css";
 import { api } from "../api/auth";
+import useScrollToTop from "../hooks/useScrollToTop";
 
 const ArticlesPage = () => {
+  useScrollToTop();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 

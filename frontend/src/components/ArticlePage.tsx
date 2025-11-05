@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Article } from "../types/article";
+import styles from "./ArticlePage.module.css";
 
 import {
   isFillInTheBlanksExercise,
@@ -84,38 +85,26 @@ const ArticlePage = () => {
   if (!article) return <div className="article-page">Статья не найдена</div>;
 
   return (
-    <div className="article-page">
+    <div className={styles.articlePage}>
       <img
         src={article.imageUrl}
         alt={article.titleRu}
-        className="article-image"
+        className={styles.articleImage}
       />
 
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 10,
-        }}
+        style={{ display: "flex", justifyContent: "space-between", gap: 10 }}
       >
-        <h1 className="article-title">{article.titleRu}</h1>
+        <h1 className={styles.articleTitle}>{article.titleRu}</h1>
         <FavoriteButton isFavorite={isFavorite} onToggle={toggleFavorite} />
       </div>
 
-      <h2 className="article-title-arabic">{article.titleAr}</h2>
+      <h2 className={styles.articleTitleArabic}>{article.titleAr}</h2>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-          flexWrap: "wrap",
-          margin: "10px 0",
-        }}
-      >
-        <div className="article-theme">
-          Тема: <span className="article-theme-label">{article.themeRu}</span>
+      <div className={styles.articleMeta}>
+        <div className={styles.articleTheme}>
+          Тема:{" "}
+          <span className={styles.articleThemeLabel}>{article.themeRu}</span>
         </div>
 
         <StarRating
@@ -127,11 +116,11 @@ const ArticlePage = () => {
       </div>
 
       {article.description && (
-        <p className="article-description">{article.description}</p>
+        <p className={styles.articleDescription}>{article.description}</p>
       )}
 
       <div
-        className="article-content rtl"
+        className={`${styles.articleContent} ${styles.rtl}`}
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
 

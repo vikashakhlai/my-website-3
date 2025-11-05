@@ -93,7 +93,7 @@ const FillInTheBlanksExercise: React.FC<FillInTheBlanksExerciseProps> = ({
     return (
       <div className={styles.container}>
         <h2 className={styles.title}>{instructionRu || "Упражнение"}</h2>
-        <p className={styles.error}>Некорректные данные упражнения.</p>
+        <p className={styles.error}>Некорректные данные упражнения</p>
       </div>
     );
   }

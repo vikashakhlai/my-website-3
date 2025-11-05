@@ -1,198 +1,176 @@
-/* FillInTheBlanksExercise.module.css */
-
+/* === Контейнер упражнения === */
 .container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.08);
 }
 
+/* Заголовок */
 .title {
-  color: #4a90e2;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+  font-size: 1.35rem;
   font-weight: 600;
+  color: #1f1c3a;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
+/* === Выбор слов === */
 .optionsContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 10px;
   justify-content: center;
+  margin: 1.5rem 0 2rem;
 }
 
 .wordOption {
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  background: #f4f4ff;
+  border: 1px solid rgba(99, 102, 241, 0.3);
   padding: 8px 16px;
+  font-size: 0.95rem;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  user-select: none;
+  transition: all 0.25s ease;
+  color: #4b4b68;
 }
 
 .wordOption:hover:not(.disabled) {
-  background-color: #e0e0e0;
-  transform: translateY(-1px);
+  background: #e4e4ff;
+  transform: translateY(-2px);
 }
 
 .wordOption.selected {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
 }
 
 .wordOption.disabled {
-  background-color: #e9ecef;
-  border-color: #dee2e6;
-  color: #6c757d;
+  background: #e6e6ee;
+  border-color: #d1d1dd;
+  color: #7d7d90;
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
+/* === Предложения === */
 .sentencesContainer {
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-top: 1rem;
 }
 
 .sentence {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
-  line-height: 1.6;
-  font-size: 16px;
-  color: #333;
+  font-size: 1.1rem;
   direction: rtl;
   text-align: right;
-  white-space: nowrap;
-  overflow: visible;
-  word-break: keep-all;
-  gap: 4px;
+  gap: 6px;
 }
 
-.sentence .number {
-  font-weight: bold;
-  margin-left: 8px;
-  min-width: 20px;
-  text-align: left;
+/* Номер перед предложением */
+.number {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #4b4b68;
   direction: ltr;
-  flex-shrink: 0;
 }
 
-.textPart {
-  white-space: nowrap;
-  display: inline;
-}
-
+/* Пропуск */
 .blankSlot {
-  display: inline-block;
-  min-width: 100px;
-  max-width: 200px;
-  height: auto;
-  border: 1px dashed #ccc;
-  border-radius: 4px;
-  margin: 0 4px;
-  padding: 6px 12px;
-  text-align: center;
-  line-height: 1.4;
+  min-width: 120px;
+  padding: 6px 10px;
   font-weight: 500;
-  transition: all 0.3s ease;
-  background-color: #fff;
+  border: 2px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  background: #fff;
   cursor: pointer;
-  direction: ltr;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  transition: all 0.25s ease;
+}
+
+.blankSlot:hover {
+  border-color: #6366f1;
+  background: #f8f8ff;
 }
 
 .blankSlot.correct {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-  animation: pulseGreen 0.5s ease-in-out;
+  background: #d9f8e6;
+  border-color: #45c170;
+  color: #125e2b;
 }
 
 .blankSlot.wrong {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
-  animation: pulseRed 0.5s ease-in-out;
+  background: #ffe1e1;
+  border-color: #e54b4b;
+  color: #7b0d0d;
 }
 
+/* === Таблица слов === */
 .vocabularyTable {
-  margin: 24px 0 32px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #fafaff;
+  border-radius: 14px;
+  padding: 1.4rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
 .tableTitle {
-  color: #4a90e2;
-  font-size: 1.3rem;
-  margin-bottom: 16px;
+  font-size: 1.15rem;
   font-weight: 600;
+  color: #1f1c3a;
   text-align: center;
+  margin-bottom: 1rem;
 }
 
 .vocabularyTable table {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
   border-collapse: collapse;
-  font-size: 15px;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
 }
 
 .vocabularyTable th,
 .vocabularyTable td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .vocabularyTable th {
-  background-color: #f8f9fa;
-  color: #495057;
+  text-align: left;
+  color: #555;
   font-weight: 600;
-}
-
-.vocabularyTable td {
-  color: #333;
+  background: #f4f4ff;
 }
 
 .vocabularyTable td:last-child {
   text-align: right;
   direction: rtl;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
 }
 
-.vocabularyTable tr:last-child td {
-  border-bottom: none;
-}
+/* === Адаптив === */
+@media (max-width: 600px) {
+  .container {
+    padding: 1.4rem;
+  }
 
-@keyframes pulseGreen {
-  0% {
-    background-color: #d4edda;
+  .sentence {
+    font-size: 1rem;
+    flex-wrap: wrap;
   }
-  50% {
-    background-color: #b8eac8;
-  }
-  100% {
-    background-color: #d4edda;
-  }
-}
 
-@keyframes pulseRed {
-  0% {
-    background-color: #f8d7da;
+  .blankSlot {
+    min-width: 90px;
   }
-  50% {
-    background-color: #f1b0b7;
-  }
-  100% {
-    background-color: #f8d7da;
+
+  .wordOption {
+    font-size: 0.85rem;
+    padding: 6px 12px;
   }
 }

@@ -12,8 +12,10 @@ import {
   normalizeArabic,
   enrichVerbForms,
 } from "./utils/dictionaryUtils";
+import useScrollToTop from "../../hooks/useScrollToTop";
 
 const DictionaryPage: React.FC = () => {
+  useScrollToTop();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [rootResults, setRootResults] = useState<RootGroupedResult | null>(

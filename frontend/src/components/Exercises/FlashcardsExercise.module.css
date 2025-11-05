@@ -1,97 +1,118 @@
+/* === Контейнер === */
 .exerciseContainer {
   width: 100%;
   max-width: 900px;
-  margin: 0 auto;
-  padding: 16px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 2rem auto;
+  padding: 1.8rem;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.08);
 }
 
+/* === Инструкции === */
 .instructions {
-  margin-bottom: 24px;
-  padding: 12px;
-  background: #e9ecef;
-  border-radius: 8px;
+  background: #f4f4ff;
+  border-left: 4px solid #6366f1;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.8rem;
 }
 
 .instructionAr {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f1c3a;
   text-align: right;
   direction: rtl;
-  unicode-bidi: plaintext;
+  margin-bottom: 6px;
 }
 
 .instructionRu {
-  font-size: 14px;
+  font-size: 0.95rem;
   color: #555;
-  margin: 8px 0;
   text-align: left;
 }
 
+/* === Сетка карточек === */
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1.4rem;
   justify-items: center;
 }
 
+/* === Карточка === */
 .card {
   width: 100%;
-  height: 180px;
-  perspective: 1000px;
+  height: 190px;
+  position: relative;
+  perspective: 1100px;
   cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
 }
 
 .card > div {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  border-radius: 12px;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  box-sizing: border-box;
-  text-align: center;
-  transition: transform 0.6s;
+  padding: 1rem;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  transition: transform 0.6s ease;
 }
 
+/* === Передняя сторона (арабский) === */
 .cardFront {
-  background: var(--color-primary);
+  background: linear-gradient(145deg, #6366f1, #4f46e5);
   color: white;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   direction: rtl;
   text-align: right;
-  unicode-bidi: plaintext;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.28);
 }
 
+/* === Обратная сторона (русский) === */
 .cardBack {
-  background: #f8f9fa;
-  color: #212529;
-  font-size: 16px;
+  background: #ffffff;
+  border: 2px solid rgba(99, 102, 241, 0.4);
+  color: #1f1c3a;
+  font-size: 1.15rem;
+  font-weight: 600;
   transform: rotateY(180deg);
-  border: 2px solid #dee2e6;
 }
 
+/* === Анимация переворота === */
 .card.flipped .cardFront {
   transform: rotateY(-180deg);
 }
-
 .card.flipped .cardBack {
   transform: rotateY(0deg);
 }
 
-/* Адаптивность */
-@media (max-width: 600px) {
+/* === Адаптив === */
+@media (max-width: 700px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
   .cardsGrid {
     grid-template-columns: 1fr;
   }
-
   .card {
-    height: 160px;
+    height: 170px;
+  }
+  .cardFront {
+    font-size: 1.4rem;
   }
 }

@@ -5,8 +5,10 @@ import Pagination from "../../components/Pagination";
 import Filters from "../../components/Filters";
 import { TextBookProps } from "../../types/TextBook";
 import styles from "./StudentBooksPage.module.css";
+import useScrollToTop from "../../hooks/useScrollToTop";
 
 const StudentBooksPage: React.FC = () => {
+  useScrollToTop();
   const [books, setBooks] = useState<TextBookProps[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -15,6 +15,7 @@ import { api } from "../../api/auth";
 
 import type { MediaWithRating } from "../../types/media";
 import OtherDialectVersions from "../../components/OtherDialectVersions";
+import useScrollToTop from "../../hooks/useScrollToTop";
 
 interface Dialogue {
   id: number;
@@ -35,6 +36,7 @@ const DIALECT_COLORS: Record<string, string> = {
 };
 
 export default function DialectExercisePage() {
+  useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();

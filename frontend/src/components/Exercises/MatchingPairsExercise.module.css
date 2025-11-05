@@ -1,111 +1,116 @@
-/* src/components/exercises/MatchingPairsExercise/MatchingPairsExercise.module.css */
-
+/* === Контейнер === */
 .exerciseContainer {
   width: 100%;
   max-width: 1000px;
-  margin: 0 auto;
-  padding: 16px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 2rem auto;
+  padding: 1.8rem;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.08);
 }
 
+/* === Инструкции === */
 .instructions {
   margin-bottom: 24px;
-  padding: 12px;
-  background: #e9ecef;
-  border-radius: 8px;
+  padding: 14px 16px;
+  background: #f4f4ff;
+  border-left: 4px solid #6366f1;
+  border-radius: 12px;
 }
 
 .instructionAr {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f1c3a;
   text-align: right;
   direction: rtl;
-  unicode-bidi: plaintext;
+  margin-bottom: 6px;
 }
 
 .instructionRu {
-  font-size: 14px;
+  font-size: 0.95rem;
   color: #555;
-  margin: 8px 0;
   text-align: left;
 }
 
+/* === Область сопоставления === */
 .matchingArea {
   display: flex;
   gap: 40px;
   margin-bottom: 30px;
 }
 
+/* === Заголовок колонок === */
 .columnTitle {
-  font-size: 18px;
+  font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 16px;
   text-align: right;
+  color: #1f1c3a;
   direction: rtl;
-  unicode-bidi: plaintext;
 }
 
-.termsColumn,
-.definitionsColumn {
-  flex: 1;
-}
-
+/* === Элементы списка === */
 .termItem,
 .definitionItem {
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  background: white;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 2px solid rgba(99, 102, 241, 0.25);
+  border-radius: 14px;
+  background: #ffffff;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   text-align: right;
   direction: rtl;
-  unicode-bidi: plaintext;
   line-height: 1.5;
+  font-size: 1.05rem;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.04);
 }
 
 .termItem:hover,
 .definitionItem:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
+  background: #f6f6ff;
+  transform: translateY(-3px);
 }
 
+/* === Выбранный вариант === */
 .termItem.selected,
 .definitionItem.selected {
-  border-color: #0d6efd;
-  background: #e7f1ff;
+  border-color: #6366f1;
+  background: #eef0ff;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.18);
 }
 
+/* === Верно === */
 .termItem.correct,
 .definitionItem.correct {
-  border-color: #28a745;
-  background: #d4edda;
-  color: #155724;
-  font-weight: 600;
+  border-color: #4ade80;
+  background: #e9ffe9;
+  color: #14532d;
 }
 
+/* === Ошибка === */
 .termItem.incorrect,
 .definitionItem.incorrect {
-  border-color: #dc3545;
-  background: #f8d7da;
-  color: #721c24;
+  border-color: #f87171;
+  background: #ffecec;
+  color: #7f1d1d;
 }
 
-/* Сопоставленные пары */
+/* === Блок с сопоставленными парами === */
 .matchedPairs {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 12px;
-  margin-top: 24px;
+  background: #f8f9ff;
+  padding: 18px;
+  border-radius: 14px;
+  margin-top: 28px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 .matchedTitle {
-  font-size: 18px;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-align: right;
   direction: rtl;
 }
@@ -114,32 +119,33 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
+  padding: 10px 14px;
   background: white;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: 10px;
+  margin-bottom: 10px;
   direction: rtl;
   text-align: right;
-}
-
-.matchedTerm,
-.matchedDef {
-  unicode-bidi: plaintext;
+  font-size: 1rem;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
 }
 
 .matchedTerm {
   font-weight: 600;
-  color: #0d6efd;
+  color: #6366f1;
 }
 
 .matchedDef {
-  color: #212529;
+  color: #1f1c3a;
 }
 
-/* Адаптивность */
+/* === Адаптив === */
 @media (max-width: 768px) {
   .matchingArea {
     flex-direction: column;
     gap: 20px;
+  }
+  .termItem,
+  .definitionItem {
+    font-size: 1rem;
   }
 }

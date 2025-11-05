@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import type {
   MultipleChoiceExercise,
   MultipleChoiceItem,
@@ -9,7 +9,7 @@ import styles from "./MultipleChoiceExercise.module.css";
 interface MultipleChoiceExerciseProps {
   exercise: MultipleChoiceExercise;
   onAnswerSubmit?: (itemId: number, selectedOption: string) => void;
-  showFeedback?: boolean;
+  showFeedback?: boolean; // если true — можно переотвечать (режим тренировки)
 }
 
 const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
@@ -21,48 +21,51 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
     Record<number, string>
   >({});
 
-  // ✅ Безопасная генерация вариантов
-  const itemsWithLimitedOptions = useMemo(() => {
+  const audioCorrectRef = useRef<HTMLAudioElement | null>(null);
+  const audioWrongRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioCorrectRef.current = new Audio("/sounds/correct.mp3");
+    audioWrongRef.current = new Audio("/sounds/incorrect.mp3");
+  }, []);
+
+  const playSound = (correct: boolean) => {
+    const audio = correct ? audioCorrectRef.current : audioWrongRef.current;
+    audio?.play().catch(() => null);
+  };
+
+  const itemsWithOptions = useMemo(() => {
     return exercise.items.map((item) => {
       const { correctAnswer } = item;
       const options = Array.isArray(item.options) ? item.options : [];
-
-      // Убираем правильный ответ из пула отвлекающих
-      const distractors = options.filter((opt) => opt !== correctAnswer);
-
-      // Берём 3 случайных отвлекающих
-      const shuffledDistractors = shuffleArray([...distractors]);
-      const selectedDistractors = shuffledDistractors.slice(0, 3);
-
-      // ✅ Добавляем правильный ответ, даже если options пустой
-      const finalOptions = shuffleArray([
-        ...selectedDistractors,
-        ...(correctAnswer ? [correctAnswer] : []),
-      ]);
-
-      return {
-        ...item,
-        options: finalOptions.length > 0 ? finalOptions : [correctAnswer ?? ""],
-      };
+      const distractors = shuffleArray(
+        options.filter((x) => x !== correctAnswer)
+      ).slice(0, 3);
+      const finalOptions = shuffleArray(
+        [correctAnswer, ...distractors].filter(Boolean)
+      );
+      return { ...item, options: finalOptions };
     });
   }, [exercise.items]);
 
   const handleOptionClick = (item: MultipleChoiceItem, option: string) => {
-    const newSelection = { ...selectedAnswers, [item.id]: option };
-    setSelectedAnswers(newSelection);
+    if (!showFeedback && selectedAnswers[item.id]) return;
 
-    if (onAnswerSubmit) {
-      onAnswerSubmit(item.id, option);
-    }
+    const updated = { ...selectedAnswers, [item.id]: option };
+    setSelectedAnswers(updated);
+
+    const isCorrect = option === item.correctAnswer;
+    playSound(isCorrect);
+
+    onAnswerSubmit?.(item.id, option);
   };
 
   return (
     <div className={styles.exerciseContainer}>
+      {/* === Instructions === */}
       <div className={styles.instructions}>
         {exercise.instructionAr && (
-          <p dir="rtl" className={styles.instructionAr}>
-            {exercise.instructionAr}
-          </p>
+          <p className={styles.instructionAr}>{exercise.instructionAr}</p>
         )}
         {exercise.instructionRu && (
           <p className={styles.instructionRu}>{exercise.instructionRu}</p>
@@ -70,45 +73,37 @@ const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
       </div>
 
       <div className={styles.questions}>
-        {itemsWithLimitedOptions.map((item) => {
-          const isSelected = selectedAnswers[item.id] !== undefined;
-          const isCorrect =
-            isSelected && selectedAnswers[item.id] === item.correctAnswer;
-
+        {itemsWithOptions.map((item) => {
+          const userAnswer = selectedAnswers[item.id];
           return (
             <div key={item.id} className={styles.questionCard}>
               {item.questionAr && (
-                <h3 dir="rtl" className={styles.questionAr}>
-                  {item.questionAr}
-                </h3>
+                <h3 className={styles.questionAr}>{item.questionAr}</h3>
               )}
               {item.questionRu && (
                 <h3 className={styles.questionRu}>{item.questionRu}</h3>
               )}
 
               <div className={styles.optionsGrid}>
-                {(item.options ?? []).map((option, idx) => {
-                  const isSelectedOption = selectedAnswers[item.id] === option;
-                  let optionClass = styles.option;
+                {item.options.map((option, index) => {
+                  const isSelected = userAnswer === option;
+                  const isCorrect = option === item.correctAnswer;
 
-                  if (isSelected) {
-                    if (option === item.correctAnswer) {
-                      optionClass += ` ${styles.correct}`;
-                    } else if (isSelectedOption && !isCorrect) {
-                      optionClass += ` ${styles.incorrect}`;
-                    }
+                  let optionClass = styles.option;
+                  if (userAnswer) {
+                    if (isCorrect) optionClass += ` ${styles.correct}`;
+                    else if (isSelected) optionClass += ` ${styles.incorrect}`;
                   }
 
                   return (
                     <button
-                      key={idx}
-                      type="button"
+                      key={index}
                       className={optionClass}
                       onClick={() => handleOptionClick(item, option)}
-                      disabled={isSelected && !showFeedback}
+                      disabled={!showFeedback && Boolean(userAnswer)}
                       dir="rtl"
                     >
-                      {option || "—"}
+                      {option}
                     </button>
                   );
                 })}
