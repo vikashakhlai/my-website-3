@@ -1,6 +1,7 @@
 .dialect-exercise {
-  width: 100%;
-+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   color: #333;
   padding: 1rem 0 2rem;
   background: transparent;
