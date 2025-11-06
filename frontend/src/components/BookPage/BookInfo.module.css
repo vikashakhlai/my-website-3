@@ -34,17 +34,6 @@
   line-height: 1.5;
 }
 
-.publisherLink {
-  color: #3182ce;
-  text-decoration: none;
-  border-bottom: 1px dashed #3182ce;
-}
-
-.publisherLink:hover {
-  color: #2c5282;
-  border-bottom-style: solid;
-}
-
 .description {
   margin: 20px 0;
   line-height: 1.6;
@@ -53,7 +42,7 @@
 }
 
 .authorLink {
-  color: #1a73e8;
+  color: #6366f1;
   text-decoration: none;
   font-weight: 500;
 }
