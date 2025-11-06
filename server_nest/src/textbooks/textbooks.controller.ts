@@ -49,8 +49,9 @@ export class TextbooksController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('sort') sort?: 'asc' | 'desc',
     @Query('level') level?: string,
+    @Query('search') search?: string,
   ) {
-    return this.textbooksService.getAll({ page, limit, sort, level });
+    return this.textbooksService.getAll({ page, limit, sort, level, search });
   }
 
   /** 📖 Просмотр одного учебника (публично) */

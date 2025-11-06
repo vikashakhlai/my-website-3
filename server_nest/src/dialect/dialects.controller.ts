@@ -43,6 +43,12 @@ export class DialectsController {
     return this.dialectsService.findOne(id);
   }
 
+  @Public()
+  @Get('regions')
+  getRegions() {
+    return this.dialectsService.getRegions();
+  }
+
   /** ➕ Создать (только админ) */
   @Roles(Role.SUPER_ADMIN)
   @Post()

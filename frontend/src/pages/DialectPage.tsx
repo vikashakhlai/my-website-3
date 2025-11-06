@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DialectCard from "../components/DialectCard";
-// import Filters from "../components/Filters";
+import DialectFilters from "../components/DialectFilters";
 import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
 import useScrollToTop from "../hooks/useScrollToTop";
@@ -11,18 +11,22 @@ interface Topic {
   name: string;
 }
 
-interface FiltersState {
+interface RegionOption {
+  region: string;
+}
+
+type FiltersState = {
   name: string;
   region: string;
   topics: number[];
-}
+};
 
 const DialectPage = () => {
   useScrollToTop();
 
   const [mediaList, setMediaList] = useState<Media[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  // const [regions, setRegions] = useState<string[]>([]);
+  const [regions, setRegions] = useState<RegionOption[]>([]);
   const [filters, setFilters] = useState<FiltersState>({
     name: "",
     region: "",
@@ -33,72 +37,108 @@ const DialectPage = () => {
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
-  /** === 1. Загрузка тем === */
+  // 1) Темы
   useEffect(() => {
     api
       .get("/dialect-topics")
       .then((res) => setTopics(res.data || []))
-      .catch((e) => console.error("Ошибка при загрузке тем", e));
+      .catch((e) => console.error("Ошибка при загрузке тем:", e));
   }, []);
 
-  /** === 2. Загрузка медиа === */
+  // 2) Регионы (с backend'а уже с count)
   useEffect(() => {
+    let cancelled = false;
+
+    const loadRegions = async () => {
+      try {
+        const res = await api.get<RegionOption[]>("/media/regions");
+        if (!cancelled) {
+          setRegions(
+            Array.isArray(res.data)
+              ? res.data.sort((a, b) => a.region.localeCompare(b.region, "ru"))
+              : []
+          );
+        }
+      } catch (err) {
+        console.error("⚠️ Ошибка загрузки регионов:", err);
+      }
+    };
+
+    loadRegions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 3) Медиа с учётом фильтров
+  useEffect(() => {
+    let cancelled = false;
+
     const fetchMedia = async () => {
       setLoading(true);
 
+      const params: Record<string, string> = {};
+      if (filters.name) params.name = filters.name;
+      if (filters.region) params.region = filters.region;
+      if (filters.topics.length > 0) params.topics = filters.topics.join(",");
+
       try {
-        const params: Record<string, string> = {};
-        if (filters.name) params.name = filters.name;
-        if (filters.region) params.region = filters.region;
-        if (filters.topics.length > 0) params.topics = filters.topics.join(",");
-
         const res = await api.get<Media[]>("/media", { params });
+        if (cancelled) return;
 
-        setMediaList(Array.isArray(res.data) ? res.data : []);
-        setLoadedOnce(true);
-        setLoading(false);
+        const items = Array.isArray(res.data) ? res.data : [];
+        setMediaList(items);
 
-        // const uniqueRegions = Array.from(
-        //   new Set(
-        //     res.data
-        //       .map((m) => m.dialect?.region)
-        //       .filter((r): r is string => Boolean(r))
-        //   )
-        // );
+        // fallback: если API регионов не вернуло, собираем вручную
+        if (regions.length === 0) {
+          const uniq = Array.from(
+            new Set(
+              items
+                .map((m) => m.dialect?.region)
+                .filter((v): v is string => Boolean(v))
+            )
+          )
+            .sort((a, b) => a.localeCompare(b, "ru"))
+            .map((r) => ({ region: r, count: 0 }));
 
-        // setRegions(uniqueRegions);
+          setRegions(uniq);
+        }
       } catch (err) {
-        console.error("❌ Ошибка при загрузке медиа:", err);
-        setMediaList([]);
-        setLoadedOnce(true);
-        setLoading(false);
+        if (!cancelled) {
+          console.error("❌ Ошибка при загрузке медиа:", err);
+          setMediaList([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadedOnce(true);
+          setLoading(false);
+        }
       }
     };
 
     fetchMedia();
-  }, [filters]);
+    return () => {
+      cancelled = true;
+    };
+  }, [filters, regions.length]);
 
-  /** === Управление фильтрами === */
+  // Управление темами
   const toggleTopic = (id: number) => {
     setFilters((prev) => {
-      const topics = prev.topics.includes(id)
-        ? prev.topics.filter((t) => t !== id)
-        : [...prev.topics, id];
-      return { ...prev, topics };
+      const exists = prev.topics.includes(id);
+      return {
+        ...prev,
+        topics: exists
+          ? prev.topics.filter((t) => t !== id)
+          : [...prev.topics, id],
+      };
     });
   };
 
-  // const handleReset = () => setFilters({ name: "", region: "", topics: [] });
-
-  // const handleBaseFiltersChange = (vals: Record<string, string>) => {
-  //   setFilters((prev) => ({
-  //     ...prev,
-  //     name: vals.name ?? "",
-  //     region: vals.region ?? "",
-  //   }));
-  // };
-
-  const filteredMedia = mediaList.filter((m) => !!m.dialect);
+  const filteredMedia = useMemo(
+    () => mediaList.filter((m) => !!m.dialect),
+    [mediaList]
+  );
   const visibleCount = filteredMedia.length;
   const isSingleFiltered = visibleCount === 1;
 
@@ -106,27 +146,15 @@ const DialectPage = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>Все упражнения по диалектам</h1>
 
-      {/* <Filters
-        fields={[
-          {
-            type: "text",
-            key: "name",
-            label: "Название",
-            placeholder: "Поиск по имени...",
-          },
-          {
-            type: "select",
-            key: "region",
-            label: "Регион",
-            options: regions.map((r) => ({ label: r, value: r })),
-          },
-        ]}
-        onChange={handleBaseFiltersChange}
-        onReset={handleReset}
+      <DialectFilters
+        filters={filters}
+        regions={regions}
         totalCount={visibleCount}
-      /> */}
+        onChange={(vals) => setFilters((p) => ({ ...p, ...vals }))}
+        onReset={() => setFilters({ name: "", region: "", topics: [] })}
+      />
 
-      {/* === Темы === */}
+      {/* Темы */}
       <div className={styles.topicsFilter}>
         <div className={styles.topicsHeaderRow}>
           <p className={styles.filterLabel}>Темы:</p>
@@ -190,7 +218,7 @@ const DialectPage = () => {
         )}
       </div>
 
-      {/* === Контент === */}
+      {/* Контент */}
       {loading && !loadedOnce && (
         <div className={styles.skeletonGrid}>
           {Array.from({ length: 6 }).map((_, i) => (

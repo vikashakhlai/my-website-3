@@ -31,11 +31,13 @@ export class TextbooksService {
     limit?: number;
     sort?: 'asc' | 'desc';
     level?: string;
+    search?: string;
   }) {
     const page = Math.max(options?.page || 1, 1);
     const limit = Math.max(options?.limit || 10, 1);
     const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
     const levelFilter = options?.level?.trim();
+    const searchFilter = options?.search?.trim();
 
     const qb = this.textbookRepo
       .createQueryBuilder('t')
@@ -49,26 +51,33 @@ export class TextbooksService {
         't.level AS level',
         't.pdf_url AS pdf_url',
         `(SELECT AVG(r.value)
-      FROM ratings r
-      WHERE r.target_id = t.id
-      AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
+        FROM ratings r
+        WHERE r.target_id = t.id
+        AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
         `(SELECT COUNT(*)
-      FROM ratings r
-      WHERE r.target_id = t.id
-      AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
+        FROM ratings r
+        WHERE r.target_id = t.id
+        AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
         `(SELECT COUNT(*)
-      FROM comments c
-      WHERE c.target_id = t.id
-      AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
+        FROM comments c
+        WHERE c.target_id = t.id
+        AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
       ])
       .orderBy('t.id', sortOrder);
 
-    if (levelFilter) qb.where('t.level = :level', { level: levelFilter });
+    if (levelFilter) {
+      qb.andWhere('t.level = :level', { level: levelFilter });
+    }
 
-    // ✅ 1. Считаем total ДО пагинации
+    if (searchFilter) {
+      qb.andWhere(
+        `(LOWER(t.title) LIKE :search OR LOWER(t.authors) LIKE :search)`,
+        { search: `%${searchFilter.toLowerCase()}%` },
+      );
+    }
+
     const total = await qb.getCount();
 
-    // ✅ 2. Применяем пагинацию ПОСЛЕ getCount()
     qb.skip((page - 1) * limit).take(limit);
 
     const data = await qb.getRawMany();

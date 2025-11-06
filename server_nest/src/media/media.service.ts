@@ -337,6 +337,19 @@ export class MediaService {
     }
   }
 
+  async getRegionsWithCount() {
+    const qb = this.mediaRepository
+      .createQueryBuilder('media')
+      .leftJoin('media.dialect', 'dialect')
+      .select('dialect.region', 'region')
+      .addSelect('COUNT(media.id)', 'count')
+      .where('media.dialectId IS NOT NULL')
+      .groupBy('dialect.region')
+      .orderBy('COUNT(media.id)', 'DESC');
+
+    return qb.getRawMany<{ region: string; count: string }>();
+  }
+
   private async syncMediaTopics(mediaId: number, nextTopicIds: number[]) {
     const manager = this.mediaRepository.manager;
 

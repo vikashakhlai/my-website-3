@@ -49,6 +49,17 @@ export class DialectsService {
     };
   }
 
+  async getRegions(): Promise<string[]> {
+    const rows = await this.dialectRepository
+      .createQueryBuilder('d')
+      .select('DISTINCT d.region', 'region')
+      .where("d.region IS NOT NULL AND d.region != ''")
+      .orderBy('d.region', 'ASC')
+      .getRawMany<{ region: string }>();
+
+    return rows.map((r) => r.region);
+  }
+
   /** 🔍 Получить один диалект по ID */
   async findOne(id: number): Promise<Dialect> {
     const dialect = await this.dialectRepository.findOne({

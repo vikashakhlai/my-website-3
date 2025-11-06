@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import styles from "./BooksPage.module.css";
 import BookList from "../components/BookList";
-import Filters from "../components/Filters";
 import Pagination from "../components/Pagination";
 import { Book } from "../types/Book";
 import { api } from "../api/auth";
+import BookFilters from "../components/BookFilters";
 
 type TagDto = { id: number; name: string };
 type AuthorDto = { id: number; full_name: string };
 
 const BooksPage = () => {
   const [filters, setFilters] = useState({ tag: "", author: "", title: "" });
-  const filtersRef = useRef(filters);
-  useEffect(() => {
-    filtersRef.current = filters;
-  }, [filters]);
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   const [books, setBooks] = useState<Book[]>([]);
   const [tags, setTags] = useState<TagDto[]>([]);
@@ -31,7 +28,6 @@ const BooksPage = () => {
 
   const limit = 20;
   const mountedRef = useRef(true);
-  const isFirstLoad = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -40,7 +36,13 @@ const BooksPage = () => {
     };
   }, []);
 
-  // === фильтры (tags + authors) ===
+  // ✅ debounce (400ms) synced with BookFilters
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => clearTimeout(t);
+  }, [filters]);
+
+  // === Загружаем теги и авторов ===
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -60,66 +62,59 @@ const BooksPage = () => {
     fetchFilters();
   }, []);
 
-  // === Стабильная функция загрузки книг ===
-  const fetchBooks = useCallback(async (page = 1, fullLoad = false) => {
-    try {
-      if (fullLoad) {
-        setLoading(true);
+  // === Запрос книг ===
+  const fetchBooks = useCallback(
+    async (page = 1, fullLoad = false) => {
+      try {
+        if (fullLoad) {
+          setLoading(true);
+          setBooks([]);
+        } else {
+          setIsFetching(true);
+        }
+
+        const params: Record<string, string | number> = { page, limit };
+        const f = debouncedFilters;
+
+        if (f.title.trim()) params.title = f.title.trim();
+        if (f.tag) params.tag = f.tag;
+        if (f.author.trim()) params.author = f.author.trim();
+
+        const { data } = await api.get("/books", { params });
+
+        if (!mountedRef.current) return;
+
+        setBooks(data.items ?? []);
+        setPagination({
+          currentPage: data.page ?? 1,
+          totalPages: data.pages ?? 1,
+          totalCount: data.total ?? 0,
+        });
+        setError(null);
+      } catch (err) {
+        console.error("Ошибка загрузки книг:", err);
+        if (!mountedRef.current) return;
+        setError("Не удалось загрузить книги.");
         setBooks([]);
-      } else {
-        setIsFetching(true);
+      } finally {
+        if (!mountedRef.current) return;
+        setLoading(false);
+        setIsFetching(false);
       }
+    },
+    [debouncedFilters]
+  );
 
-      const params: Record<string, string | number> = { page, limit };
-      const f = filtersRef.current;
-
-      if (f.title.trim()) params.title = f.title.trim();
-      if (f.tag.trim()) params.tag = f.tag.trim();
-      if (f.author.trim()) params.author = f.author.trim();
-
-      const { data } = await api.get("/books", { params });
-      console.log(
-        "📌 REQUEST PARAMS:",
-        params,
-        "FILTERS REF:",
-        filtersRef.current
-      );
-
-      if (!mountedRef.current) return;
-
-      setBooks(data.items ?? []);
-      setPagination({
-        currentPage: data.page ?? 1,
-        totalPages: data.pages ?? 1,
-        totalCount: data.total ?? 0,
-      });
-      setError(null);
-    } catch (err) {
-      console.error("Ошибка загрузки книг:", err);
-      if (!mountedRef.current) return;
-      setError("Не удалось загрузить книги.");
-      setBooks([]);
-    } finally {
-      if (!mountedRef.current) return;
-      setLoading(false);
-      setIsFetching(false);
-    }
-  }, []);
-
-  // === первый запрос ===
+  // === первый запуск ===
   useEffect(() => {
     fetchBooks(1, true);
   }, []);
 
-  // === повторная загрузка при изменении фильтров ===
+  // === перезагрузка при изменении debouncedFilters ===
   useEffect(() => {
-    if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      return;
-    }
     fetchBooks(1);
-    setPagination((p) => ({ ...p, currentPage: 1 }));
-  }, [filters, fetchBooks]);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, [debouncedFilters, fetchBooks]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
@@ -130,46 +125,21 @@ const BooksPage = () => {
 
   const handleReset = () => {
     setFilters({ tag: "", author: "", title: "" });
+    setDebouncedFilters({ tag: "", author: "", title: "" });
     fetchBooks(1, true);
   };
-
-  const handleFiltersChange = useCallback(
-    (values: Record<string, string>) => setFilters(values as any),
-    []
-  );
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Библиотека</h1>
 
-      <Filters
-        fields={[
-          {
-            type: "select",
-            key: "tag",
-            label: "Теги",
-            options: [
-              { label: "Все теги", value: "" },
-              ...tags.map((t) => ({ label: t.name, value: t.name })),
-            ],
-          },
-          {
-            type: "autocomplete",
-            key: "author",
-            label: "Автор",
-            options: authors.map((a) => a.full_name),
-            placeholder: "Введите фамилию...",
-          },
-          {
-            type: "text",
-            key: "title",
-            label: "Название",
-            placeholder: "Поиск по названию...",
-          },
-        ]}
-        onChange={handleFiltersChange}
+      <BookFilters
+        filters={filters}
+        onChange={setFilters}
         onReset={handleReset}
         totalCount={pagination.totalCount}
+        tags={tags}
+        authors={authors.map((a) => a.full_name)}
       />
 
       <div className={styles.booksWrapper}>

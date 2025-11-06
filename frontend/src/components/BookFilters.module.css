@@ -4,42 +4,35 @@
   gap: 1rem;
   align-items: flex-start;
   margin-bottom: 1.5rem;
-  z-index: 100;
+  z-index: 10;
 }
 
-/* === Каждый фильтр теперь отдельная карточка === */
+/* === Карта одного фильтра === */
 .filterItem {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  flex: 1 1 220px;
+  flex: 1 1 240px;
   background: #ffffff;
   border-radius: 12px;
   padding: 0.8rem 1rem;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08), 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08), 0 4px 10px rgba(0, 0, 0, 0.06);
   transition: all 0.25s ease;
 }
 
 .filterItem:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12),
-    0 6px 14px rgba(0, 0, 0, 0.06);
+    0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
-/* === Метки === */
-.filterItem label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #333;
-}
-
-/* === Поля === */
+/* inputs & selects */
 .filterItem input,
 .filterItem select {
-  padding: 0.5rem 0.7rem;
+  padding: 0.55rem 0.7rem;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   background: #fafafa;
   transition: all 0.2s ease;
 }
@@ -47,12 +40,12 @@
 .filterItem input:focus,
 .filterItem select:focus {
   outline: none;
-  background: #fff;
+  background: white;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-/* === Автокомплит === */
+/* === AUTOCOMPLETE BLOCK === */
 .autocompleteField {
   position: relative;
 }
@@ -64,17 +57,19 @@
   right: 0;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  z-index: 1000;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   list-style: none;
   margin: 0;
   padding: 4px 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 9999; /* ✅ Поверх всего */
   animation: fadeIn 0.15s ease-in;
 }
 
 .suggestions li {
-  padding: 6px 10px;
+  padding: 8px 10px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.15s ease, color 0.15s ease;
@@ -82,10 +77,10 @@
 
 .suggestions li:hover {
   background: rgba(99, 102, 241, 0.08);
-  color: #6366f1;
+  color: #4f46e5;
 }
 
-/* === Кнопки === */
+/* === Reset + Count === */
 .actions {
   display: flex;
   align-items: center;
@@ -102,16 +97,12 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .resetButton:hover {
   background: rgba(99, 102, 241, 0.1);
   color: #4f46e5;
-}
-
-.resetButton:active {
-  transform: scale(0.97);
 }
 
 .count {
@@ -120,27 +111,14 @@
   margin-left: auto;
 }
 
-/* === Мобильная адаптация === */
-@media (max-width: 768px) {
-  .filters {
-    flex-direction: column;
-    gap: 0.7rem;
+/* === Animation === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
-  .filterItem {
-    width: 100%;
-    flex: none; /* сброс flex-grow */
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
-  }
-
-  .filterItem input,
-  .filterItem select {
-    padding: 0.45rem 0.6rem;
-    font-size: 0.85rem;
-  }
-
-  .actions {
-    margin-top: 0.2rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

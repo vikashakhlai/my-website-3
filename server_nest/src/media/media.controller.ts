@@ -108,6 +108,12 @@ export class MediaController {
     return dto;
   }
 
+  @Public()
+  @Get('regions')
+  async getRegions() {
+    return this.mediaService.getRegionsWithCount();
+  }
+
   /** 📥 Загрузка файла (ADMIN+) */
   @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
   @ApiOkResponse({ type: MediaResponseDto })
