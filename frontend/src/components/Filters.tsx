@@ -54,11 +54,12 @@ const Filters = ({
 
   // === debounce вызов onChange ===
   useEffect(() => {
+    console.log("🔍 FILTER VALUES:", values);
     const timeout = setTimeout(() => {
       onChange(values);
     }, debounce);
     return () => clearTimeout(timeout);
-  }, [values]);
+  }, [values, debounce, onChange]);
 
   // === закрытие списков подсказок при клике вне ===
   useEffect(() => {
@@ -99,7 +100,7 @@ const Filters = ({
   };
 
   const resetFilters = () => {
-    setValues({});
+    setValues(initialValues);
     onReset?.();
   };
 

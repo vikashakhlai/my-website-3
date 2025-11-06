@@ -33,11 +33,12 @@ const BooksPage = () => {
   const mountedRef = useRef(true);
   const isFirstLoad = useRef(true);
 
-  // useEffect(() => {
-  //   return () => {
-  //     mountedRef.current = false;
-  //   };
-  // }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // === фильтры (tags + authors) ===
   useEffect(() => {
@@ -77,6 +78,12 @@ const BooksPage = () => {
       if (f.author.trim()) params.author = f.author.trim();
 
       const { data } = await api.get("/books", { params });
+      console.log(
+        "📌 REQUEST PARAMS:",
+        params,
+        "FILTERS REF:",
+        filtersRef.current
+      );
 
       if (!mountedRef.current) return;
 

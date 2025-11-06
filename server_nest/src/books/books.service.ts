@@ -45,17 +45,28 @@ export class BookService {
 
   // === 🔍 Поиск с вычисляемыми полями ===
   async searchBooks(dto: SearchBooksDto) {
-    const { page = 1, limit = 20, title } = dto;
+    const { page = 1, limit = 20, title, tag, author } = dto;
 
     const qb = this.bookRepo
       .createQueryBuilder('b')
+      .leftJoin('b.tags', 'tagEntity')
+      .leftJoin('b.authors', 'authorEntity')
       .select(['b.id', 'b.title', 'b.cover_url', 'b.created_at'])
+      .distinct(true)
       .orderBy('b.created_at', 'DESC')
       .offset((page - 1) * limit)
       .limit(limit);
 
     if (title) {
       qb.andWhere('b.title ILIKE :title', { title: `%${title}%` });
+    }
+
+    if (tag) {
+      qb.andWhere('tagEntity.name ILIKE :tag', { tag });
+    }
+
+    if (author) {
+      qb.andWhere('authorEntity.full_name ILIKE :author', { author });
     }
 
     const [items, total] = await qb.getManyAndCount();

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { FaTwitter, FaInstagram, FaTelegram } from "react-icons/fa";
 import "./Footer.css";
 
@@ -10,10 +11,8 @@ const Footer = () => {
           <h3 className="footer-title">Оазис</h3>
           <p className="footer-text">
             Арабский язык — ключ к пониманию богатого культурного наследия
-            Востока. Откройте для себя мир изящных букв, мелодичных звуков и
-            глубоких смыслов. Путешествуйте по страницам истории, изучайте
-            искусство письма и погружайтесь в магию одного из древнейших языков
-            мира.
+            Востока. Погружайтесь в диалекты, литературу, историю и живую
+            культуру.
           </p>
         </div>
 
@@ -21,11 +20,12 @@ const Footer = () => {
         <div className="footer-col">
           <h3 className="footer-title">Контакты</h3>
           <address className="footer-text">
-            Адрес: Улица, Город, Страна
+            Email: <a href="mailto:info@oasis.arabic">info@oasis.arabic</a>
             <br />
-            Телефон: +1 (123) 456-7890
-            <br />
-            Email: <a href="mailto:info@example.com">info@example.com</a>
+            Telegram:{" "}
+            <a href="https://t.me/oasis_ar" target="_blank" rel="noreferrer">
+              @oasis_ar
+            </a>
           </address>
         </div>
 
@@ -35,13 +35,19 @@ const Footer = () => {
           <nav>
             <ul className="footer-links">
               <li>
-                <a href="/about">О нас</a>
+                <Link to="/about">О нас</Link>
               </li>
               <li>
-                <a href="/services">Услуги</a>
+                <Link to="/books">Книги</Link>
               </li>
               <li>
-                <a href="/contact">Контакты</a>
+                <Link to="/dialects">Диалекты</Link>
+              </li>
+              <li>
+                <Link to="/personalities">Личности</Link>
+              </li>
+              <li>
+                <Link to="/contact">Контакты</Link>
               </li>
             </ul>
           </nav>
@@ -49,15 +55,30 @@ const Footer = () => {
 
         {/* Колонка 4: Соцсети */}
         <div className="footer-col">
-          <h3 className="footer-title">Социальные сети</h3>
+          <h3 className="footer-title">Соцсети</h3>
           <div className="social-icons">
-            <a href="#" aria-label="Telegram">
+            <a
+              href="https://t.me/oasis_ar"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Telegram"
+            >
               <FaTelegram size={24} />
             </a>
-            <a href="#" aria-label="Twitter">
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Twitter"
+            >
               <FaTwitter size={24} />
             </a>
-            <a href="#" aria-label="Instagram">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram"
+            >
               <FaInstagram size={24} />
             </a>
           </div>
@@ -65,7 +86,7 @@ const Footer = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 Оазис. Все права защищены.</p>
+        <p>© {new Date().getFullYear()} Оазис. Все права защищены.</p>
       </div>
     </footer>
   );

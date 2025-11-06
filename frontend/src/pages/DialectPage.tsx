@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DialectCard from "../components/DialectCard";
-import Filters from "../components/Filters";
+// import Filters from "../components/Filters";
 import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
 import useScrollToTop from "../hooks/useScrollToTop";
@@ -22,7 +22,7 @@ const DialectPage = () => {
 
   const [mediaList, setMediaList] = useState<Media[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [regions, setRegions] = useState<string[]>([]);
+  // const [regions, setRegions] = useState<string[]>([]);
   const [filters, setFilters] = useState<FiltersState>({
     name: "",
     region: "",
@@ -58,15 +58,15 @@ const DialectPage = () => {
         setLoadedOnce(true);
         setLoading(false);
 
-        const uniqueRegions = Array.from(
-          new Set(
-            res.data
-              .map((m) => m.dialect?.region)
-              .filter((r): r is string => Boolean(r))
-          )
-        );
+        // const uniqueRegions = Array.from(
+        //   new Set(
+        //     res.data
+        //       .map((m) => m.dialect?.region)
+        //       .filter((r): r is string => Boolean(r))
+        //   )
+        // );
 
-        setRegions(uniqueRegions);
+        // setRegions(uniqueRegions);
       } catch (err) {
         console.error("❌ Ошибка при загрузке медиа:", err);
         setMediaList([]);
@@ -88,15 +88,15 @@ const DialectPage = () => {
     });
   };
 
-  const handleReset = () => setFilters({ name: "", region: "", topics: [] });
+  // const handleReset = () => setFilters({ name: "", region: "", topics: [] });
 
-  const handleBaseFiltersChange = (vals: Record<string, string>) => {
-    setFilters((prev) => ({
-      ...prev,
-      name: vals.name ?? "",
-      region: vals.region ?? "",
-    }));
-  };
+  // const handleBaseFiltersChange = (vals: Record<string, string>) => {
+  //   setFilters((prev) => ({
+  //     ...prev,
+  //     name: vals.name ?? "",
+  //     region: vals.region ?? "",
+  //   }));
+  // };
 
   const filteredMedia = mediaList.filter((m) => !!m.dialect);
   const visibleCount = filteredMedia.length;
@@ -106,7 +106,7 @@ const DialectPage = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>Все упражнения по диалектам</h1>
 
-      <Filters
+      {/* <Filters
         fields={[
           {
             type: "text",
@@ -124,7 +124,7 @@ const DialectPage = () => {
         onChange={handleBaseFiltersChange}
         onReset={handleReset}
         totalCount={visibleCount}
-      />
+      /> */}
 
       {/* === Темы === */}
       <div className={styles.topicsFilter}>

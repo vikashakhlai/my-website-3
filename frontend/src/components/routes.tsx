@@ -16,6 +16,7 @@ import AuthPage from "../pages/Auth/AuthPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import AllPersonalitiesPage from "../pages/AllPersonalitiesPage";
 import DialectExercisePage from "../pages/DialectExercisePage/DialectExercisePage.js";
+import AboutPage from "./AboutPage.js";
 
 const routes = [
   {
@@ -35,6 +36,7 @@ const routes = [
       { path: "/authors/:id", element: <AuthorPage /> },
       { path: "/personalities/:id", element: <PersonalityPage /> },
       { path: "/personalities", element: <AllPersonalitiesPage /> },
+      {path: "/about", element: <AboutPage/>},
 
       // 🔒 Защищённые маршруты (только авторизованные)
       {
