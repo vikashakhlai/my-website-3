@@ -49,30 +49,29 @@ export class TextbooksService {
         't.level AS level',
         't.pdf_url AS pdf_url',
         `(SELECT AVG(r.value)
-          FROM ratings r
-          WHERE r.target_id = t.id
-          AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
+      FROM ratings r
+      WHERE r.target_id = t.id
+      AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
         `(SELECT COUNT(*)
-          FROM ratings r
-          WHERE r.target_id = t.id
-          AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
+      FROM ratings r
+      WHERE r.target_id = t.id
+      AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
         `(SELECT COUNT(*)
-          FROM comments c
-          WHERE c.target_id = t.id
-          AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
+      FROM comments c
+      WHERE c.target_id = t.id
+      AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
       ])
-      .orderBy('t.id', sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit);
+      .orderBy('t.id', sortOrder);
 
     if (levelFilter) qb.where('t.level = :level', { level: levelFilter });
 
-    const [data, total] = await Promise.all([
-      qb.getRawMany(),
-      this.textbookRepo.count(
-        levelFilter ? { where: { level: levelFilter } } : {},
-      ),
-    ]);
+    // ✅ 1. Считаем total ДО пагинации
+    const total = await qb.getCount();
+
+    // ✅ 2. Применяем пагинацию ПОСЛЕ getCount()
+    qb.skip((page - 1) * limit).take(limit);
+
+    const data = await qb.getRawMany();
 
     const formatted = data.map((t) => ({
       id: Number(t.id),

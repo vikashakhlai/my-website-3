@@ -1,5 +1,4 @@
 import "./AboutPage.css";
-import bgPattern from "../assets/arabic-pattern.svg";
 
 export default function AboutPage() {
   return (
