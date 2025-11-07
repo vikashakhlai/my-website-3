@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { api } from "../../api/auth";
 import StudentBookCard from "./StudentBookCard";
 import Pagination from "../../components/Pagination";
 import { TextBookProps } from "../../types/TextBook";
@@ -26,7 +26,7 @@ const StudentBooksPage: React.FC = () => {
 
     const fetchBooks = async () => {
       try {
-        const { data } = await axios.get("/api-nest/textbooks", {
+        const { data } = await api.get("/textbooks", {
           params: {
             page,
             limit,

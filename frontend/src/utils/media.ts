@@ -1,20 +1,21 @@
 // src/utils/media.ts
+import { api } from "../api/auth";
 
 export function getMediaUrl(path?: string | null): string {
   if (!path) return "/default-book-cover.jpg";
 
-  // Если это внешний URL — оставляем как есть
-  if (path.startsWith("http")) return path;
+  // Внешний URL (http/https) — возвращаем как есть
+  if (/^https?:\/\//.test(path)) return path;
 
-  // Нормализуем путь: убедимся, что он начинается с '/'
-  const normalizedPath = path.startsWith("/") ? path : "/" + path;
+  // Добавляем ведущий слэш, если его нет
+  const normalized = path.startsWith("/") ? path : `/${path}`;
 
-  // Для путей в uploads — используем относительный путь, чтобы работал прокси Vite
-  if (normalizedPath.startsWith("/uploads/")) {
-    return normalizedPath; // → /uploads/... → проксируется на бэкенд
+  // Если это статический upload — пусть идет как /uploads/...
+  if (normalized.startsWith("/uploads/")) {
+    return normalized; // Vite/NGINX проксирует на backend
   }
 
-  // Для всего остального (например, API-генерируемых изображений) — используем API_BASE
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
-  return `${API_BASE}${normalizedPath}`;
+  // ✅ Абсолютный путь от API — без дублирования .env
+  const base = api.defaults.baseURL?.replace(/\/$/, "") || "";
+  return `${base}${normalized}`;
 }

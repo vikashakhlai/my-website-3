@@ -16,20 +16,24 @@ export interface FavoriteEntity {
 
 const cache = new Map<string, FavoriteEntity[]>();
 
+const endpoint = "/favorites";
+
 export const favoritesApi = {
   /** 📋 Получить избранное по типу */
   async getFavorites(type: FavoriteItemType): Promise<FavoriteEntity[]> {
     const cacheKey = `favorites_${type}`;
     if (cache.has(cacheKey)) return cache.get(cacheKey)!;
 
-    const { data } = await api.get(`/favorites/by-type/${type}`);
+    const { data } = await api.get<FavoriteEntity[]>(
+      `${endpoint}/by-type/${type}`
+    );
     cache.set(cacheKey, data);
     return data;
   },
 
   /** ⭐ Добавить в избранное */
-  async add(type: FavoriteItemType, id: number) {
-    await api.post(`/favorites`, {
+  async add(type: FavoriteItemType, id: number): Promise<void> {
+    await api.post(endpoint, {
       targetType: type,
       targetId: id,
     });
@@ -37,8 +41,8 @@ export const favoritesApi = {
   },
 
   /** 🗑 Удалить из избранного */
-  async remove(type: FavoriteItemType, id: number) {
-    await api.delete(`/favorites`, {
+  async remove(type: FavoriteItemType, id: number): Promise<void> {
+    await api.delete(endpoint, {
       data: {
         targetType: type,
         targetId: id,
@@ -47,6 +51,7 @@ export const favoritesApi = {
     cache.delete(`favorites_${type}`);
   },
 
+  /** 🧹 Сброс кэша (например при logout) */
   clearCache(type?: FavoriteItemType) {
     if (type) cache.delete(`favorites_${type}`);
     else cache.clear();

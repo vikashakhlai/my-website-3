@@ -8,15 +8,15 @@ import {
   RegisterFormData,
 } from "./validation";
 import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/auth";
 import "./auth.css";
 import { useState } from "react";
-
-const API_URL = "http://localhost:3001/api/v1/auth";
 
 export default function AuthPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error" | null>(null);
 
@@ -38,23 +38,16 @@ export default function AuthPage() {
 
   const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
-      const endpoint = isRegister ? "register" : "login";
+      const endpoint = isRegister ? "/auth/register" : "/auth/login";
       const payload = { ...data } as any;
       if (isRegister) delete payload.confirmPassword;
 
-      const res = await fetch(`${API_URL}/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await api.post(endpoint, payload);
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Ошибка запроса");
-
-      const token = result.access_token || result.token;
+      const token = res.data?.access_token;
       if (!token) throw new Error("Токен не получен от сервера");
 
-      // 💫 Автоматический вход
+      // ✅ login() только обновляет контекст
       await login(token);
 
       showToast(
@@ -62,10 +55,13 @@ export default function AuthPage() {
         "success"
       );
 
-      // ✅ Навигация после обновления контекста
       navigate("/");
-    } catch (err) {
-      showToast((err as Error).message, "error");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Ошибка при запросе авторизации";
+      showToast(msg, "error");
     }
   };
 

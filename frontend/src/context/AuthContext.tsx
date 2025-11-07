@@ -1,9 +1,11 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { api } from "../api/auth";
 
 interface User {
-  id: number;
+  id: string;
   email: string;
-  role?: "USER" | "ADMIN" | "SUPER_ADMIN"; // ✅ добавили поле роли
+  role?: "USER" | "ADMIN" | "SUPER_ADMIN" | "TUTOR";
 }
 
 interface AuthContextType {
@@ -22,9 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:3001/api/v1/auth";
-
-  // 🔁 Проверяем токен при старте
+  // 🔁 Проверяем токен при перезагрузке страницы
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -32,53 +32,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    const fetchUser = async () => {
+    (async () => {
       try {
-        const res = await fetch(`${API_URL}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          console.warn("Ошибка проверки токена:", res.status);
-          setUser(null);
-          return;
-        }
-
-        const data = await res.json();
-
-        // ✅ убедимся, что роль приходит (на бэкенде нужно добавить её в /auth/me)
-        setUser({
-          id: data.id,
-          email: data.email,
-          role: data.role || "USER", // fallback
-        });
-      } catch (err) {
-        console.error("Ошибка авторизации:", err);
+        const { data } = await api.get<User>("/auth/me");
+        setUser(data);
+      } catch {
+        localStorage.removeItem("token");
+        setUser(null);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchUser();
+    })();
   }, []);
 
-  // 🔐 Вход по токену
+  // 🔐 Логин (сюда приходит token, как и раньше)
   const login = async (token: string) => {
     try {
       localStorage.setItem("token", token);
 
-      const res = await fetch(`${API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Ошибка при получении данных пользователя");
-
-      const userData = await res.json();
-      setUser({
-        id: userData.id,
-        email: userData.email,
-        role: userData.role || "USER",
-      });
+      const { data } = await api.get<User>("/auth/me");
+      setUser(data);
     } catch (err) {
       console.error("Ошибка входа:", err);
       localStorage.removeItem("token");
@@ -92,20 +65,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
   };
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    login,
-    logout,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
       {loading ? (
-        <div style={{ textAlign: "center", padding: "50px" }}>
-          <p>Загрузка...</p>
-        </div>
+        <div style={{ textAlign: "center", padding: 50 }}>Загрузка...</div>
       ) : (
         children
       )}
@@ -114,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
 };

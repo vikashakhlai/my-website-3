@@ -15,10 +15,10 @@
   justify-content: flex-start;
 }
 
+/* === Карточка книги === */
 .item {
   display: flex;
   flex-direction: column;
-  width: 200px;
   background: white;
   border-radius: 8px;
   overflow: hidden;
@@ -38,4 +38,41 @@
   object-fit: cover;
   object-position: top;
   background: #f5f5f5;
+}
+
+/* === Адаптивная сетка === */
+
+/* ≥ 1400px — 5 карточек в ряд */
+@media (min-width: 1400px) {
+  .item {
+    width: calc((100% - 80px) / 5); /* 4 gaps по 20px */
+  }
+}
+
+/* ≥ 1024px — 4 карточки */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .item {
+    width: calc((100% - 60px) / 4); /* 3 gaps */
+  }
+}
+
+/* ≥ 768px — 3 карточки */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .item {
+    width: calc((100% - 40px) / 3); /* 2 gaps */
+  }
+}
+
+/* ≥ 480px — 2 карточки */
+@media (min-width: 480px) and (max-width: 767px) {
+  .item {
+    width: calc((100% - 20px) / 2);
+  }
+}
+
+/* < 480px — 1 карточка */
+@media (max-width: 479px) {
+  .item {
+    width: 100%;
+  }
 }
