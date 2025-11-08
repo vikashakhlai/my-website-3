@@ -1,19 +1,24 @@
+/* ============================================
+   DIALECT EXERCISE PAGE STYLES
+   Using global styles system
+   ============================================ */
+
 .dialect-exercise {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #333;
-  padding: 1rem 0 2rem;
+  color: var(--color-text);
+  padding: var(--space-4) 0 var(--space-8);
   background: transparent;
   box-sizing: border-box;
 }
 
 .exercise-meta {
   display: flex;
-  justify-content: center; /* центрируем содержимое */
+  justify-content: center;
   width: 100%;
-  max-width: 720px; /* совпадает с шириной плеера */
-  margin: 1.4rem auto 1rem;
+  max-width: 720px;
+  margin: var(--space-4) auto var(--space-4);
   box-sizing: border-box;
 }
 
@@ -21,16 +26,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap; /* не переносим на новую строку */
-  gap: 14px;
+  flex-wrap: nowrap;
+  gap: var(--space-4);
   width: 100%;
-  line-height: 1.5;
+  line-height: var(--line-height-normal);
 }
 
 .exercise-topbar {
   width: 100%;
-  max-width: 720px; /* ширина как у плеера */
-  margin: 0 auto 0.5rem;
+  max-width: 720px;
+  margin: 0 auto var(--space-2);
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -38,35 +43,35 @@
 
 /* === Заголовок === */
 .exercise-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
   margin: 0;
 }
 
 /* === Эксклюзив === */
 .exclusive {
-  background: linear-gradient(90deg, #c084fc, #7c3aed);
+  background: linear-gradient(90deg, var(--color-secondary-light), var(--color-secondary-dark));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .exclusive::before {
   content: "🔥";
-  color: #7c3aed;
+  color: var(--color-secondary-dark);
 }
 
 /* === Тег диалекта === */
 .dialect-badge {
-  color: #fff;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
 }
 
@@ -74,31 +79,31 @@
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 3px 10px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: #374151;
-  transition: all 0.2s ease;
+  gap: var(--space-1);
+  background: var(--color-bg-muted);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  transition: var(--transition-all);
 }
 .meta-item:hover {
-  background: #e5e7eb;
+  background: var(--color-bg-active);
   transform: scale(1.05);
 }
 
 /* === Цвета уровней === */
 .meta-item.level.beginner {
-  background: #60a5fa;
-  color: #fff;
+  background: var(--color-info);
+  color: var(--color-text-inverse);
 }
 .meta-item.level.intermediate {
-  background: #10b981;
-  color: #fff;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
 }
 .meta-item.level.advanced {
-  background: #f59e0b;
-  color: #fff;
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
 }
 
 /* 📱 Адаптив: перенос строк и центрирование */
@@ -116,89 +121,26 @@
   }
 }
 
-/* Остальные стили оставляем как есть */
-.exclusive {
-  background: linear-gradient(90deg, #c084fc, #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 600;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.exclusive::before {
-  content: "🔥";
-  color: #7c3aed;
-}
-
-.dialect-badge {
-  color: #fff;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 3px 10px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: #374151;
-}
-
-.meta-item:hover {
-  background: #e5e7eb;
-  transform: scale(1.05);
-}
-
-/* === Цвета уровней (как в карточках) === */
-.meta-item.level {
-  font-weight: 600;
-  color: #fff;
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-}
-
-.meta-item.level.beginner {
-  background: #60a5fa; /* голубой */
-}
-
-.meta-item.level.intermediate {
-  background: #10b981; /* зелёный */
-}
-
-.meta-item.level.advanced {
-  background: #f59e0b; /* жёлтый */
-}
-
 .feedback-section {
   width: 100%;
-  max-width: 900px; /* 🔹 комфортная ширина, как у учебников */
-  margin: 40px auto; /* 🔹 центрирование */
-  padding: 32px;
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  max-width: 900px;
+  margin: var(--space-10) auto;
+  padding: var(--space-8);
+  background: var(--color-bg);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-lg);
 }
 
 .feedback-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: #1e293b;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-6);
+  color: var(--color-text);
   text-align: center;
 }
 
 .rating-block {
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
   text-align: center;
 }
 
@@ -206,32 +148,32 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .comments-block {
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 /* 🔹 Адаптив для мобилок */
 @media (max-width: 768px) {
   .feedback-section {
-    padding: 20px;
-    border-radius: 14px;
+    padding: var(--space-5);
+    border-radius: var(--border-radius-xl);
     max-width: 95%;
   }
 
   .feedback-title {
-    font-size: 1.4rem;
+    font-size: var(--font-size-2xl);
   }
 }
 
 /* === Адаптив === */
 @media (max-width: 768px) {
   .exercise-title {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
   }
   .meta-item {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
 }

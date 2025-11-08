@@ -1,8 +1,13 @@
+/* ============================================
+   BOOK INFO COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .mainContent {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px;
-  margin-bottom: 40px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-10);
 }
 
 .coverWrapper {
@@ -13,8 +18,8 @@
 .cover {
   width: 100%;
   height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .info {
@@ -23,36 +28,38 @@
 }
 
 .title {
-  font-size: 2.2em;
-  margin: 0 0 20px 0;
-  color: #1a202c;
+  font-size: var(--font-size-4xl);
+  margin: 0 0 var(--space-5) 0;
+  color: var(--color-text);
 }
 
 .property {
-  margin-bottom: 12px;
-  font-size: 1.1em;
-  line-height: 1.5;
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-normal);
 }
 
 .description {
-  margin: 20px 0;
-  line-height: 1.6;
-  color: #4a5568;
-  font-size: 1.05em;
+  margin: var(--space-5) 0;
+  line-height: var(--line-height-normal);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
 }
 
 .authorLink {
-  color: #6366f1;
+  color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-fast);
 }
 
 .authorLink:hover {
   text-decoration: underline;
+  color: var(--color-primary-dark);
 }
 
 .invalidAuthor {
-  color: #999;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 

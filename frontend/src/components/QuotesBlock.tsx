@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./QuotesBlock.css";
+import { api } from "../api/auth";
 
 export interface Quote {
   id: number;
@@ -19,9 +20,7 @@ const QuotesBlock = () => {
   useEffect(() => {
     const fetchQuotes = async () => {
       try {
-        const res = await fetch("/api-nest/quotes/random?count=2");
-        if (!res.ok) throw new Error("Ошибка загрузки цитат");
-        const data = await res.json();
+        const { data } = await api.get("/quotes/random?count=2");
         setQuotes(data);
       } catch (err) {
         console.error(err);

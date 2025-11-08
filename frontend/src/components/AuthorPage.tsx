@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import useScrollToTop from "../hooks/useScrollToTop";
 import styles from "./AuthorPage.module.css";
 import { api } from "../api/auth";
 import BackZone from "../components/BackZone";
+import BookGallery from "./BookGallery";
 
 interface Author {
   id: number;
@@ -96,28 +97,15 @@ const AuthorPage = () => {
       </div>
 
       {/* Книги автора */}
-      {author.books?.length > 0 ? (
-        <div className={styles.booksSection}>
-          <h2 className={styles.sectionTitle}>Книги автора</h2>
-          <div className={styles.booksGrid}>
-            {author.books.map((book) => (
-              <Link
-                to={`/books/${book.id}`}
-                key={book.id}
-                className={styles.bookCard}
-              >
-                <img
-                  src={book.cover_url}
-                  alt={book.title}
-                  className={styles.bookCover}
-                />
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className={styles.noBooks}>Пока нет книг этого автора.</div>
-      )}
+      <BookGallery
+        books={author.books?.map((book) => ({
+          id: book.id,
+          title: book.title,
+          cover_url: book.cover_url,
+        })) || []}
+        title="Книги автора"
+        emptyMessage="Пока нет книг этого автора."
+      />
     </div>
   );
 };

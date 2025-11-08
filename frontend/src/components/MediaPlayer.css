@@ -77,6 +77,32 @@
   transition: var(--transition-fast);
 }
 
+/* Ensure play/pause button states are visible */
+.media-wrapper .vjs-play-control {
+  cursor: pointer !important;
+}
+
+.media-wrapper .vjs-play-control.vjs-playing .vjs-icon-placeholder::before {
+  content: "\f103" !important; /* Pause icon */
+}
+
+.media-wrapper .vjs-play-control.vjs-paused .vjs-icon-placeholder::before {
+  content: "\f101" !important; /* Play icon */
+}
+
+/* Video mode play/pause button */
+.media-wrapper.video .vjs-play-control {
+  cursor: pointer !important;
+}
+
+.media-wrapper.video .vjs-play-control.vjs-playing .vjs-icon-placeholder::before {
+  content: "\f103" !important; /* Pause icon */
+}
+
+.media-wrapper.video .vjs-play-control.vjs-paused .vjs-icon-placeholder::before {
+  content: "\f101" !important; /* Play icon */
+}
+
 /* 🔘 Ползунок прогресса */
 .media-wrapper.audio .vjs-progress-control .vjs-progress-holder {
   background-color: var(--color-border) !important;

@@ -10,6 +10,7 @@ import FavoriteButton from "../../components/FavoriteButton";
 import { useFavorites } from "../../hooks/useFavorites";
 import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
+import { api } from "../../api/auth";
 
 export interface Author {
   id: number;
@@ -62,13 +63,7 @@ const BookPage = () => {
   const fetchBook = useCallback(async () => {
     if (!id) return;
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api-nest/books/${id}?t=${Date.now()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const data = await res.json();
+      const { data } = await api.get(`/books/${id}?t=${Date.now()}`);
       const rootBook = data.book ?? data;
 
       const safeBook: Book = {

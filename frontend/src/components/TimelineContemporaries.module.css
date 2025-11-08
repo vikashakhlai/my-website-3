@@ -1,14 +1,19 @@
+/* ============================================
+   TIMELINE CONTEMPORARIES STYLES
+   Using global styles system
+   ============================================ */
+
 .timelineSection {
-  margin-top: 3rem;
+  margin-top: var(--space-12);
   position: relative;
   width: 100%;
 }
 
 .title {
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
-  color: #333;
-  font-weight: 600;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
 }
 
 .timelineContainer {
@@ -17,16 +22,16 @@
   height: 180px;
   overflow-x: visible;
   overflow-y: visible;
-  padding-bottom: 1rem;
+  padding-bottom: var(--space-4);
 }
 
 .timelineLine {
   position: absolute;
   top: 95px;
-  height: 2px;
-  background: linear-gradient(to right, #cfd8dc, #90a4ae);
-  border-radius: 2px;
-  z-index: 1;
+  height: var(--border-width-thick);
+  background: linear-gradient(to right, var(--color-border-dark), var(--color-text-muted));
+  border-radius: var(--border-width-thick);
+  z-index: var(--z-index-sticky);
 }
 
 .timelineLine::before,
@@ -34,27 +39,27 @@
   content: "";
   position: absolute;
   top: 0;
-  width: 6px;
-  height: 2px;
-  background: #90a4ae;
+  width: var(--space-2);
+  height: var(--border-width-thick);
+  background: var(--color-text-muted);
 }
 
 .timelineLine::before {
   left: 0;
-  border-radius: 2px 0 0 2px;
+  border-radius: var(--border-width-thick) 0 0 var(--border-width-thick);
 }
 
 .timelineLine::after {
   right: 0;
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 var(--border-width-thick) var(--border-width-thick) 0;
 }
 
 .scale {
   position: absolute;
   top: 110px;
   width: 100%;
-  font-size: 0.75rem;
-  color: #777;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .scaleMark {
@@ -65,13 +70,13 @@
 
 .scaleLabel {
   position: absolute;
-  top: 5px;
+  top: var(--space-1);
 }
 
 .persons {
   position: relative;
   height: 100%;
-  z-index: 2;
+  z-index: var(--z-index-fixed);
 }
 
 .personMarker {
@@ -80,18 +85,18 @@
   transform: translateX(-50%);
   text-align: center;
   text-decoration: none;
-  z-index: 2;
-  transition: transform 0.2s ease, z-index 0.2s ease;
+  z-index: var(--z-index-fixed);
+  transition: transform var(--transition-fast), z-index var(--transition-fast);
 }
 
 .personMarker:hover {
-  z-index: 10; /* 👈 поднимаем над другими */
+  z-index: var(--z-index-tooltip);
   transform: translateX(-50%) scale(1.2);
 }
 
 .tooltip {
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .personMarker:hover .tooltip {
@@ -103,12 +108,12 @@
 .avatarWrapper {
   width: 46px;
   height: 46px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   overflow: hidden;
-  border: 2px solid #fff;
-  background: #f5f5f5;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.3s;
+  border: var(--border-width-thick) solid var(--color-bg);
+  background: var(--color-bg-muted);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-normal);
 }
 
 .avatar {
@@ -119,7 +124,7 @@
 
 .personMarker:hover .avatarWrapper {
   transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(0, 123, 255, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .tooltip {
@@ -128,13 +133,13 @@
   top: -75px;
   left: 50%;
   transform: translateX(-50%);
-  background: #fff;
-  color: #333;
-  padding: 6px 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
   white-space: nowrap;
-  z-index: 10;
+  z-index: var(--z-index-tooltip);
 }
 
 .personMarker:hover .tooltip {
@@ -145,16 +150,16 @@
   position: absolute;
   top: 90px;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: var(--z-index-modal);
 }
 
 .currentDot {
   display: block;
-  width: 14px;
-  height: 14px;
-  background: #007bff;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.8);
+  width: var(--space-4);
+  height: var(--space-4);
+  background: var(--color-info);
+  border-radius: var(--border-radius-full);
+  box-shadow: var(--shadow-lg);
 }
 
 .currentTooltip {
@@ -162,10 +167,10 @@
   top: -55px;
   left: 50%;
   transform: translateX(-50%);
-  background: #007bff;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  background: var(--color-info);
+  color: var(--color-text-inverse);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }

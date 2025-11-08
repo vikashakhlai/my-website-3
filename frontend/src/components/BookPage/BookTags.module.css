@@ -1,38 +1,43 @@
+/* ============================================
+   BOOK TAGS COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .tagsSection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .tagsSection strong {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #333;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .tag {
-  background: #5b67f1;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(91, 103, 241, 0.25);
-  transition: all 0.2s ease;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
 }
 
 .tag:hover {
-  background: #4a54d1;
+  background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
 .noTags {
-  color: #aaa;
+  color: var(--color-text-muted);
   font-style: italic;
 }

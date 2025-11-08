@@ -1,21 +1,26 @@
+/* ============================================
+   FILL IN THE BLANKS EXERCISE STYLES
+   Using global styles system
+   ============================================ */
+
 /* === Контейнер упражнения === */
 .container {
   width: 100%;
   max-width: 900px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.08);
+  margin: var(--space-8) auto;
+  padding: var(--space-8);
+  background: var(--color-bg);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-lg);
+  border: var(--border-width) solid rgba(104, 108, 223, 0.08);
 }
 
 /* Заголовок */
 .title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #1f1c3a;
-  margin-bottom: 1.5rem;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
   text-align: center;
 }
 
@@ -23,37 +28,37 @@
 .optionsContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-3);
   justify-content: center;
-  margin: 1.5rem 0 2rem;
+  margin: var(--space-6) 0 var(--space-8);
 }
 
 .wordOption {
-  background: #f4f4ff;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 8px 16px;
-  font-size: 0.95rem;
-  border-radius: 9999px;
+  background: var(--color-primary-lightest);
+  border: var(--border-width) solid rgba(104, 108, 223, 0.3);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-full);
   cursor: pointer;
-  transition: all 0.25s ease;
-  color: #4b4b68;
+  transition: var(--transition-all);
+  color: var(--color-text);
 }
 
 .wordOption:hover:not(.disabled) {
-  background: #e4e4ff;
+  background: var(--color-primary-lighter);
   transform: translateY(-2px);
 }
 
 .wordOption.selected {
-  background: #6366f1;
-  color: white;
-  border-color: #6366f1;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
 }
 
 .wordOption.disabled {
-  background: #e6e6ee;
-  border-color: #d1d1dd;
-  color: #7d7d90;
+  background: var(--color-bg-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -62,106 +67,108 @@
 .sentencesContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  margin-top: 1rem;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .sentence {
   display: flex;
   align-items: center;
-  font-size: 1.1rem;
+  font-size: var(--font-size-lg);
   direction: rtl;
   text-align: right;
-  gap: 6px;
+  gap: var(--space-2);
+  font-family: var(--font-arabic);
 }
 
 /* Номер перед предложением */
 .number {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #4b4b68;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
   direction: ltr;
 }
 
 /* Пропуск */
 .blankSlot {
   min-width: 120px;
-  padding: 6px 10px;
-  font-weight: 500;
-  border: 2px dashed rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  background: #fff;
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-medium);
+  border: var(--border-width-thick) dashed rgba(0, 0, 0, 0.25);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: var(--transition-all);
 }
 
 .blankSlot:hover {
-  border-color: #6366f1;
-  background: #f8f8ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-lightest);
 }
 
 .blankSlot.correct {
-  background: #d9f8e6;
-  border-color: #45c170;
-  color: #125e2b;
+  background: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
 .blankSlot.wrong {
-  background: #ffe1e1;
-  border-color: #e54b4b;
-  color: #7b0d0d;
+  background: var(--color-danger-light);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 /* === Таблица слов === */
 .vocabularyTable {
-  background: #fafaff;
-  border-radius: 14px;
-  padding: 1.4rem;
-  margin-bottom: 2rem;
-  border: 1px solid rgba(99, 102, 241, 0.12);
+  background: var(--color-primary-lightest);
+  border-radius: var(--border-radius-xl);
+  padding: var(--space-4);
+  margin-bottom: var(--space-8);
+  border: var(--border-width) solid rgba(104, 108, 223, 0.12);
 }
 
 .tableTitle {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #1f1c3a;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .vocabularyTable table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: var(--font-size-sm);
 }
 
 .vocabularyTable th,
 .vocabularyTable td {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border-light);
 }
 
 .vocabularyTable th {
   text-align: left;
-  color: #555;
-  font-weight: 600;
-  background: #f4f4ff;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-primary-lightest);
 }
 
 .vocabularyTable td:last-child {
   text-align: right;
   direction: rtl;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-arabic);
 }
 
 /* === Адаптив === */
 @media (max-width: 600px) {
   .container {
-    padding: 1.4rem;
+    padding: var(--space-4);
   }
 
   .sentence {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     flex-wrap: wrap;
   }
 
@@ -170,7 +177,7 @@
   }
 
   .wordOption {
-    font-size: 0.85rem;
-    padding: 6px 12px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-2) var(--space-3);
   }
 }

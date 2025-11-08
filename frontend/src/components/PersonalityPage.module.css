@@ -120,45 +120,7 @@
   padding-left: 0.75rem;
 }
 
-.booksGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-.booksGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1.2rem;
-  margin-top: 1rem;
-}
-
-.bookCover {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  background: #f3f3f3;
-}
-
-.bookCover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-}
-
-/* 📱 Адаптив для телефонов */
-@media (max-width: 768px) {
-  .booksGrid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.8rem;
-  }
-
-  .bookCover {
-    height: 180px;
-  }
-}
+/* BookGallery component is now used for books display */
 
 .articlesGrid {
   display: grid;

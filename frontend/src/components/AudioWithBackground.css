@@ -1,3 +1,8 @@
+/* ============================================
+   AUDIO WITH BACKGROUND COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .audio-scene {
   position: relative;
   display: flex;
@@ -5,12 +10,12 @@
   align-items: center;
   width: 100%;
   max-width: 950px;
-  margin: 2rem auto;
-  border-radius: 20px;
+  margin: var(--space-8) auto;
+  border-radius: var(--border-radius-2xl);
   overflow: hidden;
-  transition: all 0.5s ease;
-  background: #f9fafb; /* нейтральный фон */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: var(--transition-slow);
+  background: var(--color-bg-secondary);
+  box-shadow: var(--shadow-lg);
 }
 
 /* 🖼️ Картинка — без белых краёв, заполняет весь блок */
@@ -45,11 +50,11 @@
 /* 🎧 Плеер */
 .scene-player {
   position: relative;
-  margin-top: -0.6rem; /* почти вплотную к нижнему краю */
-  z-index: 2;
+  margin-top: -0.6rem;
+  z-index: var(--z-index-fixed);
   width: 100%;
-  max-width: 720px; /* исходный размер */
-  background: transparent; /* фон убран */
+  max-width: 720px;
+  background: transparent;
   border-radius: 0;
   box-shadow: none;
   padding: 0;

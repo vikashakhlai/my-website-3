@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { api } from "../api/auth";
+import { api, setUnauthorizedHandler } from "../api/auth";
 
 interface User {
   id: string;
@@ -45,6 +45,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
   }, []);
 
+  // 🔐 Настраиваем обработчик 401 ошибок
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      localStorage.removeItem("token");
+      setUser(null);
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    };
+
+    setUnauthorizedHandler(handleUnauthorized);
+
+    return () => {
+      setUnauthorizedHandler(() => {});
+    };
+  }, []);
+
   // 🔐 Логин (сюда приходит token, как и раньше)
   const login = async (token: string) => {
     try {
@@ -59,10 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // 🚪 Выход
+  // 🚪 Выход - перенаправляем на страницу входа
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
+    // Используем window.location для надежного редиректа
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
   };
 
   return (

@@ -13,6 +13,7 @@ import {
   enrichVerbForms,
 } from "./utils/dictionaryUtils";
 import useScrollToTop from "../../hooks/useScrollToTop";
+import { api } from "../../api/auth";
 
 const DictionaryPage: React.FC = () => {
   useScrollToTop();
@@ -33,10 +34,9 @@ const DictionaryPage: React.FC = () => {
     setLoading(true);
     setRootResults(null);
     try {
-      const res = await fetch(
-        `/api-nest/dictionary/by-root?root=${encodeURIComponent(root)}`
+      const { data: rootData } = await api.get<RootGroupedResult>(
+        `/dictionary/by-root?root=${encodeURIComponent(root)}`
       );
-      const rootData: RootGroupedResult = await res.json();
       setRootResults(rootData);
     } catch (err) {
       console.error("Ошибка загрузки корня:", err);
@@ -60,15 +60,9 @@ const DictionaryPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `/api-nest/dictionary/search?query=${encodeURIComponent(
-          normalizedTerm
-        )}`
+      const { data } = await api.get<SearchResult>(
+        `/dictionary/search?query=${encodeURIComponent(normalizedTerm)}`
       );
-
-      if (!res.ok) throw new Error("Ошибка сети");
-
-      const data: SearchResult = await res.json();
 
       if (data.results?.length) {
         setDirectResults(data.results);
@@ -115,10 +109,9 @@ const DictionaryPage: React.FC = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api-nest/dictionary/autocomplete?q=${encodeURIComponent(query)}`
+        const { data } = await api.get<{ suggestions: Suggestion[] }>(
+          `/dictionary/autocomplete?q=${encodeURIComponent(query)}`
         );
-        const data = await res.json();
         setSuggestions(data.suggestions || []);
       } catch (err) {
         console.error("Ошибка автодополнения:", err);

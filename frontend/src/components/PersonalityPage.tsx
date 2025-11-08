@@ -12,6 +12,8 @@ import FavoriteButton from "../components/FavoriteButton";
 import { useFavorites } from "../hooks/useFavorites";
 import { CommentsSection } from "./CommentsSection";
 import { StarRating } from "./StarRating";
+import { api } from "../api/auth";
+import BookGallery from "./BookGallery";
 
 const PersonalityPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,9 +35,7 @@ const PersonalityPage = () => {
 
     const fetchPersonality = async () => {
       try {
-        const response = await fetch(`/api-nest/personalities/${id}`);
-        if (!response.ok) throw new Error(`Ошибка ${response.status}`);
-        const data: Personality = await response.json();
+        const { data } = await api.get<Personality>(`/personalities/${id}`);
         setPersonality({
           ...data,
           averageRating: data.averageRating ? Number(data.averageRating) : null,
@@ -81,9 +81,7 @@ const PersonalityPage = () => {
     if (!id) return;
     const fetchQuotes = async () => {
       try {
-        const res = await fetch(`/api-nest/quotes/by-personality/${id}`);
-        if (!res.ok) return;
-        const data = await res.json();
+        const { data } = await api.get(`/quotes/by-personality/${id}`);
         setQuotes(data);
       } catch (err) {
         console.error("Ошибка загрузки цитат:", err);
@@ -178,21 +176,16 @@ const PersonalityPage = () => {
               </div>
             )}
 
-            {personality.books?.length > 0 && (
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Книги о личности</h2>
-                <div className={styles.booksGrid}>
-                  {personality.books.map((book) => (
-                    <Link to={`/books/${book.id}`} key={book.id}>
-                      <img
-                        src={book.cover_url || "/uploads/default-book.jpg"}
-                        alt={book.title}
-                        className={styles.bookCover}
-                      />
-                    </Link>
-                  ))}
-                </div>
-              </div>
+            {personality.books && personality.books.length > 0 && (
+              <BookGallery
+                books={personality.books.map((book) => ({
+                  id: book.id,
+                  title: book.title,
+                  cover_url: book.cover_url,
+                }))}
+                title="Книги о личности"
+                emptyMessage="Пока нет книг о этой личности."
+              />
             )}
 
             {personality.articles?.length > 0 && (

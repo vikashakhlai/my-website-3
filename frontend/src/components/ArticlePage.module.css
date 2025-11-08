@@ -1,8 +1,13 @@
+/* ============================================
+   ARTICLE PAGE STYLES
+   Using global styles system
+   ============================================ */
+
 .articlePage {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  line-height: 1.7;
+  padding: var(--space-8) var(--space-4);
+  line-height: var(--line-height-relaxed);
 }
 
 /* Картинка */
@@ -10,62 +15,63 @@
   width: 100%;
   max-height: 380px;
   object-fit: cover;
-  border-radius: 14px;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-xl);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Заголовок RU */
 .articleTitle {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   margin: 0;
-  color: #1f1c3a;
+  color: var(--color-text);
 }
 
 /* Заголовок AR */
 .articleTitleArabic {
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
   text-align: right;
   direction: rtl;
-  margin-top: 0.5rem;
-  color: #0d0c22;
+  margin-top: var(--space-2);
+  color: var(--color-text);
+  font-family: var(--font-arabic);
 }
 
 /* Тема + Рейтинг */
 .articleMeta {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin: 1rem 0;
+  margin: var(--space-4) 0;
 }
 
 .articleTheme {
-  font-size: 1rem;
-  color: #4b4b4b;
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
 }
 
 .articleThemeLabel {
-  background: #eef2ff;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  color: #4f46e5;
-  font-weight: 500;
+  background: var(--color-primary-lightest);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--border-radius);
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-medium);
 }
 
 .articleDescription {
-  margin: 1rem 0 2rem;
-  font-size: 1.1rem;
-  color: #333;
+  margin: var(--space-4) 0 var(--space-8);
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
 }
 
 /* Контент */
 .articleContent {
-  font-size: 1.1rem;
-  color: #242424;
-  margin: 2rem 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  margin: var(--space-8) 0;
 }
 
 /* Авто RTL поддержка */
@@ -77,28 +83,28 @@
 
 /* Упражнения */
 .articleExercises {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid #eee;
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .articleExercisesTitle {
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin-bottom: 1.2rem;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-3);
 }
 
 /* 🔹 Мобилка */
 @media (max-width: 600px) {
   .articleTitle {
-    font-size: 1.6rem;
+    font-size: var(--font-size-2xl);
   }
 
   .articleTitleArabic {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
   }
 
   .articlePage {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }

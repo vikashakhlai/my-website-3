@@ -1,6 +1,11 @@
+/* ============================================
+   OTHER DIALECT VERSIONS STYLES
+   Using global styles system
+   ============================================ */
+
 /* ===== component-scoped reset (безопасно) ===== */
 .wrapper {
-  margin-top: 70px;
+  margin-top: var(--space-16);
   -webkit-tap-highlight-color: transparent;
 }
 .wrapper *,
@@ -26,22 +31,22 @@
 .inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
 }
 
 .title {
   text-align: center;
-  font-size: 26px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: #1a1a1a;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-6);
+  color: var(--color-text);
 }
 
 .container {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .single .slider {
@@ -51,17 +56,17 @@
 /* ===== slider ===== */
 .slider {
   display: flex;
-  gap: 18px;
+  gap: var(--space-5);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 6px 6px 12px 6px; /* дают воздух слева/справа */
+  padding: var(--space-2) var(--space-2) var(--space-3) var(--space-2);
 }
 .slider::-webkit-scrollbar {
-  height: 6px;
+  height: var(--space-2);
 }
 .slider::-webkit-scrollbar-thumb {
-  background: #c9cdfd;
-  border-radius: 4px;
+  background: var(--color-primary-lighter);
+  border-radius: var(--border-radius-sm);
 }
 
 /* режим 1 карточки — без горизонтального скролла и на всю ширину */
@@ -75,19 +80,19 @@
   min-width: 280px;
   max-width: 300px;
   scroll-snap-align: start;
-  background: #fff;
-  padding: 20px 22px;
-  border-radius: 18px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
-  border: 1px solid #ececec;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--color-bg);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-md);
+  border: var(--border-width) solid var(--color-border);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 .card:focus-visible {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 0 3px var(--color-primary-lightest);
 }
 
 /* single card растягивается */
@@ -99,26 +104,26 @@
 /* ===== meta/badge ===== */
 .dialectBadge {
   display: inline-block;
-  background: #6366f1;
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-2);
 }
 .metaRow {
-  font-size: 14px;
-  margin-top: 6px;
-  color: #444;
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
 }
 .exclusive {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #6366f1;
-  font-weight: 600;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
 }
 
@@ -127,7 +132,7 @@
   width: 340px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: var(--border-radius-2xl);
 }
 .imageWrap img {
   width: 100%;
@@ -143,22 +148,22 @@
   .imageWrap {
     width: 100%;
     height: 180px;
-  } /* было слишком большое — фиксируем высоту */
+  }
   .slider {
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: var(--space-1);
+    padding-right: var(--space-1);
   }
 }
 
 @media (max-width: 600px) {
   .imageWrap {
     height: 150px;
-    border-radius: 16px;
+    border-radius: var(--border-radius-xl);
   }
   .card {
     min-width: 260px;
   }
   .title {
-    font-size: 22px;
+    font-size: var(--font-size-2xl);
   }
 }

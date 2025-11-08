@@ -1,3 +1,8 @@
+/* ============================================
+   BOOK PAGE STYLES
+   Using global styles system
+   ============================================ */
+
 .pageWrapper {
   display: flex;
   flex-direction: column;
@@ -8,8 +13,8 @@
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 20px;
-  position: relative; /* ключ для абсолютного позиционирования стрелки */
+  padding: var(--space-5);
+  position: relative;
 }
 
 /* --- Блок книги и стрелка --- */
@@ -19,7 +24,7 @@
 
 .bookContent {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-index-sticky);
 }
 
 /* BackZone is now fixed, no need for floatingBack styles */
@@ -30,7 +35,7 @@
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .titleBlock {
@@ -50,41 +55,41 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1.2rem;
-  margin: 1.5rem 0 2rem;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-8);
 }
 
 /* --- Теги --- */
 .tagsSection {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .tagsSection strong {
-  font-size: 1rem;
-  color: #333;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .tag {
-  background: #5b67f1;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(91, 103, 241, 0.25);
-  transition: all 0.2s ease;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
 }
 
 .tag:hover {
-  background: #4a54d1;
+  background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
@@ -101,7 +106,7 @@
   .metaBlock {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .ratingWrapper {

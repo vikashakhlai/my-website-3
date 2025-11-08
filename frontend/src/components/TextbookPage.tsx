@@ -7,6 +7,7 @@ import FavoriteButton from "./FavoriteButton";
 import { useFavorites } from "../hooks/useFavorites";
 import { StarRating } from "./StarRating";
 import { CommentsSection } from "./CommentsSection";
+import { api } from "../api/auth";
 
 export interface Textbook {
   id: number;
@@ -38,13 +39,7 @@ const TextbookPage = () => {
   const fetchTextbook = useCallback(async () => {
     if (!id) return;
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api-nest/textbooks/${id}?t=${Date.now()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      const data = await res.json();
+      const { data } = await api.get(`/textbooks/${id}?t=${Date.now()}`);
 
       setTextbook({
         ...data,
@@ -169,17 +164,10 @@ const TextbookPage = () => {
               <button
                 className="download-btn"
                 onClick={async () => {
-                  const token = localStorage.getItem("token");
                   try {
-                    const res = await fetch(
-                      `/api-nest/textbooks/${textbook.id}/download`,
-                      {
-                        headers: { Authorization: `Bearer ${token}` },
-                      }
+                    const { data } = await api.get(
+                      `/textbooks/${textbook.id}/download`
                     );
-                    if (!res.ok) throw new Error("Ошибка скачивания");
-
-                    const data = await res.json();
                     window.location.href = data.url; // реальный файл
                   } catch (e) {
                     alert("Ошибка: не удалось скачать файл");

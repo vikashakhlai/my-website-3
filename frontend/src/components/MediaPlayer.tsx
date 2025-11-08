@@ -48,6 +48,37 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
       poster: !isAudio ? media.previewUrl || "" : undefined,
     });
 
+    // 🎬 Ensure play/pause button state is properly managed
+    let updatePlayButtonFn: (() => void) | null = null;
+    
+    player.ready(() => {
+      // 🎨 для аудио убираем фон
+      if (isAudio && player.el()) {
+        player.el()!.style.background = "transparent";
+      }
+      
+      // Ensure the control bar is properly initialized
+      const controlBar = player.getChild("controlBar");
+      const playControl = controlBar?.getChild("playToggle");
+      
+      if (playControl) {
+        // Force update the button state on ready
+        playControl.update();
+        
+        // Ensure button state updates when player state changes
+        updatePlayButtonFn = () => {
+          // Update the button state
+          playControl.update();
+        };
+        
+        // Listen to all relevant events to update button state
+        player.on("play", updatePlayButtonFn);
+        player.on("playing", updatePlayButtonFn);
+        player.on("pause", updatePlayButtonFn);
+        player.on("paused", updatePlayButtonFn);
+      }
+    });
+
     // 🎬 callbacks
     if (onPlay) player.on("play", onPlay);
     if (onPause) player.on("pause", onPause);
@@ -64,13 +95,6 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
         false
       );
     }
-
-    // 🎨 для аудио убираем фон
-    player.ready(() => {
-      if (isAudio && player.el()) {
-        player.el()!.style.background = "transparent";
-      }
-    });
 
     playerRef.current = player;
     lastMediaId.current = media.id;
@@ -97,10 +121,18 @@ const MediaPlayer: React.FC<Props> = ({ media, onPlay, onPause }) => {
 
     return () => {
       if (playerRef.current) {
-        playerRef.current.off("play", onPlay);
-        playerRef.current.off("pause", onPause);
+        if (onPlay) playerRef.current.off("play", onPlay);
+        if (onPause) playerRef.current.off("pause", onPause);
         playerRef.current.off("timeupdate", saveProgress);
         playerRef.current.off("ended");
+        
+        // Remove play button update handlers
+        if (updatePlayButtonFn) {
+          playerRef.current.off("play", updatePlayButtonFn);
+          playerRef.current.off("playing", updatePlayButtonFn);
+          playerRef.current.off("pause", updatePlayButtonFn);
+          playerRef.current.off("paused", updatePlayButtonFn);
+        }
       }
     };
   }, [

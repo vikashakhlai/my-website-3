@@ -9,6 +9,7 @@ import {
   SearchedForm,
 } from "./types";
 import { normalizeArabic, enrichVerbForms } from "./utils/dictionaryUtils";
+import { api } from "../../api/auth";
 
 interface DictionaryWidgetProps {
   isOpen: boolean;
@@ -40,10 +41,9 @@ const DictionaryWidget: React.FC<DictionaryWidgetProps> = ({
 
     try {
       // 1️⃣ Поиск по слову или форме
-      const res = await fetch(
-        `/api-nest/dictionary/search?query=${encodeURIComponent(searchTerm)}`
+      const { data } = await api.get<SearchResult>(
+        `/dictionary/search?query=${encodeURIComponent(searchTerm)}`
       );
-      const data: SearchResult = await res.json();
 
       if (!data.results || data.results.length === 0) {
         setRootResults({ root: null, grouped: {} });
@@ -58,10 +58,10 @@ const DictionaryWidget: React.FC<DictionaryWidgetProps> = ({
       // 3️⃣ Загружаем все слова по каждому корню
       const allRootData: RootGroupedResult[] = await Promise.all(
         uniqueRoots.map(async (root) => {
-          const r = await fetch(
-            `/api-nest/dictionary/by-root?root=${encodeURIComponent(root!)}`
+          const { data } = await api.get<RootGroupedResult>(
+            `/dictionary/by-root?root=${encodeURIComponent(root!)}`
           );
-          return await r.json();
+          return data;
         })
       );
 
@@ -126,10 +126,9 @@ const DictionaryWidget: React.FC<DictionaryWidgetProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api-nest/dictionary/autocomplete?q=${encodeURIComponent(query)}`
+        const { data } = await api.get<{ suggestions: Suggestion[] }>(
+          `/dictionary/autocomplete?q=${encodeURIComponent(query)}`
         );
-        const data = await res.json();
         setSuggestions(data.suggestions || []);
       } catch (err) {
         console.error("Ошибка автодополнения:", err);
