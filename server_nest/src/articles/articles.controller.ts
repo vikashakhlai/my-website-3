@@ -23,6 +23,7 @@ import { Exercise } from './entities/exercise.entity';
 
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/roles.enum';
 
@@ -72,13 +73,14 @@ export class ArticlesController {
   }
 
   /** 🔍 Получить статью (публично). JWT добавляет userId */
-  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
-    summary: 'Получить статью (публично). Если есть JWT — вернётся userId',
+    summary: 'Получить статью (публично). Если есть JWT — вернётся userId и userRating',
   })
   @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.articlesService.getById(id, req.user?.sub);
+    const userId = req.user?.sub ?? undefined;
+    return this.articlesService.getById(id, userId);
   }
 
   // ====================== CRUD (ADMIN+) ======================

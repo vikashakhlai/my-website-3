@@ -11,13 +11,21 @@ import {
   Delete,
   Put,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
 import { BookService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { BookResponseDto } from './dto/book-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
@@ -35,7 +43,26 @@ export class BooksController {
 
   // ✅ Новый универсальный эндпоинт поиска + пагинации
   @Public()
-  @ApiOperation({ summary: 'Получить список книг с пагинацией и фильтрами' })
+  @ApiOperation({
+    summary: 'Получить список книг с пагинацией и фильтрами',
+    description:
+      'Возвращает список книг с поддержкой пагинации и фильтрации по названию, тегу и автору. Публичный эндпоинт, не требует аутентификации.',
+  })
+  @ApiOkResponse({
+    description: 'Список книг успешно получен',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/BookResponseDto' },
+        },
+        total: { type: 'number', example: 150 },
+        page: { type: 'number', example: 1 },
+        pages: { type: 'number', example: 8 },
+      },
+    },
+  })
   @Get()
   async getBooks(@Query() query: SearchBooksDto, @Req() req: Request) {
     const userId = this.extractUserId(req);
@@ -68,7 +95,31 @@ export class BooksController {
 
   // === 📘 Одна книга + связанные ===
   @Public()
-  @ApiOperation({ summary: 'Получить книгу + связанные данные' })
+  @ApiOperation({
+    summary: 'Получить книгу с полной информацией и связанными данными',
+    description:
+      'Возвращает полную информацию о книге, включая авторов, теги, издательство, рейтинги и связанные книги (похожие книги и другие книги автора). Публичный эндпоинт, не требует аутентификации. Если пользователь авторизован, дополнительно возвращаются его рейтинг и статус избранного.',
+  })
+  @ApiOkResponse({
+    description: 'Информация о книге успешно получена',
+    schema: {
+      type: 'object',
+      properties: {
+        book: { $ref: '#/components/schemas/BookResponseDto' },
+        similarBooks: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/BookResponseDto' },
+        },
+        otherBooksByAuthor: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/BookResponseDto' },
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Книга с указанным идентификатором не найдена',
+  })
   @Get(':id')
   async findOneWithRelated(
     @Param('id', ParseIntPipe) id: number,
@@ -119,20 +170,43 @@ export class BooksController {
   }
 
   // === ➕ Создать книгу (ADMIN+) ===
-  @ApiOperation({ summary: 'Создать книгу (ADMIN+)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Создать новую книгу',
+    description:
+      'Создает новую книгу в системе. Доступно только для пользователей с ролями ADMIN или SUPER_ADMIN. Требуется JWT токен в заголовке Authorization.',
+  })
+  @ApiCreatedResponse({
+    description: 'Книга успешно создана',
+    type: BookResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Неверные данные запроса. Проверьте обязательные поля и типы данных.',
+  })
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
   async create(@Body() dto: CreateBookDto) {
     return this.bookService.create(dto);
   }
 
   // === ✏️ Обновить книгу (ADMIN+) ===
-  @ApiOperation({ summary: 'Обновить книгу (ADMIN+)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Обновить существующую книгу',
+    description:
+      'Обновляет информацию о книге по её идентификатору. Доступно только для пользователей с ролями ADMIN или SUPER_ADMIN. Требуется JWT токен в заголовке Authorization.',
+  })
+  @ApiOkResponse({
+    description: 'Книга успешно обновлена',
+    type: BookResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Книга с указанным идентификатором не найдена',
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Неверные данные запроса. Проверьте типы данных и значения полей.',
+  })
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -142,10 +216,27 @@ export class BooksController {
   }
 
   // === ❌ Удалить книгу (ADMIN+) ===
-  @ApiOperation({ summary: 'Удалить книгу (ADMIN+)' })
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Удалить книгу',
+    description:
+      'Удаляет книгу из системы по её идентификатору. Доступно только для пользователей с ролями ADMIN или SUPER_ADMIN. Требуется JWT токен в заголовке Authorization. Внимание: операция необратима!',
+  })
+  @ApiOkResponse({
+    description: 'Книга успешно удалена',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Книга успешно удалена',
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Книга с указанным идентификатором не найдена',
+  })
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.remove(id);

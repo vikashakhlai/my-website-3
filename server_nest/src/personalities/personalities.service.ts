@@ -179,7 +179,9 @@ export class PersonalitiesService {
       comments,
       commentCount: comments.length,
 
-      averageRating: avgRow?.average ? Number(avgRow.average) : null,
+      averageRating: avgRow?.average
+        ? Number(parseFloat(avgRow.average).toFixed(2))
+        : null,
       ratingCount: avgRow?.count ? Number(avgRow.count) : 0,
       userRating: userRating?.value ?? null,
 

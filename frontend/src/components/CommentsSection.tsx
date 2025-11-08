@@ -38,37 +38,64 @@ const buildTree = (flat: Comment[]): Comment[] => {
   const map = new Map<number, Comment & { replies: Comment[] }>();
   const roots: Comment[] = [];
 
-  flat.forEach((c) => map.set(c.id, { ...c, replies: c.replies ?? [] }));
-
+  // First pass: create map of all comments with empty replies array
   flat.forEach((c) => {
+    map.set(c.id, { ...c, replies: [] });
+  });
+
+  // Second pass: build tree structure
+  flat.forEach((c) => {
+    const comment = map.get(c.id)!;
     if (c.parent_id && map.has(c.parent_id)) {
-      map.get(c.parent_id)!.replies.push(map.get(c.id)!);
+      // This is a reply, add it to parent's replies
+      map.get(c.parent_id)!.replies.push(comment);
     } else {
-      roots.push(map.get(c.id)!);
+      // This is a root comment
+      roots.push(comment);
     }
   });
 
+  // Sort replies by creation date (oldest first)
+  const sortReplies = (comments: Comment[]): void => {
+    comments.forEach((c) => {
+      if (c.replies && c.replies.length > 0) {
+        c.replies.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        sortReplies(c.replies);
+      }
+    });
+  };
+
+  sortReplies(roots);
   return roots;
 };
 
 const insertIntoTree = (tree: Comment[], node: Comment): Comment[] => {
-  // если уже есть — ничего не делаем
+  // Check if comment already exists
   const exists = (list: Comment[]): boolean =>
     list.some((c) => c.id === node.id || exists(c.replies || []));
   if (exists(tree)) return tree;
 
+  const newNode = { ...node, replies: node.replies ?? [] };
+
   if (!node.parent_id) {
-    return [{ ...node, replies: node.replies ?? [] }, ...tree];
+    // Insert root comment at the beginning (newest first for root comments)
+    return [newNode, ...tree];
   }
+
+  // Insert reply into parent's replies, maintaining chronological order
   const rec = (list: Comment[]): Comment[] =>
     list.map((c) => {
       if (c.id === node.parent_id) {
+        const updatedReplies = [...(c.replies || []), newNode].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
         return {
           ...c,
-          replies: [
-            { ...node, replies: node.replies ?? [] },
-            ...(c.replies || []),
-          ],
+          replies: updatedReplies,
         };
       }
       return { ...c, replies: rec(c.replies || []) };
@@ -106,12 +133,15 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     null
   );
   const [loading, setLoading] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(3);
+  const [visibleCount, setVisibleCount] = useState(5);
   const [visibleReplies, setVisibleReplies] = useState<Record<number, number>>(
     {}
   );
+  const INITIAL_REPLIES_VISIBLE = 3;
+  const REPLIES_INCREMENT = 5;
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const { user } = useAuth();
 
@@ -131,17 +161,35 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       const res = await api.get(`/comments/${targetType}/${targetId}`);
       setComments(buildTree(res.data));
     } catch (err) {
-      console.error("❌ Ошибка загрузки комментариев:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ Ошибка загрузки комментариев:", err);
+      }
+      // In production, silently handle errors or show user-friendly message
     }
   }, [targetId, targetType]);
 
   useEffect(() => {
-    setVisibleCount(3);
+    setVisibleCount(5);
     setVisibleReplies({});
     setReplyTo(null);
     setContent("");
     loadComments();
   }, [loadComments, targetId, targetType]);
+
+  // Auto-focus textarea when replyTo changes
+  useEffect(() => {
+    if (replyTo && textareaRef.current) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [replyTo]);
 
   /** === Send comment (instant insert, без полного refetch) === */
   const handleSend = async () => {
@@ -167,9 +215,15 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
       setContent("");
       setReplyTo(null);
-    } catch (err) {
-      console.error("❌ Ошибка при отправке комментария:", err);
-      alert("Чтобы оставить комментарий, нужно войти в систему.");
+    } catch (err: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ Ошибка при отправке комментария:", err);
+      }
+      const errorMessage =
+        err?.response?.status === 401
+          ? "Чтобы оставить комментарий, нужно войти в систему."
+          : err?.response?.data?.message || "Не удалось отправить комментарий. Попробуйте позже.";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -193,13 +247,13 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       }))
     );
 
-    // лог — проверяем реальные данные
-    console.log("LIKE SEND:", id, newReaction, typeof newReaction);
-
     try {
       await api.post(`/comments/${id}/react`, { value: newReaction });
     } catch (err) {
-      console.error("Ошибка при реакции:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Ошибка при реакции:", err);
+      }
+      // Revert optimistic update on error
       await loadComments();
     }
   };
@@ -212,7 +266,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       // удалить локально (SSE удаление тоже придёт, но тут можно убрать сразу)
       setComments((prev) => removeFromTree(prev, id));
     } catch (err) {
-      console.error("Ошибка удаления:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Ошибка удаления:", err);
+      }
+      alert("Не удалось удалить комментарий. Попробуйте позже.");
     }
   };
 
@@ -238,8 +295,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       eventSourceRef.current = es;
 
       es.onopen = () => {
-        // eslint-disable-next-line no-console
-        console.info(`✅ SSE подключено: ${url}`);
+        // SSE connection established
       };
 
       es.onmessage = (ev) => {
@@ -270,12 +326,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             setComments((prev) => removeFromTree(prev, payload.id));
           }
         } catch (e) {
-          console.warn("⚠️ Ошибка парсинга SSE:", e);
+          // Silently handle SSE parsing errors in production
+          if (process.env.NODE_ENV === "development") {
+            console.warn("⚠️ Ошибка парсинга SSE:", e);
+          }
         }
       };
 
       es.onerror = () => {
-        console.warn("⚠️ SSE разорвано, переподключение через 2s ...");
+        if (process.env.NODE_ENV === "development") {
+          console.warn("⚠️ SSE разорвано, переподключение через 2s ...");
+        }
         es.close();
         reconnectTimerRef.current = setTimeout(connect, 2000);
       };
@@ -293,8 +354,6 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
       }
-      // eslint-disable-next-line no-console
-      console.info(`🛑 SSE отключено для ${targetType} #${targetId}`);
     };
   }, [baseUrl, targetId, targetType]);
 
@@ -311,16 +370,22 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   };
 
   const toggleReplies = (id: number, totalReplies: number) => {
-    setVisibleReplies((prev) => ({
-      ...prev,
-      [id]: prev[id] === totalReplies ? 2 : totalReplies,
-    }));
+    setVisibleReplies((prev) => {
+      const current = prev[id] || INITIAL_REPLIES_VISIBLE;
+      // If showing all, collapse to initial
+      if (current >= totalReplies) {
+        return { ...prev, [id]: INITIAL_REPLIES_VISIBLE };
+      }
+      // Otherwise, show more (increment by REPLIES_INCREMENT, but not more than total)
+      const next = Math.min(current + REPLIES_INCREMENT, totalReplies);
+      return { ...prev, [id]: next };
+    });
   };
 
   /** === Render === */
   const renderComment = (c: Comment, level = 0): JSX.Element => {
     const replies = c.replies || [];
-    const visible = visibleReplies[c.id] || 1;
+    const visible = visibleReplies[c.id] || INITIAL_REPLIES_VISIBLE;
     const hasHiddenReplies = replies.length > visible;
 
     return (
@@ -328,7 +393,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         key={`comment-${c.id}-${level}`}
         className={`${styles.commentCard} ${
           replyTo?.id === c.id ? styles.activeReply : ""
-        }`}
+        } ${level > 0 ? styles.nestedComment : ""}`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
@@ -343,7 +408,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         <div className={styles.actions}>
           <button
             className={styles.replyButton}
-            onClick={() => setReplyTo({ id: c.id, email: c.user.email })}
+            onClick={() => {
+              setReplyTo({ id: c.id, email: c.user.email });
+            }}
           >
             <MessageSquare size={16} />
             Ответить
@@ -388,8 +455,9 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {replies.slice(0, visible).map((r) => (
                 <motion.div
                   key={`comment-${r.id}-${level + 1}`}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
                 >
                   {renderComment(r, level + 1)}
@@ -402,7 +470,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 className={styles.showMoreReplies}
                 onClick={() => toggleReplies(c.id, replies.length)}
               >
-                Показать ещё {replies.length - visible} ответов
+                {replies.length - visible === 1
+                  ? "Показать ещё 1 ответ"
+                  : `Показать ещё ${replies.length - visible} ответов`}
+              </button>
+            )}
+            {!hasHiddenReplies && visible > INITIAL_REPLIES_VISIBLE && (
+              <button
+                className={styles.showMoreReplies}
+                onClick={() => toggleReplies(c.id, replies.length)}
+              >
+                Скрыть ответы
               </button>
             )}
           </div>
@@ -424,7 +502,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 className={styles.showMore}
                 onClick={() => setVisibleCount(comments.length)}
               >
-                Показать ещё {comments.length - visibleCount} комментариев
+                {comments.length - visibleCount === 1
+                  ? "Показать ещё 1 комментарий"
+                  : `Показать ещё ${comments.length - visibleCount} комментариев`}
+              </button>
+            )}
+            {visibleCount >= comments.length && comments.length > 5 && (
+              <button
+                className={styles.showMore}
+                onClick={() => setVisibleCount(5)}
+              >
+                Скрыть комментарии
               </button>
             )}
           </>
@@ -440,7 +528,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             <span className={styles.replyUser}>{replyTo.email}</span>{" "}
             <button
               className={styles.cancelReply}
-              onClick={() => setReplyTo(null)}
+              onClick={() => {
+                setReplyTo(null);
+                setContent("");
+                textareaRef.current?.focus();
+              }}
             >
               отменить
             </button>
@@ -448,11 +540,30 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         )}
 
         <textarea
+          ref={textareaRef}
           className={styles.textarea}
           rows={3}
-          placeholder="Оставьте комментарий..."
+          placeholder={
+            replyTo
+              ? `Ответить пользователю ${replyTo.email}...`
+              : "Оставьте комментарий..."
+          }
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            // Allow submitting with Ctrl+Enter or Cmd+Enter
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+              e.preventDefault();
+              if (!loading && content.trim()) {
+                handleSend();
+              }
+            }
+            // Cancel reply with Escape
+            if (e.key === "Escape" && replyTo) {
+              setReplyTo(null);
+              setContent("");
+            }
+          }}
         />
 
         <button

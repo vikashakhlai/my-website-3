@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  MessageEvent,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, MessageEvent } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 
@@ -12,7 +7,6 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { User } from 'src/user/user.entity';
 import { CommentReaction } from './comment-reaction.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
-import { Role } from 'src/auth/roles.enum';
 
 import { Subject, Observable, map } from 'rxjs';
 
@@ -180,7 +174,7 @@ export class CommentsService {
     return updated;
   }
 
-  // --- Удаление комментария ---
+  // --- Удаление комментария (только ADMIN/SUPER_ADMIN) ---
   async delete(id: number, user: User): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id },
@@ -188,14 +182,12 @@ export class CommentsService {
     });
     if (!comment) throw new NotFoundException('Комментарий не найден');
 
-    const isAdmin = [Role.ADMIN, Role.SUPER_ADMIN].includes(user.role);
-
-    if (comment.user.id !== user.id && !isAdmin) {
-      throw new ForbiddenException('Вы не можете удалить этот комментарий');
-    }
+    // Проверка прав доступа выполняется в контроллере через @Auth декоратор
+    // Здесь мы просто удаляем комментарий, так как доступ уже проверен
 
     await this.commentRepository.remove(comment);
 
+    // Отправляем событие об удалении через SSE
     this.getStream(comment.target_type, comment.target_id).next({
       type: 'deleted',
       id,

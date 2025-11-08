@@ -178,12 +178,15 @@ export class ArticlesService {
 
     const average =
       ratings.length > 0
-        ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length
+        ? Number((ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length).toFixed(2))
         : null;
 
-    const userRating = userId
-      ? (ratings.find((r) => r.user_id === userId)?.value ?? null)
-      : null;
+    // Исправляем поиск userRating - проверяем точно по user_id
+    let userRating: number | null = null;
+    if (userId && ratings.length > 0) {
+      const userRatingObj = ratings.find((r) => r.user_id === userId);
+      userRating = userRatingObj?.value ?? null;
+    }
 
     return {
       ...article,

@@ -17,6 +17,7 @@ import { RatingsService } from 'src/ratings/ratings.service';
 import { Era } from './personality.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
 
 @Controller('personalities')
 export class PersonalitiesController {
@@ -97,9 +98,10 @@ export class PersonalitiesController {
   }
 
   /** 🔍 Одна личность (публично, но учитывает авторизацию для рейтинга/избранного) */
-  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.personalitiesService.findOne(id, req.user?.sub ?? null);
+    const userId = req.user?.sub ?? null;
+    return this.personalitiesService.findOne(id, userId);
   }
 }

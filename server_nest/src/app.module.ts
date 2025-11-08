@@ -6,6 +6,9 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
 import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
+import appConfig from './config/app.config';
+import { envValidationSchema } from './config/env.validation';
 import { AllConfigType, DatabaseConfig } from './config/configuration.types';
 
 // modules
@@ -35,11 +38,16 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
 
 @Module({
   imports: [
-    // ✅ .env config
+    // ✅ .env config с валидацией
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, jwtConfig, appConfig],
       envFilePath: ['.env'],
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: false, // Запрещаем неизвестные переменные
+        abortEarly: true, // Останавливаемся на первой ошибке для более понятных сообщений
+      },
     }),
 
     // ✅ TypeORM
@@ -47,6 +55,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
         const db = configService.getOrThrow<DatabaseConfig>('database');
+        const app = configService.getOrThrow('app');
         return {
           type: 'postgres',
           host: db.host,
@@ -55,10 +64,10 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
           password: db.password,
           database: db.database,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: false,
-          logging: process.env.NODE_ENV === 'development',
+          synchronize: false, // Никогда не используем synchronize в production!
+          logging: app.nodeEnv === 'development',
           ssl:
-            process.env.NODE_ENV === 'production'
+            app.nodeEnv === 'production'
               ? { rejectUnauthorized: false }
               : false,
         };

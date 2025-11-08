@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import * as express from 'express';
 import cookieParser from 'cookie-parser';
@@ -12,18 +13,23 @@ import { join } from 'path';
 import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
 import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter';
+import { AllConfigType, AppConfig } from './config/configuration.types';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
 
+  // Получаем ConfigService из контекста приложения
+  const configService = app.get(ConfigService<AllConfigType>);
+  const appConfig = configService.getOrThrow<AppConfig>('app');
+
   // если есть nginx/ingress — важен для реального IP
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(cookieParser());
 
-  const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+  const FRONTEND_URL = appConfig.frontendUrl;
   const corsOptions = {
     origin: [FRONTEND_URL],
     credentials: true,
@@ -50,11 +56,11 @@ async function bootstrap() {
       frameguard: { action: 'deny' },
       hidePoweredBy: true,
       hsts:
-        process.env.NODE_ENV === 'production'
+        appConfig.nodeEnv === 'production'
           ? { maxAge: 60 * 60 * 24 * 180 } // 180 days
           : false,
       contentSecurityPolicy:
-        process.env.NODE_ENV === 'production'
+        appConfig.nodeEnv === 'production'
           ? {
               directives: {
                 defaultSrc: ["'self'"],
@@ -62,10 +68,15 @@ async function bootstrap() {
                 mediaSrc: ["'self'", 'blob:', FRONTEND_URL],
                 scriptSrc: ["'self'", FRONTEND_URL],
                 styleSrc: ["'self'", "'unsafe-inline'", FRONTEND_URL],
-                connectSrc: ["'self'", FRONTEND_URL],
+                // Разрешаем SSE соединения
+                connectSrc: ["'self'", FRONTEND_URL, 'blob:', 'data:'],
               },
             }
           : false,
+      // Отключаем XSS фильтр для SSE (может мешать)
+      xssFilter: true,
+      // Разрешаем iframe для встраивания (если нужно)
+      frameguard: { action: 'deny' },
     }),
   );
 
@@ -74,7 +85,7 @@ async function bootstrap() {
   app.use('/uploads/:dialect/videos/:filename', videoStreamMiddleware);
   app.use('/uploads', express.static(uploadsPath));
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix(appConfig.apiPrefix);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -89,7 +100,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (appConfig.nodeEnv !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Backend API')
       .setDescription('Protected API with global JWT')
@@ -111,8 +122,9 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  const port = Number(process.env.PORT ?? 3001);
-  await app.listen(port, '0.0.0.0');
-  console.log(`🚀 http://localhost:${port}/api/v1`);
+  await app.listen(appConfig.port, '0.0.0.0');
+  console.log(`🚀 Server running on http://localhost:${appConfig.port}/${appConfig.apiPrefix}`);
+  console.log(`📝 Environment: ${appConfig.nodeEnv}`);
+  console.log(`🌐 Frontend URL: ${appConfig.frontendUrl}`);
 }
 bootstrap();
