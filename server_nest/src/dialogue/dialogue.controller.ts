@@ -20,9 +20,12 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiParam,
+  ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { DialogueService } from './dialogue.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { DialogueGroupResponseDto } from './dto/dialogue-group-response.dto';
 import { CreateDialogueGroupDto, UpdateDialogueGroupDto } from './dto/create-dialogue-group.dto';
@@ -42,6 +45,8 @@ export class DialogueController {
       'Возвращает список всех групп диалогов с связанными медиа-файлами и репликами. ' +
       'Требуется авторизация.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Список групп диалогов успешно получен',
     type: [DialogueGroupResponseDto],
@@ -105,6 +110,7 @@ export class DialogueController {
   @ApiUnauthorizedResponse({
     description: 'Требуется авторизация',
   })
+  @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const group = await this.dialogueService.findGroupById(id);

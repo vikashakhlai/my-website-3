@@ -128,6 +128,7 @@ export class PublishersController {
   })
   @ApiErrorResponses({ include404: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Post()
@@ -153,6 +154,7 @@ export class PublishersController {
   })
   @ApiErrorResponses()
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Put(':id')
@@ -189,6 +191,7 @@ export class PublishersController {
   })
   @ApiErrorResponses({ include400: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {

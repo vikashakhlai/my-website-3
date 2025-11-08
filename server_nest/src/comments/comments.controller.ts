@@ -29,6 +29,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
+  ApiSecurity,
   ApiResponse,
   ApiOkResponse,
   ApiCreatedResponse,
@@ -99,6 +100,7 @@ export class CommentsController {
       'Для удобства также доступны ресурс-специфичные эндпоинты, которые являются обертками над этим универсальным методом.',
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiCreatedResponse({
     description: 'Комментарий успешно создан',
     type: CommentResponseDto,
@@ -218,6 +220,7 @@ export class CommentsController {
       'Ограничение: максимум 10 реакций в минуту на пользователя.',
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Реакция успешно обновлена',
     type: CommentResponseDto,

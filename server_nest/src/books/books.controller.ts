@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiSecurity,
   ApiOperation,
   ApiTags,
   ApiOkResponse,
@@ -215,6 +216,7 @@ export class BooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/comments')
   async addComment(
@@ -240,6 +242,7 @@ export class BooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/ratings')
   async rateBook(

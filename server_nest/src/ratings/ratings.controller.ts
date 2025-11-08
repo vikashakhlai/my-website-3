@@ -35,6 +35,7 @@ import {
   ApiTags,
   ApiParam,
   ApiBearerAuth,
+  ApiSecurity,
   ApiOkResponse,
   ApiCreatedResponse,
   ApiBadRequestResponse,
@@ -59,6 +60,7 @@ export class RatingsController {
       'Ограничение: 5 запросов в минуту на пользователя.',
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiCreatedResponse({
     description: 'Рейтинг успешно создан или обновлён',
     type: RatingResponseDto,
@@ -222,6 +224,7 @@ export class RatingsController {
       'SUPER_ADMIN может удалить любой рейтинг.',
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Рейтинг успешно удалён',
   })

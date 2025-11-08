@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { UserService } from './user.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserAdminListDto } from './dto/user-admin-list.dto';
@@ -42,6 +42,8 @@ export class UserController {
 
   /** 👑 Получить всех пользователей (ADMIN+) */
   @ApiOperation({ summary: 'Получить список всех пользователей (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiResponse({ status: 200, type: [UserAdminListDto] })
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Get()
@@ -51,6 +53,8 @@ export class UserController {
 
   /** 🔍 Получить одного пользователя (SELF или ADMIN+) */
   @ApiOperation({ summary: 'Получить пользователя по ID (SELF или ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     description: 'Уникальный идентификатор пользователя (UUID)',
@@ -78,6 +82,8 @@ export class UserController {
 
   /** ⬆️ Повысить до ADMIN (только SUPER_ADMIN) */
   @ApiOperation({ summary: 'Повысить пользователя до ADMIN (SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     description: 'Уникальный идентификатор пользователя (UUID)',
@@ -93,6 +99,8 @@ export class UserController {
 
   /** ⬇️ Снять права ADMIN (только SUPER_ADMIN) */
   @ApiOperation({ summary: 'Снять права ADMIN у пользователя (SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     description: 'Уникальный идентификатор пользователя (UUID)',
@@ -108,6 +116,8 @@ export class UserController {
 
   /** ✍️ Сделать автора (ADMIN+) */
   @ApiOperation({ summary: 'Назначить пользователя автором (ADMIN+)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     description: 'Уникальный идентификатор пользователя (UUID)',
@@ -123,6 +133,8 @@ export class UserController {
 
   /** ❌ Удалить пользователя (SUPER_ADMIN) */
   @ApiOperation({ summary: 'Удалить пользователя (SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     description: 'Уникальный идентификатор пользователя (UUID)',

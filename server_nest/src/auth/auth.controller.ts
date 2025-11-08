@@ -18,6 +18,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
+  ApiSecurity,
   ApiResponse,
 } from '@nestjs/swagger';
 import { RegisterDto } from './dto/register.dto';
@@ -77,6 +78,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOperation({ summary: 'Профиль пользователя по access-токену' })
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -85,6 +87,8 @@ export class AuthController {
     return this.authService.toResponseDto(req.user);
   }
 
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOperation({ summary: 'Обновить access токен по refresh cookie' })
   @UseGuards(AuthGuard('jwt-refresh'))
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -102,6 +106,8 @@ export class AuthController {
     return result;
   }
 
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOperation({ summary: 'Выход (очистка refresh cookie и отзыв сессий)' })
   @UseGuards(JwtAuthGuard)
   @Post('logout')

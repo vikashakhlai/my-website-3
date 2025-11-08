@@ -17,6 +17,7 @@ import {
   ApiUnauthorizedResponse,
   ApiParam,
   ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { SubtitlesService } from './subtitles.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -27,6 +28,7 @@ import { ApiErrorResponses } from 'src/common/decorators/api-error-responses.dec
 
 @ApiTags('Subtitles')
 @ApiBearerAuth('access-token')
+@ApiSecurity('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('subtitles')
 export class SubtitlesController {

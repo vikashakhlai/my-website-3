@@ -19,6 +19,8 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiParam,
+  ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { DialectTopicsService } from './dialect_topics.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -38,6 +40,8 @@ export class DialectTopicsController {
     summary: 'Получить список всех тем диалектов',
     description: 'Возвращает список всех тем диалектов. Требуется авторизация.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Список тем диалектов успешно получен',
     type: [DialectTopicResponseDto],
@@ -78,6 +82,8 @@ export class DialectTopicsController {
     summary: 'Получить тему диалекта по ID',
     description: 'Возвращает полную информацию о теме диалекта, включая связанные медиа-файлы. Требуется авторизация.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     type: Number,

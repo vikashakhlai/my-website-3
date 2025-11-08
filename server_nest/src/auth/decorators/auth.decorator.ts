@@ -1,6 +1,7 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiSecurity,
   ApiForbiddenResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -13,6 +14,7 @@ export function Auth(...roles: Role[]) {
     Roles(...roles),
     UseGuards(RolesGuard),
     ApiBearerAuth('access-token'),
+    ApiSecurity('access-token'),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
     ApiForbiddenResponse({ description: 'Forbidden' }),
   );

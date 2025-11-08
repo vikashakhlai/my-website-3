@@ -15,7 +15,10 @@ interface Dialogue {
   id: number;
   title: string;
   description?: string;
-  medias: Media[]; // ✅ теперь совместимо
+  medias: Array<Media & {
+    scripts?: Script[]; // ✅ scripts из API
+    dialect?: { id: number; name: string } | null; // ✅ dialect из API
+  }>;
 }
 
 const DialogueCompare: React.FC<{
@@ -26,17 +29,21 @@ const DialogueCompare: React.FC<{
 
   if (!dialogue.medias || dialogue.medias.length < 2) return null;
 
-  const fusha = dialogue.medias.find((m) => m.dialectId === null);
+  // ✅ API возвращает dialect: { id, name } | null, а не dialectId
+  const fusha = dialogue.medias.find((m) => m.dialect === null || m.dialect === undefined);
 
   // ✅ выбираем ТОЛЬКО тот диалект, который соответствует открытой карточке
   const dialect = dialogue.medias.find((m) => m.id === selectedMediaId);
 
   if (!fusha || !dialect) return null;
 
-  const fushaLines = [...(fusha as any).scripts].sort(
+  // ✅ Проверяем наличие scripts перед использованием
+  if (!fusha.scripts || !dialect.scripts) return null;
+
+  const fushaLines = [...fusha.scripts].sort(
     (a: Script, b: Script) => a.orderIndex - b.orderIndex
   );
-  const dialectLines = [...(dialect as any).scripts].sort(
+  const dialectLines = [...dialect.scripts].sort(
     (a: Script, b: Script) => a.orderIndex - b.orderIndex
   );
 

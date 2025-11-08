@@ -28,6 +28,7 @@ import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiSecurity,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -272,6 +273,7 @@ export class PersonalitiesController {
   })
   @ApiErrorResponses({ include404: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Post()
@@ -298,6 +300,7 @@ export class PersonalitiesController {
   })
   @ApiErrorResponses()
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Put(':id')
@@ -335,6 +338,7 @@ export class PersonalitiesController {
   })
   @ApiErrorResponses({ include400: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {

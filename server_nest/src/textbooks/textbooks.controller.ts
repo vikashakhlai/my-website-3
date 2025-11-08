@@ -28,6 +28,7 @@ import { CreateTextbookDto } from './dto/create-textbook.dto';
 import { UpdateTextbookDto } from './dto/update-textbook.dto';
 import {
   ApiBearerAuth,
+  ApiSecurity,
   ApiOperation,
   ApiTags,
   ApiParam,
@@ -123,6 +124,7 @@ export class TextbooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id/download')
   async download(@Param('id', ParseIntPipe) id: number, @Request() req) {
@@ -140,6 +142,7 @@ export class TextbooksController {
   /** 🛠 Создать (SUPER_ADMIN) */
   @ApiOperation({ summary: 'Создать новый учебник (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @Post()
@@ -156,6 +159,7 @@ export class TextbooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @Put(':id')
@@ -175,6 +179,7 @@ export class TextbooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @Delete(':id')
@@ -215,6 +220,7 @@ export class TextbooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
   async addToFavorites(
@@ -236,6 +242,7 @@ export class TextbooksController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')
   async removeFromFavorites(

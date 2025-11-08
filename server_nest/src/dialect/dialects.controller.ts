@@ -22,6 +22,8 @@ import {
   ApiForbiddenResponse,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { DialectsService } from './dialects.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -45,6 +47,8 @@ export class DialectsController {
       'Возвращает список диалектов с возможностью фильтрации по названию и региону. ' +
       'Требуется авторизация. Поддерживает пагинацию.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Список диалектов успешно получен',
     schema: {
@@ -98,6 +102,8 @@ export class DialectsController {
     summary: 'Получить диалект по ID',
     description: 'Возвращает полную информацию о диалекте, включая связанные медиа-файлы. Требуется авторизация.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'id',
     type: Number,
@@ -125,6 +131,8 @@ export class DialectsController {
     summary: 'Получить список всех уникальных регионов',
     description: 'Возвращает отсортированный список всех регионов, где распространены диалекты. Требуется авторизация.',
   })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiOkResponse({
     description: 'Список регионов успешно получен',
     schema: {

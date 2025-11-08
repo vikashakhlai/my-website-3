@@ -96,11 +96,18 @@ export default function DialectExercisePage() {
         setMedia(mediaData);
 
         if (mediaData.dialogueGroupId) {
-          const { data: dialogueData } = await api.get<Dialogue>(
-            `/dialogues/${mediaData.dialogueGroupId}`,
-            { signal }
-          );
-          setDialogue(dialogueData);
+          try {
+            const { data: dialogueData } = await api.get<Dialogue>(
+              `/dialogues/${mediaData.dialogueGroupId}`,
+              { signal }
+            );
+            console.log('✅ Dialogue loaded:', dialogueData);
+            setDialogue(dialogueData);
+          } catch (dialogueError: any) {
+            console.error('⚠️ Ошибка загрузки диалога:', dialogueError);
+            // Не блокируем загрузку страницы, если диалог не загрузился
+            setDialogue(null);
+          }
         }
 
         // ✅ lowercase "media"

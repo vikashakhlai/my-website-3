@@ -33,6 +33,7 @@ import { Role } from 'src/auth/roles.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 import {
   ApiBearerAuth,
+  ApiSecurity,
   ApiTags,
   ApiOperation,
   ApiOkResponse,
@@ -131,6 +132,8 @@ export class MediaController {
     example: 10,
   })
   @ApiOkResponse({ type: MediaWithRatingResponseDto })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(
@@ -151,6 +154,7 @@ export class MediaController {
   @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
   @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post('upload')
@@ -204,6 +208,7 @@ export class MediaController {
   })
   @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
@@ -224,6 +229,7 @@ export class MediaController {
     example: 10,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
@@ -296,6 +302,7 @@ export class MediaController {
     example: 10,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
   async addToFavorites(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
@@ -314,6 +321,7 @@ export class MediaController {
     example: 10,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')
   async removeFromFavorites(

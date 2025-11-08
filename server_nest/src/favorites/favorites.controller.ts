@@ -20,6 +20,8 @@ import {
   ApiBody,
   ApiResponse,
   ApiParam,
+  ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 
 @ApiTags('Favorites')
@@ -34,6 +36,8 @@ export class FavoritesController {
   }
 
   @ApiOperation({ summary: 'Добавить элемент в избранное' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiBody({
     type: CreateFavoriteDto,
     examples: {
@@ -47,6 +51,8 @@ export class FavoritesController {
   }
 
   @ApiOperation({ summary: 'Удалить элемент из избранного' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiBody({
     type: RemoveFavoriteDto,
     examples: {
@@ -62,6 +68,8 @@ export class FavoritesController {
   }
 
   @ApiOperation({ summary: 'Получить избранное одного типа' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiParam({
     name: 'targetType',
     enum: TargetType,
@@ -90,6 +98,8 @@ export class FavoritesController {
   }
 
   @ApiOperation({ summary: 'Получить всё избранное пользователя' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @ApiResponse({
     status: 200,
     example: [

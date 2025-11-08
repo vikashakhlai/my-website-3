@@ -14,7 +14,7 @@ import {
   Sse,
   MessageEvent,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiSecurity, ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
 import { interval, Observable, switchMap } from 'rxjs';
 
 import { ArticlesService } from './articles.service';
@@ -95,6 +95,7 @@ export class ArticlesController {
 
   @ApiOperation({ summary: 'Создать статью (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
@@ -110,6 +111,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
@@ -128,6 +130,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
@@ -145,6 +148,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id/exercises')
   async getExercises(@Param('id', ParseIntPipe) id: number) {
@@ -159,6 +163,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Post(':id/exercises')
@@ -180,6 +185,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/ratings')
   async rate(
@@ -248,6 +254,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/comments')
   async addComment(
@@ -297,6 +304,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
   async addToFavorites(@Param('id', ParseIntPipe) id: number, @Request() req) {
@@ -316,6 +324,7 @@ export class ArticlesController {
     example: 1,
   })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')
   async removeFromFavorites(

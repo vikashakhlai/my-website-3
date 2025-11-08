@@ -155,6 +155,7 @@ export class QuotesController {
   })
   @ApiErrorResponses({ include404: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Post()
@@ -180,6 +181,7 @@ export class QuotesController {
   })
   @ApiErrorResponses()
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @Put(':id')
@@ -216,6 +218,7 @@ export class QuotesController {
   })
   @ApiErrorResponses({ include400: false })
   @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
