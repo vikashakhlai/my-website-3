@@ -26,7 +26,13 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CreateTextbookDto } from './dto/create-textbook.dto';
 import { UpdateTextbookDto } from './dto/update-textbook.dto';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { Role } from 'src/auth/roles.enum';
 import { TargetType } from 'src/common/enums/target-type.enum';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
@@ -43,6 +49,41 @@ export class TextbooksController {
   /** 📚 Список учебников (публично) */
   @Public()
   @ApiOperation({ summary: 'Список учебников (публично)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Номер страницы',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Количество элементов на странице',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Порядок сортировки',
+    example: 'asc',
+  })
+  @ApiQuery({
+    name: 'level',
+    required: false,
+    type: String,
+    description: 'Уровень сложности учебника',
+    example: 'beginner',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Поисковый запрос',
+    example: 'арабский язык',
+  })
   @Get()
   async getAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -56,7 +97,17 @@ export class TextbooksController {
 
   /** 📖 Просмотр одного учебника (публично) */
   @UseGuards(OptionalJwtAuthGuard)
-  @ApiOperation({ summary: 'Получить учебник (публично, с canDownload)' })
+  @ApiOperation({
+    summary: 'Получить учебник (публично)',
+    description:
+      'Возвращает полную информацию об учебнике, включая описание, рейтинги и ссылки на файлы. Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `canDownload`.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @Get(':id')
   async getPublic(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
     const userId = req.user?.sub ?? null;
@@ -65,6 +116,12 @@ export class TextbooksController {
 
   /** 📥 Скачать PDF — только авторизованные */
   @ApiOperation({ summary: 'Скачать учебник (только авторизованные)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id/download')
@@ -92,6 +149,12 @@ export class TextbooksController {
 
   /** 🛠 Обновить (SUPER_ADMIN) */
   @ApiOperation({ summary: 'Обновить учебник (SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -105,6 +168,12 @@ export class TextbooksController {
 
   /** 🗑 Удалить (SUPER_ADMIN) */
   @ApiOperation({ summary: 'Удалить учебник (SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -116,6 +185,12 @@ export class TextbooksController {
   /** 📡 SSE Live рейтинг (публично) */
   @Public()
   @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @Sse('stream/:id/rating')
   streamRatings(
     @Param('id', ParseIntPipe) id: number,
@@ -133,6 +208,12 @@ export class TextbooksController {
 
   /** 💛 Добавить в избранное */
   @ApiOperation({ summary: 'Добавить учебник в избранное' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
@@ -148,6 +229,12 @@ export class TextbooksController {
 
   /** 💔 Удалить из избранного */
   @ApiOperation({ summary: 'Удалить учебник из избранного' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор учебника',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')

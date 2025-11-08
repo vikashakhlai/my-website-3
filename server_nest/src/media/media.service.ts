@@ -163,29 +163,29 @@ export class MediaService {
 
     // simple fields
     if (dto.title !== undefined) media.title = dto.title;
-    if (dto.mediaUrl !== undefined) media.mediaUrl = dto.mediaUrl;
-    if (dto.previewUrl !== undefined) media.previewUrl = dto.previewUrl;
+    if (dto.mediaUrl !== undefined) media.mediaUrl = dto.mediaUrl ?? null;
+    if (dto.previewUrl !== undefined) media.previewUrl = dto.previewUrl ?? undefined;
     if (dto.subtitlesLink !== undefined)
-      media.subtitlesLink = dto.subtitlesLink;
+      media.subtitlesLink = dto.subtitlesLink ?? undefined;
 
     if (dto.type !== undefined) (media as any).type = dto.type;
 
     if (dto.licenseType !== undefined) media.licenseType = dto.licenseType;
     if (dto.licenseAuthor !== undefined)
-      media.licenseAuthor = dto.licenseAuthor;
+      media.licenseAuthor = dto.licenseAuthor ?? undefined;
 
     if (dto.level !== undefined) (media as any).level = dto.level;
 
     if (dto.dialogueGroupId !== undefined)
       media.dialogueGroupId = dto.dialogueGroupId ?? null;
 
-    if (dto.duration !== undefined) media.duration = dto.duration ?? null;
-    if (dto.speaker !== undefined) media.speaker = dto.speaker ?? null;
-    if (dto.sourceRole !== undefined) media.sourceRole = dto.sourceRole ?? null;
+    if (dto.duration !== undefined) media.duration = dto.duration ?? undefined;
+    if (dto.speaker !== undefined) media.speaker = dto.speaker ?? undefined;
+    if (dto.sourceRole !== undefined) media.sourceRole = dto.sourceRole ?? undefined;
 
     if (dto.grammarLink !== undefined)
-      media.grammarLink = dto.grammarLink ?? null;
-    if (dto.resources !== undefined) media.resources = dto.resources ?? null;
+      media.grammarLink = dto.grammarLink ?? undefined;
+    if (dto.resources !== undefined) media.resources = dto.resources ?? undefined;
 
     if (dto.dialectId !== undefined) {
       media.dialectId = dto.dialectId || null;

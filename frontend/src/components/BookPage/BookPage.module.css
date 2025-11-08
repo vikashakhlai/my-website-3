@@ -29,14 +29,6 @@
 
 /* BackZone is now fixed, no need for floatingBack styles */
 
-/* --- Заголовок и избранное --- */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: var(--space-6);
-}
 
 .titleBlock {
   flex: 1;

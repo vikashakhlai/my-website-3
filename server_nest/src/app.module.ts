@@ -24,6 +24,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { PersonalitiesModule } from './personalities/personalities.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { PublishersModule } from './publishers/publishers.module';
 import { SubtitlesModule } from './subtitles/subtitles.module';
 import { MediaModule } from './media/media.module';
 import { DialectsModule } from './dialect/dialects.module';
@@ -45,7 +46,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
       envFilePath: ['.env'],
       validationSchema: envValidationSchema,
       validationOptions: {
-        allowUnknown: false, // Запрещаем неизвестные переменные
+        allowUnknown: true, // Разрешаем системные переменные окружения (Windows, Linux, etc.)
         abortEarly: true, // Останавливаемся на первой ошибке для более понятных сообщений
       },
     }),
@@ -96,6 +97,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
     PersonalitiesModule,
     MediaModule,
     QuotesModule,
+    PublishersModule,
     SubtitlesModule,
     DialectsModule,
     DialectTopicsModule,

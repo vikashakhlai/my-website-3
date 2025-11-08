@@ -14,7 +14,7 @@ import {
   Sse,
   MessageEvent,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
 import { interval, Observable, switchMap } from 'rxjs';
 
 import { ArticlesService } from './articles.service';
@@ -75,7 +75,15 @@ export class ArticlesController {
   /** 🔍 Получить статью (публично). JWT добавляет userId */
   @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
-    summary: 'Получить статью (публично). Если есть JWT — вернётся userId и userRating',
+    summary: 'Получить статью (публично)',
+    description:
+      'Возвращает полную информацию о статье, включая содержание, упражнения, рейтинги и комментарии. Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating`.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
   })
   @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
@@ -95,6 +103,12 @@ export class ArticlesController {
   }
 
   @ApiOperation({ summary: 'Обновить статью (ADMIN, SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -107,6 +121,12 @@ export class ArticlesController {
   }
 
   @ApiOperation({ summary: 'Удалить статью (ADMIN, SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -118,6 +138,12 @@ export class ArticlesController {
   // ====================== Exercises ======================
 
   @ApiOperation({ summary: 'Список упражнений (только авторизованные)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id/exercises')
@@ -126,6 +152,12 @@ export class ArticlesController {
   }
 
   @ApiOperation({ summary: 'Добавить упражнение (ADMIN, SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -141,6 +173,12 @@ export class ArticlesController {
   // ====================== Rating ======================
 
   @ApiOperation({ summary: 'Оценить статью (1–5, только авторизованные)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/ratings')
@@ -154,6 +192,12 @@ export class ArticlesController {
 
   @Public()
   @ApiOperation({ summary: 'Live-поток рейтинга (публично, SSE)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @Sse('stream/:id/rating')
   streamRating(
     @Param('id', ParseIntPipe) id: number,
@@ -172,13 +216,37 @@ export class ArticlesController {
   // ====================== Comments ======================
 
   @Public()
-  @ApiOperation({ summary: 'Список комментариев (публично)' })
+  @ApiOperation({
+    summary: 'Список комментариев статьи (публично)',
+    description:
+      'Возвращает список комментариев для указанной статьи. Публичный эндпоинт, не требует аутентификации. ' +
+      'Этот ресурс-специфичный эндпоинт является удобной оберткой над универсальным эндпоинтом GET /comments?target_type=article&target_id={id}. ' +
+      'Оба эндпоинта функционально эквивалентны. Если пользователь авторизован (передан JWT токен), дополнительно возвращается информация о его реакциях (my_reaction).',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @Get(':id/comments')
   async getComments(@Param('id', ParseIntPipe) id: number) {
     return this.commentsService.findByTarget(TargetType.ARTICLE, id);
   }
 
-  @ApiOperation({ summary: 'Добавить комментарий (только авторизованные)' })
+  @ApiOperation({
+    summary: 'Добавить комментарий к статье (только авторизованные)',
+    description:
+      'Создает новый комментарий к указанной статье. Доступно только для авторизованных пользователей. ' +
+      'Этот ресурс-специфичный эндпоинт является удобной оберткой над универсальным эндпоинтом POST /comments ' +
+      'с автоматически установленными target_type=article и target_id={id}. Оба эндпоинта функционально эквивалентны.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/comments')
@@ -200,6 +268,12 @@ export class ArticlesController {
 
   @Public()
   @ApiOperation({ summary: 'Live-комментарии (публично, SSE)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
@@ -216,6 +290,12 @@ export class ArticlesController {
   @ApiOperation({
     summary: 'Добавить статью в избранное (только авторизованные)',
   })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
@@ -228,6 +308,12 @@ export class ArticlesController {
 
   @ApiOperation({
     summary: 'Удалить статью из избранного (только авторизованные)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор статьи',
+    type: Number,
+    example: 1,
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)

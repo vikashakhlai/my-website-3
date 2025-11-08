@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { UserService } from './user.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserAdminListDto } from './dto/user-admin-list.dto';
@@ -51,6 +51,13 @@ export class UserController {
 
   /** 🔍 Получить одного пользователя (SELF или ADMIN+) */
   @ApiOperation({ summary: 'Получить пользователя по ID (SELF или ADMIN+)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор пользователя (UUID)',
+    type: String,
+    format: 'uuid',
+    example: 'f9c9c6b4-8d0e-4b3b-a6b3-13a8f32d78b3',
+  })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Get(':id')
   async getUserById(
@@ -70,6 +77,14 @@ export class UserController {
   }
 
   /** ⬆️ Повысить до ADMIN (только SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Повысить пользователя до ADMIN (SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор пользователя (UUID)',
+    type: String,
+    format: 'uuid',
+    example: 'f9c9c6b4-8d0e-4b3b-a6b3-13a8f32d78b3',
+  })
   @Roles(Role.SUPER_ADMIN)
   @Patch(':id/promote-to-admin')
   async promoteToAdmin(@Param('id', ParseUUIDPipe) userId: string) {
@@ -77,6 +92,14 @@ export class UserController {
   }
 
   /** ⬇️ Снять права ADMIN (только SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Снять права ADMIN у пользователя (SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор пользователя (UUID)',
+    type: String,
+    format: 'uuid',
+    example: 'f9c9c6b4-8d0e-4b3b-a6b3-13a8f32d78b3',
+  })
   @Roles(Role.SUPER_ADMIN)
   @Patch(':id/revoke-admin')
   async revokeAdmin(@Param('id', ParseUUIDPipe) userId: string) {
@@ -84,6 +107,14 @@ export class UserController {
   }
 
   /** ✍️ Сделать автора (ADMIN+) */
+  @ApiOperation({ summary: 'Назначить пользователя автором (ADMIN+)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор пользователя (UUID)',
+    type: String,
+    format: 'uuid',
+    example: 'f9c9c6b4-8d0e-4b3b-a6b3-13a8f32d78b3',
+  })
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @Patch(':id/make-author')
   async makeAuthor(@Param('id', ParseUUIDPipe) userId: string) {
@@ -91,6 +122,14 @@ export class UserController {
   }
 
   /** ❌ Удалить пользователя (SUPER_ADMIN) */
+  @ApiOperation({ summary: 'Удалить пользователя (SUPER_ADMIN)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор пользователя (UUID)',
+    type: String,
+    format: 'uuid',
+    example: 'f9c9c6b4-8d0e-4b3b-a6b3-13a8f32d78b3',
+  })
   @Roles(Role.SUPER_ADMIN)
   @Delete(':id')
   async deleteUser(@Param('id', ParseUUIDPipe) userId: string) {

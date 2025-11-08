@@ -69,25 +69,93 @@ export const envValidationSchema = Joi.object({
   // ======================
   // JWT токены
   // ======================
+  JWT_SECRET: Joi.string()
+    .optional()
+    .custom((value, helpers) => {
+      if (value) {
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        const minLength = nodeEnv === 'production' ? 32 : 16;
+        if (value.length < minLength) {
+          return helpers.error('string.min', {
+            limit: minLength,
+            context: { label: 'JWT_SECRET', nodeEnv },
+          });
+        }
+      }
+      return value;
+    })
+    .description('Устаревший: единый секретный ключ для JWT (используется как fallback, если JWT_ACCESS_SECRET и JWT_REFRESH_SECRET не заданы)'),
+
   JWT_ACCESS_SECRET: Joi.string()
-    .required()
-    .min(32)
-    .description('Секретный ключ для подписи access токенов (минимум 32 символа)'),
+    .optional()
+    .custom((value, helpers) => {
+      if (value) {
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        const minLength = nodeEnv === 'production' ? 32 : 16;
+        if (value.length < minLength) {
+          return helpers.error('string.min', {
+            limit: minLength,
+            context: { label: 'JWT_ACCESS_SECRET', nodeEnv },
+          });
+        }
+      }
+      return value;
+    })
+    .description('Секретный ключ для подписи access токенов (минимум 32 символа в production, 16 в development)'),
+
+  JWT_EXPIRES_IN: Joi.string()
+    .optional()
+    .description('Устаревший: время жизни JWT токена (используется как fallback для JWT_ACCESS_EXPIRES_IN)'),
+
+  JWT_ACCESS_TTL: Joi.string()
+    .optional()
+    .description('Устаревший: время жизни access токена (используется как fallback для JWT_ACCESS_EXPIRES_IN)'),
 
   JWT_ACCESS_EXPIRES_IN: Joi.string()
+    .optional()
     .default('15m')
     .description('Время жизни access токена (например: 15m, 1h, 7d)'),
 
   JWT_REFRESH_SECRET: Joi.string()
-    .required()
-    .min(32)
-    .description('Секретный ключ для подписи refresh токенов (минимум 32 символа)'),
+    .optional()
+    .custom((value, helpers) => {
+      if (value) {
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        const minLength = nodeEnv === 'production' ? 32 : 16;
+        if (value.length < minLength) {
+          return helpers.error('string.min', {
+            limit: minLength,
+            context: { label: 'JWT_REFRESH_SECRET', nodeEnv },
+          });
+        }
+      }
+      return value;
+    })
+    .description('Секретный ключ для подписи refresh токенов (минимум 32 символа в production, 16 в development)'),
+
+  JWT_REFRESH_TTL: Joi.string()
+    .optional()
+    .description('Устаревший: время жизни refresh токена (используется как fallback для JWT_REFRESH_EXPIRES_IN)'),
 
   JWT_REFRESH_EXPIRES_IN: Joi.string()
+    .optional()
     .default('7d')
     .description('Время жизни refresh токена (например: 15m, 1h, 7d)'),
 })
-  .unknown(false) // Запрещаем неизвестные переменные
+  .unknown(true) // Разрешаем системные переменные окружения (Windows, Linux, etc.)
+  .custom((value, helpers) => {
+    // Проверяем, что хотя бы JWT_SECRET или оба JWT_ACCESS_SECRET и JWT_REFRESH_SECRET заданы
+    const jwtSecret = value.JWT_SECRET;
+    const accessSecret = value.JWT_ACCESS_SECRET;
+    const refreshSecret = value.JWT_REFRESH_SECRET;
+
+    if (!jwtSecret && (!accessSecret || !refreshSecret)) {
+      return helpers.error('custom.jwt.secrets', {
+        message: 'Either JWT_SECRET or both JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be provided',
+      });
+    }
+    return value;
+  })
   .messages({
     'any.required': '{{#label}} is required but was not provided',
     'string.uri': '{{#label}} must be a valid URI',
@@ -95,5 +163,6 @@ export const envValidationSchema = Joi.object({
     'number.min': '{{#label}} must be at least {{#limit}}',
     'number.max': '{{#label}} must be at most {{#limit}}',
     'string.min': '{{#label}} must be at least {{#limit}} characters long',
+    'custom.jwt.secrets': 'Either JWT_SECRET or both JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be provided',
   });
 

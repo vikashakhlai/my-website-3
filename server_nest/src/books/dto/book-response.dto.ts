@@ -2,33 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { AuthorResponseDto } from '../../authors/dto/author-response.dto';
 import { TagResponseDto } from '../../tags/dto/tag-response.dto';
-
-/**
- * DTO для представления издательства в ответе API
- *
- * @example
- * {
- *   "id": 3,
- *   "name": "دار الشروق"
- * }
- */
-export class PublisherResponseDto {
-  @ApiProperty({
-    description: 'Уникальный идентификатор издательства',
-    example: 3,
-    type: Number,
-  })
-  @Expose()
-  id!: number;
-
-  @ApiProperty({
-    description: 'Название издательства',
-    example: 'دار الشروق',
-    type: String,
-  })
-  @Expose()
-  name!: string;
-}
+import { PublisherResponseDto } from '../../publishers/dto/publisher-response.dto';
 
 /**
  * DTO для представления книги в ответе API

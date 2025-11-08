@@ -19,6 +19,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { BookService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -32,6 +33,7 @@ import type { Request } from 'express';
 import { RateBookDto } from './dto/rate-book.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { SearchBooksDto } from './dto/search-books.dto';
+import { ApiErrorResponses } from 'src/common/decorators/api-error-responses.decorator';
 
 @ApiTags('Books')
 @Controller('books')
@@ -46,7 +48,7 @@ export class BooksController {
   @ApiOperation({
     summary: 'Получить список книг с пагинацией и фильтрами',
     description:
-      'Возвращает список книг с поддержкой пагинации и фильтрации по названию, тегу и автору. Публичный эндпоинт, не требует аутентификации.',
+      'Возвращает список книг с поддержкой пагинации и фильтрации по названию, тегу и автору. Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `isFavorite` for each book.',
   })
   @ApiOkResponse({
     description: 'Список книг успешно получен',
@@ -56,6 +58,37 @@ export class BooksController {
         items: {
           type: 'array',
           items: { $ref: '#/components/schemas/BookResponseDto' },
+          example: [
+            {
+              id: 1,
+              title: 'ديوان أحمد شوقي',
+              description: 'Сборник стихов выдающегося арабского поэта Ахмеда Шауки',
+              publicationYear: 1927,
+              coverUrl: '/uploads/books/diwan-ahmed-shawki.jpg',
+              pages: 450,
+              authors: [
+                {
+                  id: 1,
+                  fullName: 'Ахмед Шауки',
+                  bio: 'Выдающийся арабский поэт и драматург',
+                  photoUrl: '/uploads/authors/ahmed-shawki.jpg',
+                },
+              ],
+              tags: [
+                { id: 5, name: 'Поэзия' },
+                { id: 8, name: 'Классическая литература' },
+              ],
+              publisher: {
+                id: 3,
+                name: 'دار الشروق',
+              },
+              averageRating: 4.5,
+              ratingCount: 120,
+              userRating: 5,
+              isFavorite: true,
+              createdAt: '2024-01-15T10:30:00.000Z',
+            },
+          ],
         },
         total: { type: 'number', example: 150 },
         page: { type: 'number', example: 1 },
@@ -72,6 +105,12 @@ export class BooksController {
   // === 📚 Похожие книги ===
   @Public()
   @ApiOperation({ summary: 'Похожие книги' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @Get(':id/similar')
   async getSimilarBooks(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.getSimilarBooks(id);
@@ -80,6 +119,12 @@ export class BooksController {
   // === 👩‍💻 Другие книги автора ===
   @Public()
   @ApiOperation({ summary: 'Другие книги автора' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @Get(':id/other')
   async getOtherBooksByAuthor(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.getOtherBooksByAuthor(id);
@@ -98,7 +143,7 @@ export class BooksController {
   @ApiOperation({
     summary: 'Получить книгу с полной информацией и связанными данными',
     description:
-      'Возвращает полную информацию о книге, включая авторов, теги, издательство, рейтинги и связанные книги (похожие книги и другие книги автора). Публичный эндпоинт, не требует аутентификации. Если пользователь авторизован, дополнительно возвращаются его рейтинг и статус избранного.',
+      'Возвращает полную информацию о книге, включая авторов, теги, издательство, рейтинги и связанные книги (похожие книги и другие книги автора). Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `isFavorite`.',
   })
   @ApiOkResponse({
     description: 'Информация о книге успешно получена',
@@ -117,6 +162,12 @@ export class BooksController {
       },
     },
   })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @ApiNotFoundResponse({
     description: 'Книга с указанным идентификатором не найдена',
   })
@@ -131,14 +182,38 @@ export class BooksController {
 
   // === 💬 Комментарии книги ===
   @Public()
-  @ApiOperation({ summary: 'Получить комментарии книги' })
+  @ApiOperation({
+    summary: 'Список комментариев книги (публично)',
+    description:
+      'Возвращает список комментариев для указанной книги. Публичный эндпоинт, не требует аутентификации. ' +
+      'Этот ресурс-специфичный эндпоинт является удобной оберткой над универсальным эндпоинтом GET /comments?target_type=book&target_id={id}. ' +
+      'Оба эндпоинта функционально эквивалентны. Если пользователь авторизован (передан JWT токен), дополнительно возвращается информация о его реакциях (my_reaction).',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @Get(':id/comments')
   async getComments(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.getComments(id);
   }
 
   // === 💬 Добавить комментарий ===
-  @ApiOperation({ summary: 'Добавить комментарий к книге' })
+  @ApiOperation({
+    summary: 'Добавить комментарий к книге',
+    description:
+      'Создает новый комментарий к указанной книге. Доступно только для авторизованных пользователей. ' +
+      'Этот ресурс-специфичный эндпоинт является удобной оберткой над универсальным эндпоинтом POST /comments ' +
+      'с автоматически установленными target_type=book и target_id={id}. Оба эндпоинта функционально эквивалентны.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/comments')
@@ -158,6 +233,12 @@ export class BooksController {
 
   // === ⭐ Поставить/обновить рейтинг ===
   @ApiOperation({ summary: 'Оценить книгу (1–5)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/ratings')
@@ -179,10 +260,7 @@ export class BooksController {
     description: 'Книга успешно создана',
     type: BookResponseDto,
   })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса. Проверьте обязательные поля и типы данных.',
-  })
+  @ApiErrorResponses({ include404: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
   async create(@Body() dto: CreateBookDto) {
@@ -199,13 +277,7 @@ export class BooksController {
     description: 'Книга успешно обновлена',
     type: BookResponseDto,
   })
-  @ApiNotFoundResponse({
-    description: 'Книга с указанным идентификатором не найдена',
-  })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса. Проверьте типы данных и значения полей.',
-  })
+  @ApiErrorResponses()
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
   async update(
@@ -233,9 +305,13 @@ export class BooksController {
       },
     },
   })
-  @ApiNotFoundResponse({
-    description: 'Книга с указанным идентификатором не найдена',
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор книги',
+    type: Number,
+    example: 1,
   })
+  @ApiErrorResponses({ include400: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {

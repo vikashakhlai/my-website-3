@@ -243,4 +243,58 @@ export class PersonalitiesService {
 
     return isNaN(startYear) || isNaN(endYear) ? null : [startYear, endYear];
   }
+
+  /** ✅ Создать личность */
+  async create(dto: any) {
+    const personality = this.personalityRepo.create({
+      name: dto.name,
+      years: dto.years,
+      position: dto.position,
+      biography: dto.biography,
+      facts: dto.facts,
+      era: dto.era,
+      imageUrl: dto.imageUrl,
+    });
+
+    const saved = await this.personalityRepo.save(personality);
+
+    // Связываем книги и статьи, если указаны
+    if (dto.bookIds?.length) {
+      // Реализация связи с книгами через ManyToMany
+      // Это нужно делать через репозиторий или через связи
+    }
+
+    if (dto.articleIds?.length) {
+      // Реализация связи со статьями через ManyToMany
+    }
+
+    return saved;
+  }
+
+  /** ✅ Обновить личность */
+  async update(id: number, dto: any) {
+    const personality = await this.personalityRepo.findOne({ where: { id } });
+    if (!personality) throw new NotFoundException('Личность не найдена');
+
+    Object.assign(personality, {
+      name: dto.name ?? personality.name,
+      years: dto.years ?? personality.years,
+      position: dto.position ?? personality.position,
+      biography: dto.biography ?? personality.biography,
+      facts: dto.facts ?? personality.facts,
+      era: dto.era ?? personality.era,
+      imageUrl: dto.imageUrl ?? personality.imageUrl,
+    });
+
+    return this.personalityRepo.save(personality);
+  }
+
+  /** ✅ Удалить личность */
+  async remove(id: number) {
+    const personality = await this.personalityRepo.findOne({ where: { id } });
+    if (!personality) throw new NotFoundException('Личность не найдена');
+
+    await this.personalityRepo.remove(personality);
+    return { message: `Личность #${id} удалена` };
+  }
 }

@@ -32,7 +32,7 @@ export class QuotesService {
       personality: q.personality
         ? {
             id: q.personality.id,
-            full_name: q.personality.name,
+            name: q.personality.name,
             position: q.personality.position,
           }
         : null,

@@ -37,6 +37,7 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiConsumes,
+  ApiParam,
 } from '@nestjs/swagger';
 import { TargetType } from 'src/common/enums/target-type.enum';
 
@@ -90,7 +91,45 @@ export class MediaController {
     return list.map((m) => mapToDto(MediaResponseDto, m));
   }
 
+  /** 📍 Получить список регионов с количеством медиа (публично) */
+  @Public()
+  @ApiOperation({
+    summary: 'Получить список регионов с количеством медиа',
+    description: 'Возвращает список всех регионов, где есть медиа-контент, с количеством медиа в каждом регионе.',
+  })
+  @ApiOkResponse({
+    description: 'Список регионов с количеством',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          region: { type: 'string', example: 'Египет' },
+          count: { type: 'string', example: '15' },
+        },
+      },
+      example: [
+        { region: 'Египет', count: '15' },
+        { region: 'Сирия', count: '8' },
+      ],
+    },
+  })
+  @Get('regions')
+  async getRegions() {
+    return this.mediaService.getRegionsWithCount();
+  }
+
   /** 🎬 Просмотр конкретного медиа — только авторизованные */
+  @ApiOperation({
+    summary: 'Получить медиа-контент по ID',
+    description: 'Возвращает полную информацию о медиа-контенте, включая рейтинг и избранное. Требуется авторизация.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @ApiOkResponse({ type: MediaWithRatingResponseDto })
   @UseGuards(JwtAuthGuard)
   @Get(':id')
@@ -106,12 +145,6 @@ export class MediaController {
     dto.userRating = (result as any).userRating ?? null;
 
     return dto;
-  }
-
-  @Public()
-  @Get('regions')
-  async getRegions() {
-    return this.mediaService.getRegionsWithCount();
   }
 
   /** 📥 Загрузка файла (ADMIN+) */
@@ -163,6 +196,12 @@ export class MediaController {
 
   /** 🔄 Обновить (ADMIN+) */
   @ApiOperation({ summary: 'Обновить медиа (ADMIN+)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -178,6 +217,12 @@ export class MediaController {
 
   /** 🗑 Удалить (ADMIN+) */
   @ApiOperation({ summary: 'Удалить медиа (ADMIN+)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -189,6 +234,12 @@ export class MediaController {
 
   /** ⭐ Средний рейтинг (публично) */
   @ApiOperation({ summary: 'Средний рейтинг (публично)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
     return this.ratingsService.getAverage(TargetType.MEDIA, id);
@@ -196,6 +247,12 @@ export class MediaController {
 
   /** 💬 SSE комментариев (публично) */
   @ApiOperation({ summary: 'SSE: комментарии (публично)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
@@ -209,6 +266,12 @@ export class MediaController {
 
   /** 🌟 SSE рейтинга (публично) */
   @ApiOperation({ summary: 'SSE: рейтинг (публично)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @Sse('stream/:id/rating')
   streamRatings(
     @Param('id', ParseIntPipe) id: number,
@@ -226,6 +289,12 @@ export class MediaController {
 
   /** 💛 Добавить в избранное */
   @ApiOperation({ summary: 'Добавить медиа в избранное' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post(':id/favorite')
@@ -238,6 +307,12 @@ export class MediaController {
 
   /** 💔 Удалить из избранного */
   @ApiOperation({ summary: 'Удалить медиа из избранного' })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор медиа-контента',
+    type: Number,
+    example: 10,
+  })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Delete(':id/favorite')

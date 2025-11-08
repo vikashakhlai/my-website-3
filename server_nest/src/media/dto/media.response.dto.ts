@@ -177,6 +177,16 @@ export class MediaResponseDto {
   @ApiProperty({
     description: 'Список тем, связанных с медиа-контентом',
     type: [MediaTopicResponseDto],
+    example: [
+      {
+        id: 2,
+        name: 'Приветствие',
+      },
+      {
+        id: 7,
+        name: 'Еда',
+      },
+    ],
   })
   @Expose()
   @Type(() => MediaTopicResponseDto)
@@ -186,6 +196,12 @@ export class MediaResponseDto {
     description: 'Диалект, используемый в медиа-контенте (если это не фусха)',
     type: MediaDialectResponseDto,
     nullable: true,
+    example: {
+      id: 3,
+      name: 'Египетский арабский',
+      region: 'Египет',
+      slug: 'egyptian',
+    },
   })
   @Expose()
   @Type(() => MediaDialectResponseDto)
@@ -203,6 +219,27 @@ export class MediaResponseDto {
   @ApiPropertyOptional({
     description: 'Список упражнений, связанных с медиа-контентом',
     type: [ExerciseResponseDto],
+    example: [
+      {
+        id: 1,
+        type: 'fill_in_the_blanks',
+        instructionRu: 'Заполните пропуски правильными словами',
+        instructionAr: 'املأ الفراغات بالكلمات الصحيحة',
+        articleId: null,
+        mediaId: 10,
+        distractorPoolId: null,
+        items: [
+          {
+            id: 1,
+            position: 0,
+            partBefore: 'Я хочу ',
+            partAfter: ' в магазин',
+            correctAnswer: 'пойти',
+            options: ['пойти', 'идти', 'ехать'],
+          },
+        ],
+      },
+    ],
   })
   @Expose()
   @Type(() => ExerciseResponseDto)

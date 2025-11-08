@@ -15,6 +15,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { AuthorsService } from './authors.service';
 import { CreateAuthorDto } from './dto/create-author.dto';
@@ -26,6 +27,7 @@ import {
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { ApiErrorResponses } from 'src/common/decorators/api-error-responses.decorator';
 
 @ApiTags('Authors')
 @Controller('authors')
@@ -47,6 +49,12 @@ export class AuthorsController {
   @ApiNotFoundResponse({
     description: 'Автор с указанным идентификатором не найден',
   })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор автора',
+    type: Number,
+    example: 1,
+  })
   @ApiBadRequestResponse({
     description: 'Некорректный формат идентификатора автора',
   })
@@ -64,6 +72,16 @@ export class AuthorsController {
   @ApiOkResponse({
     description: 'Список авторов успешно получен',
     type: [AuthorListItemDto],
+    example: [
+      {
+        id: 1,
+        fullName: 'Ахмед Шауки',
+      },
+      {
+        id: 2,
+        fullName: 'Нагиб Махфуз',
+      },
+    ],
   })
   @Get()
   async getAllAuthors() {
@@ -93,10 +111,7 @@ export class AuthorsController {
       },
     },
   })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса. Проверьте обязательные поля (fullName должен быть не менее 3 символов) и формат URL для photoUrl.',
-  })
+  @ApiErrorResponses({ include404: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
   async create(@Body() dto: CreateAuthorDto) {
@@ -120,13 +135,13 @@ export class AuthorsController {
       },
     },
   })
-  @ApiNotFoundResponse({
-    description: 'Автор с указанным идентификатором не найден',
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор автора',
+    type: Number,
+    example: 1,
   })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса. Проверьте типы данных и значения полей.',
-  })
+  @ApiErrorResponses()
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
   async update(
@@ -153,9 +168,13 @@ export class AuthorsController {
       },
     },
   })
-  @ApiNotFoundResponse({
-    description: 'Автор с указанным идентификатором не найден',
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор автора',
+    type: Number,
+    example: 1,
   })
+  @ApiErrorResponses({ include400: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {

@@ -14,7 +14,13 @@ import { FavoritesService } from './favorites.service';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
 import { RemoveFavoriteDto } from './dto/remove-favorite.dto';
 import { TargetType } from 'src/common/enums/target-type.enum';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('Favorites')
 @Controller('favorites')
@@ -56,6 +62,12 @@ export class FavoritesController {
   }
 
   @ApiOperation({ summary: 'Получить избранное одного типа' })
+  @ApiParam({
+    name: 'targetType',
+    enum: TargetType,
+    description: 'Тип сущности (article, book, media, textbook, personality, author)',
+    example: TargetType.BOOK,
+  })
   @ApiResponse({
     status: 200,
     example: [

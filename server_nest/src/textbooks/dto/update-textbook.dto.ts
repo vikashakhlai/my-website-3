@@ -1,5 +1,8 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { CreateTextbookDto } from './create-textbook.dto';
 
-// Позволяет обновлять только часть полей
+/**
+ * DTO для обновления учебника
+ * Все поля опциональны
+ */
 export class UpdateTextbookDto extends PartialType(CreateTextbookDto) {}

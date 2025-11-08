@@ -174,6 +174,27 @@ export class ArticleResponseDto {
   @ApiProperty({
     description: 'Список упражнений, связанных со статьей',
     type: [ExerciseResponseDto],
+    example: [
+      {
+        id: 1,
+        type: 'fill_in_the_blanks',
+        instructionRu: 'Заполните пропуски правильными словами',
+        instructionAr: 'املأ الفراغات بالكلمات الصحيحة',
+        articleId: 1,
+        mediaId: null,
+        distractorPoolId: null,
+        items: [
+          {
+            id: 1,
+            position: 0,
+            partBefore: 'Я хочу ',
+            partAfter: ' в магазин',
+            correctAnswer: 'пойти',
+            options: ['пойти', 'идти', 'ехать'],
+          },
+        ],
+      },
+    ],
   })
   @Expose()
   exercises!: ExerciseResponseDto[];

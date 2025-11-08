@@ -15,6 +15,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -23,6 +24,7 @@ import { TagResponseDto } from './dto/tag-response.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Role } from 'src/auth/roles.enum';
+import { ApiErrorResponses } from 'src/common/decorators/api-error-responses.decorator';
 
 @ApiTags('Tags')
 @Controller('tags')
@@ -39,6 +41,20 @@ export class TagsController {
   @ApiOkResponse({
     description: 'Список тегов успешно получен',
     type: [TagResponseDto],
+    example: [
+      {
+        id: 5,
+        name: 'Поэзия',
+      },
+      {
+        id: 8,
+        name: 'Классическая литература',
+      },
+      {
+        id: 12,
+        name: 'История',
+      },
+    ],
   })
   @Get()
   async getAll() {
@@ -55,10 +71,7 @@ export class TagsController {
     description: 'Тег успешно создан',
     type: TagResponseDto,
   })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса или тег с таким названием уже существует. Название тега должно быть не менее 2 символов.',
-  })
+  @ApiErrorResponses({ include404: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Post()
   async create(@Body() dto: CreateTagDto) {
@@ -75,13 +88,13 @@ export class TagsController {
     description: 'Тег успешно обновлен',
     type: TagResponseDto,
   })
-  @ApiNotFoundResponse({
-    description: 'Тег с указанным идентификатором не найден',
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор тега',
+    type: Number,
+    example: 5,
   })
-  @ApiBadRequestResponse({
-    description:
-      'Неверные данные запроса или другое тег с таким названием уже существует.',
-  })
+  @ApiErrorResponses()
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Put(':id')
   async update(
@@ -109,9 +122,13 @@ export class TagsController {
       },
     },
   })
-  @ApiNotFoundResponse({
-    description: 'Тег с указанным идентификатором не найден',
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор тега',
+    type: Number,
+    example: 5,
   })
+  @ApiErrorResponses({ include400: false })
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {

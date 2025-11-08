@@ -28,6 +28,7 @@ import {
   catchError,
   of,
   EMPTY,
+  from,
 } from 'rxjs';
 import {
   ApiOperation,
@@ -226,6 +227,12 @@ export class RatingsController {
   })
   @ApiUnauthorizedResponse({
     description: 'Требуется авторизация',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Уникальный идентификатор рейтинга',
+    type: Number,
+    example: 1,
   })
   @ApiNotFoundResponse({
     description: 'Рейтинг не найден',
