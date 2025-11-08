@@ -1,8 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FaTwitter, FaInstagram, FaTelegram } from "react-icons/fa";
 import "./Footer.css";
 
 const Footer = () => {
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
+
+  // Navigation items matching the Navigation component
+  const navItems = [
+    { to: "/DictionaryPage", label: "Словарь" },
+    { to: "/CoursesPage", label: "Курсы" },
+    { to: "/BooksPage", label: "Книги" },
+    { to: "/ArticlesPage", label: "Статьи" },
+    { to: "/dialects", label: "Диалект" },
+    { to: "/StudentBooksPage", label: "Учебники" },
+    { to: "/personalities", label: "Личности" },
+    { to: "/about", label: "О нас" },
+  ];
+
   return (
     <footer className="site-footer">
       <div className="footer-container">
@@ -16,7 +32,26 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Колонка 2: Контакты */}
+        {/* Колонка 2: Навигация (matching Navigation component) */}
+        <div className="footer-col">
+          <h3 className="footer-title">Навигация</h3>
+          <nav className="footer-nav">
+            <ul className="footer-links">
+              {navItems.map(({ to, label }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className={isActive(to) ? "footer-link active" : "footer-link"}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        {/* Колонка 3: Контакты */}
         <div className="footer-col">
           <h3 className="footer-title">Контакты</h3>
           <address className="footer-text">
@@ -27,30 +62,6 @@ const Footer = () => {
               @oasis_ar
             </a>
           </address>
-        </div>
-
-        {/* Колонка 3: Навигация */}
-        <div className="footer-col">
-          <h3 className="footer-title">Навигация</h3>
-          <nav>
-            <ul className="footer-links">
-              <li>
-                <Link to="/about">О нас</Link>
-              </li>
-              <li>
-                <Link to="/books">Книги</Link>
-              </li>
-              <li>
-                <Link to="/dialects">Диалекты</Link>
-              </li>
-              <li>
-                <Link to="/personalities">Личности</Link>
-              </li>
-              <li>
-                <Link to="/contact">Контакты</Link>
-              </li>
-            </ul>
-          </nav>
         </div>
 
         {/* Колонка 4: Соцсети */}
