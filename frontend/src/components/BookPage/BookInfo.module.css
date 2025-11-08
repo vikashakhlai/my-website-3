@@ -15,6 +15,13 @@
   position: relative;
 }
 
+.favoriteButtonWrapper {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 10;
+}
+
 .cover {
   width: 100%;
   height: auto;

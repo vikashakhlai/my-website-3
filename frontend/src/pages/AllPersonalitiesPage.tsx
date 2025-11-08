@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import useScrollToTop from "../hooks/useScrollToTop";
 import { Era } from "../types/era";
 import PersonalityFilters from "../components/PersonalityFilters";
+import Loader from "../components/Loader";
 
 interface PaginationState {
   currentPage: number;
@@ -132,11 +133,7 @@ const AllPersonalitiesPage = () => {
           </div>
         )}
 
-        {isFetching && !loading && (
-          <div className={styles.overlay}>
-            <div className={styles.spinner}></div>
-          </div>
-        )}
+        {isFetching && !loading && <Loader className="overlay" size="md" />}
       </div>
 
       {!loading && pagination.totalPages > 1 && (

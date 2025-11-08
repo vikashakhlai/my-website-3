@@ -5,6 +5,7 @@ import Pagination from "../components/Pagination";
 import { Book } from "../types/Book";
 import { api } from "../api/auth";
 import BookFilters from "../components/BookFilters";
+import Loader from "../components/Loader";
 
 type TagDto = { id: number; name: string };
 type AuthorDto = { id: number; full_name: string };
@@ -163,11 +164,7 @@ const BooksPage = () => {
           </div>
         )}
 
-        {isFetching && !loading && (
-          <div className={styles.overlay}>
-            <div className={styles.spinner}></div>
-          </div>
-        )}
+        {isFetching && !loading && <Loader className="overlay" size="md" />}
       </div>
 
       {!loading && pagination.totalPages > 1 && (

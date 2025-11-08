@@ -6,7 +6,6 @@ import styles from "./BookPage.module.css";
 import BookInfo from "./BookInfo";
 import BookTags from "./BookTags";
 import BookGallery from "./BookGallery";
-import FavoriteButton from "../../components/FavoriteButton";
 import { useFavorites } from "../../hooks/useFavorites";
 import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
@@ -132,16 +131,11 @@ const BookPage = () => {
           {/* Основной контент книги */}
           <div className={styles.bookContent}>
             <div className={styles.header}>
-              <div className={styles.titleBlock}>
-                <BookInfo book={book} />
-              </div>
-
-              <div className={styles.favoriteButtonWrapper}>
-                <FavoriteButton
-                  isFavorite={localFavorite}
-                  onToggle={handleToggleFavorite}
-                />
-              </div>
+              <BookInfo 
+                book={book}
+                isFavorite={localFavorite}
+                onToggleFavorite={handleToggleFavorite}
+              />
             </div>
 
             <div className={styles.metaBlock}>

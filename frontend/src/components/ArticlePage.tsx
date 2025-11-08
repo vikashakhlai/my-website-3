@@ -95,11 +95,13 @@ const ArticlePage = () => {
         className={styles.articleImage}
       />
 
-      <div
-        style={{ display: "flex", justifyContent: "space-between", gap: 10 }}
-      >
+      <div className={styles.titleRow}>
         <h1 className={styles.articleTitle}>{article.titleRu}</h1>
-        <FavoriteButton isFavorite={isFavorite} onToggle={toggleFavorite} />
+        <FavoriteButton 
+          isFavorite={isFavorite} 
+          onToggle={toggleFavorite}
+          variant="elegant"
+        />
       </div>
 
       <h2 className={styles.articleTitleArabic}>{article.titleAr}</h2>

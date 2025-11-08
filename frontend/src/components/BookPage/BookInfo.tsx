@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import styles from "./BookInfo.module.css";
 import { Book } from "./BookPage";
+import FavoriteButton from "../../components/FavoriteButton";
 
 interface BookInfoProps {
   book: Book;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 }
 
-const BookInfo = ({ book }: BookInfoProps) => {
+const BookInfo = ({ book, isFavorite, onToggleFavorite }: BookInfoProps) => {
   const cover =
     book.cover_url && book.cover_url.startsWith("http")
       ? book.cover_url
@@ -16,6 +19,13 @@ const BookInfo = ({ book }: BookInfoProps) => {
     <div className={styles.mainContent}>
       <div className={styles.coverWrapper}>
         {cover && <img src={cover} alt={book.title} className={styles.cover} />}
+        <div className={styles.favoriteButtonWrapper}>
+          <FavoriteButton
+            isFavorite={isFavorite}
+            onToggle={onToggleFavorite}
+            variant="corner"
+          />
+        </div>
       </div>
 
       <div className={styles.info}>

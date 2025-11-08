@@ -237,7 +237,11 @@ export default function DialectExercisePage() {
             </span>
           )}
 
-          <FavoriteButton isFavorite={fav} onToggle={handleToggleFavorite} />
+          <FavoriteButton 
+            isFavorite={fav} 
+            onToggle={handleToggleFavorite}
+            variant="elegant"
+          />
         </div>
       </div>
 

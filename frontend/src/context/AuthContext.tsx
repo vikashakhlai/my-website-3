@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, setUnauthorizedHandler } from "../api/auth";
+import Loader from "../components/Loader";
 
 interface User {
   id: string;
@@ -96,11 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         logout,
       }}
     >
-      {loading ? (
-        <div style={{ textAlign: "center", padding: 50 }}>Загрузка...</div>
-      ) : (
-        children
-      )}
+      {loading ? <Loader /> : children}
     </AuthContext.Provider>
   );
 };

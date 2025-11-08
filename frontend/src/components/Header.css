@@ -7,15 +7,16 @@
   position: sticky;
   top: 0;
   z-index: var(--z-index-sticky);
-  background-color: var(--color-bg);
-  background: var(--color-bg);
+  /* Force solid, fully opaque background to prevent transparency when scrolling */
+  background-color: var(--color-bg) !important;
+  background: var(--color-bg) !important;
   border-bottom: var(--border-width) solid var(--color-border);
   box-shadow: var(--shadow-sm);
   width: 100%;
   /* Ensure background is fully opaque and consistent */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  /* Prevent background from showing through */
+  /* Prevent background from showing through - ensure solid background */
   isolation: isolate;
 }
 

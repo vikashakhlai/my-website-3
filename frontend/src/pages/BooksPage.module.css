@@ -45,6 +45,11 @@
   justify-content: flex-start;
 }
 
+/* === WRAPPER FOR BOOKS === */
+.booksWrapper {
+  position: relative;
+}
+
 /* === СЕТКА СКЕЛЕТОНОВ === */
 .gridPlaceholder {
   display: grid;

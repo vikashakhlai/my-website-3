@@ -9,6 +9,7 @@ import StudentBookCardBigSlider from "../components/StudentBookCardBigSlider";
 import { PersonalityPreview } from "../types/Personality";
 import PersonCard from "../components/PersonCard";
 import { TextBookProps } from "../types/TextBook";
+import Loader from "../components/Loader";
 import "./HomePage.css";
 import { api } from "../api/auth";
 
@@ -50,12 +51,7 @@ const HomePage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Загрузка данных...</p>
-      </div>
-    );
+    return <Loader text="Загрузка данных..." />;
   }
 
   if (error) {

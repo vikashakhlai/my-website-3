@@ -75,7 +75,37 @@ const StudentBooksPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className={styles.loader}>Загрузка учебников...</div>
+        <>
+          <div className={styles.topSection}>
+            <div className={`${styles.skeletonCard} ${styles.skeletonBig}`}>
+              <div className={styles.skeletonCover}></div>
+              <div className={styles.skeletonContent}>
+                <div className={styles.skeletonLine}></div>
+                <div className={styles.skeletonLineShort}></div>
+                <div className={styles.skeletonLineShort}></div>
+                <div className={styles.skeletonLine}></div>
+                <div className={styles.skeletonLine}></div>
+              </div>
+            </div>
+            <div className={`${styles.skeletonCard} ${styles.skeletonSmall}`}>
+              <div className={styles.skeletonCover}></div>
+            </div>
+          </div>
+          <div className={styles.remainingSection}>
+            <h2 className={styles.sectionTitle}>Остальные учебники</h2>
+            <div className={styles.booksGrid}>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className={`${styles.skeletonCard} ${styles.skeletonMiddle}`}>
+                  <div className={styles.skeletonCover}></div>
+                  <div className={styles.skeletonContent}>
+                    <div className={styles.skeletonLine}></div>
+                    <div className={styles.skeletonLineShort}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       ) : books.length === 0 ? (
         <div className={styles.noResults}>Учебники не найдены</div>
       ) : (

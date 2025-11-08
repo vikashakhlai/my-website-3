@@ -14,6 +14,7 @@ import { CommentsSection } from "./CommentsSection";
 import { StarRating } from "./StarRating";
 import { api } from "../api/auth";
 import BookGallery from "./BookGallery";
+import Loader from "../components/Loader";
 
 const PersonalityPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,7 +91,7 @@ const PersonalityPage = () => {
     fetchQuotes();
   }, [id]);
 
-  if (loading) return <div className={styles.container}>Загрузка...</div>;
+  if (loading) return <Loader />;
   if (error)
     return (
       <div className={styles.container}>
@@ -123,6 +124,7 @@ const PersonalityPage = () => {
               <FavoriteButton
                 isFavorite={isFavorite}
                 onToggle={() => toggleFavorite(personality)}
+                variant="corner"
               />
             </div>
           </div>
