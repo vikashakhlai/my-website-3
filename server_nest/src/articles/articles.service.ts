@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
@@ -9,21 +9,19 @@ import { DeepPartial, Repository } from 'typeorm';
 import { Article } from './article.entity';
 import { Theme } from './themes/theme.entity';
 
-import { Exercise } from './entities/exercise.entity';
-import { ExerciseItem } from './entities/exercise-item.entity';
-import { Distractor } from './entities/distractor.entity';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
+import { Distractor } from './entities/distractor.entity';
+import { ExerciseItem } from './entities/exercise-item.entity';
 import { ExerciseType } from './entities/exercise-type.enum';
+import { Exercise } from './entities/exercise.entity';
 
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 
-// ✅ Новый enum цели
 import { TargetType } from 'src/common/enums/target-type.enum';
 
-// ✅ рейтинги и комментарии
-import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { Rating } from 'src/ratings/rating.entity';
 
 interface ExerciseItemWithOptions extends ExerciseItem {
   options?: string[];
@@ -67,7 +65,6 @@ export class ArticlesService {
     private readonly commentRepo: Repository<Comment>,
   ) {}
 
-  /** 📰 Последние N статей */
   async getLatest(limit = 3): Promise<Article[]> {
     const articles = await this.articleRepo.find({
       relations: ['theme'],
@@ -81,7 +78,6 @@ export class ArticlesService {
     }));
   }
 
-  /** 📚 Список статей (опционально по теме) */
   async getArticles(themeSlug?: string, limit = 10): Promise<Article[]> {
     const qb = this.articleRepo
       .createQueryBuilder('a')
@@ -99,7 +95,6 @@ export class ArticlesService {
     }));
   }
 
-  /** 🔍 Одна статья с упражнениями, рейтингом и счётчиками */
   async getById(id: number, userId?: string): Promise<ArticleWithExtras> {
     const article = await this.articleRepo.findOne({
       where: { id },
@@ -107,7 +102,6 @@ export class ArticlesService {
     });
     if (!article) throw new NotFoundException('Статья не найдена');
 
-    // === Упражнения ===
     const exercises = await this.exerciseRepo.find({
       where: { article: { id } },
       order: { id: 'ASC' },
@@ -161,7 +155,6 @@ export class ArticlesService {
       }
     }
 
-    // === Рейтинги и комментарии (enum TargetType!) ===
     const ratings = await this.ratingRepo.find({
       where: {
         target_type: TargetType.ARTICLE,
@@ -195,8 +188,6 @@ export class ArticlesService {
       commentCount: commentsCount,
     };
   }
-
-  // ========= CRUD статей =========
 
   async create(dto: CreateArticleDto): Promise<Article> {
     const entity = this.articleRepo.create({
@@ -239,8 +230,6 @@ export class ArticlesService {
     await this.articleRepo.remove(article);
     return { message: `Article #${id} has been removed` };
   }
-
-  // ========= Упражнения =========
 
   async findExercisesByArticle(articleId: number): Promise<Exercise[]> {
     const exists = await this.articleRepo.exists({ where: { id: articleId } });
@@ -301,8 +290,6 @@ export class ArticlesService {
       relations: ['items'],
     }) as Promise<Exercise>;
   }
-
-  // ========= Рейтинг статьи =========
 
   async rateArticle(
     articleId: number,

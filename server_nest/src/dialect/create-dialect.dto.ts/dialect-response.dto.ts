@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { MediaResponseDto } from 'src/media/dto/media.response.dto'; // ✅ Убедитесь, что путь правильный
+import { MediaResponseDto } from 'src/media/dto/media.response.dto';
 
 export class DialectResponseDto {
   @ApiProperty({ example: 1, description: 'ID диалекта' })

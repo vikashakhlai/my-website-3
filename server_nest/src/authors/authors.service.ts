@@ -18,7 +18,6 @@ export class AuthorsService {
     private readonly authorsRepo: Repository<Author>,
   ) {}
 
-  // ✅ Публичное получение автора + книг
   async getAuthorById(idParam: string | number) {
     const id = Number(idParam);
     if (!Number.isInteger(id) || id <= 0) {
@@ -58,7 +57,6 @@ export class AuthorsService {
       .getRawMany();
   }
 
-  // ✅ Создание автора (ADMIN+)
   async createAuthor(dto: CreateAuthorDto) {
     const author = this.authorsRepo.create({
       fullName: dto.fullName,
@@ -70,7 +68,6 @@ export class AuthorsService {
     return { message: 'Автор создан', id: saved.id };
   }
 
-  // ✅ Обновление автора (ADMIN+)
   async updateAuthor(id: number, dto: UpdateAuthorDto) {
     const author = await this.authorsRepo.findOne({ where: { id } });
 
@@ -84,7 +81,6 @@ export class AuthorsService {
     return { message: 'Автор обновлён', id: author.id };
   }
 
-  // ✅ Удаление автора (ADMIN+)
   async deleteAuthor(id: number) {
     const author = await this.authorsRepo.findOne({ where: { id } });
 

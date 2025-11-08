@@ -18,7 +18,6 @@ export class DialogueService {
     private readonly mediaRepo: Repository<Media>,
   ) {}
 
-  /** 📜 Все группы диалогов */
   async findAllGroups(): Promise<DialogueGroup[]> {
     return await this.groupRepo.find({
       relations: ['medias', 'medias.dialect', 'medias.scripts'],
@@ -26,7 +25,6 @@ export class DialogueService {
     });
   }
 
-  /** 🔍 Получить диалог-группу */
   async findGroupById(id: number): Promise<DialogueGroup> {
     const group = await this.groupRepo.findOne({
       where: { id },
@@ -37,13 +35,11 @@ export class DialogueService {
     return group;
   }
 
-  /** ➕ Создать новую группу диалога */
   async createGroup(data: Partial<DialogueGroup>): Promise<DialogueGroup> {
     const group = this.groupRepo.create(data);
     return await this.groupRepo.save(group);
   }
 
-  /** ♻️ Обновить группу */
   async updateGroup(
     id: number,
     data: Partial<DialogueGroup>,
@@ -53,13 +49,11 @@ export class DialogueService {
     return await this.groupRepo.save(group);
   }
 
-  /** 🗑 Удалить группу */
   async removeGroup(id: number): Promise<void> {
     const result = await this.groupRepo.delete(id);
     if (!result.affected) throw new NotFoundException('Группа не найдена');
   }
 
-  /** ✍️ Создать новую реплику */
   async createScript(
     mediaId: number,
     textOriginal: string,
@@ -79,7 +73,6 @@ export class DialogueService {
     return await this.scriptRepo.save(script);
   }
 
-  /** ♻️ Обновить реплику */
   async updateScript(id: number, data: Partial<DialogueScript>) {
     const script = await this.scriptRepo.findOne({ where: { id } });
     if (!script) throw new NotFoundException('Реплика не найдена');
@@ -88,13 +81,11 @@ export class DialogueService {
     return await this.scriptRepo.save(script);
   }
 
-  /** 🗑 Удалить реплику */
   async deleteScript(id: number): Promise<void> {
     const result = await this.scriptRepo.delete(id);
     if (!result.affected) throw new NotFoundException('Реплика не найдена');
   }
 
-  /** 🧹 Удалить все реплики у media */
   async clearScriptsByMedia(mediaId: number): Promise<void> {
     await this.scriptRepo.delete({ media: { id: mediaId } as any });
   }

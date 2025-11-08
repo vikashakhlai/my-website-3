@@ -71,7 +71,7 @@ export class AuthController {
   async login(
     @Req() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
-    @Body() loginDto: LoginDto, // ✅ Добавлено
+    @Body() loginDto: LoginDto,
   ): Promise<AuthTokens> {
     // if (!req.user) throw new UnauthorizedException('Invalid credentials');
     const result = await this.authService.login(req.user);

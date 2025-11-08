@@ -26,7 +26,6 @@ export class PersonalitiesController {
     private readonly ratingsService: RatingsService,
   ) {}
 
-  /** 🔴 SSE: поток комментариев (публично) */
   @Public()
   @Sse('stream/:id/comments')
   streamComments(
@@ -40,7 +39,6 @@ export class PersonalitiesController {
     );
   }
 
-  /** 🟡 SSE: live рейтинг (публично) */
   @Public()
   @Sse('stream/:id/rating')
   streamRating(
@@ -54,14 +52,12 @@ export class PersonalitiesController {
     );
   }
 
-  /** ⭐ Средний рейтинг (публично) */
   @Public()
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
     return this.ratingsService.getAverage(TargetType.PERSONALITY, id);
   }
 
-  /** 🎲 Случайные личности (публично) */
   @Public()
   @Get('random')
   async getRandom(@Query('limit') limit?: string) {
@@ -69,7 +65,6 @@ export class PersonalitiesController {
     return this.personalitiesService.getRandom(isNaN(num) ? 3 : num);
   }
 
-  /** 📋 Список личностей с пагинацией (публично) */
   @Public()
   @Get()
   async findAll(
@@ -79,7 +74,7 @@ export class PersonalitiesController {
     @Query('era') era?: string,
     @Req() req?: any,
   ) {
-    const userId = req?.user?.id ?? null; // ✅ Используем id, а не sub
+    const userId = req?.user?.id ?? null;
     return this.personalitiesService.findAll(
       Number(page) || 1,
       Math.min(Number(limit) || 12, 50),
@@ -89,14 +84,12 @@ export class PersonalitiesController {
     );
   }
 
-  /** 👥 Современники (публично) */
   @Public()
   @Get(':id/contemporaries')
   async getContemporaries(@Param('id', ParseIntPipe) id: number) {
     return this.personalitiesService.getContemporaries(id);
   }
 
-  /** 🔍 Одна личность (публично, но учитывает авторизацию для рейтинга/избранного) */
   @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {

@@ -1,4 +1,3 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -8,7 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllConfigType, DatabaseConfig } from './config/configuration.types';
 import databaseConfig from './config/database.config';
 
-// modules
 import { AppController } from './app.controller';
 import { ArticlesModule } from './articles/articles.module';
 import { AuthModule } from './auth/auth.module';
@@ -35,14 +33,12 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
 
 @Module({
   imports: [
-    // ✅ .env config
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig],
       envFilePath: ['.env'],
     }),
 
-    // ✅ TypeORM
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
@@ -55,7 +51,6 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
           password: db.password,
           database: db.database,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          // synchronize: true,
           synchronize: false,
           logging: process.env.NODE_ENV === 'development',
           ssl:
@@ -66,16 +61,14 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
       },
     }),
 
-    // ✅ Throttler (rate limit, глобально через APP_GUARD)
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60, // окно 60с
-        limit: 100, // 100 запросов/мин на IP (подстрой при необходимости)
+        ttl: 60,
+        limit: 100,
       },
     ]),
 
-    // ✅ App modules
     UserModule,
     AuthModule,
     BookModule,
@@ -98,7 +91,6 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
   ],
   controllers: [AppController],
   providers: [
-    // ✅ Глобально: сначала JWT, сверху над ThrottlerGuard важен порядок
     { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

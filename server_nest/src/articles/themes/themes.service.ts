@@ -10,14 +10,12 @@ export class ThemesService {
     private readonly themeRepository: Repository<Theme>,
   ) {}
 
-  // Получить все темы
   async findAll() {
     return this.themeRepository.find({
       order: { id: 'ASC' },
     });
   }
 
-  // Получить тему по slug
   async findBySlug(slug: string) {
     return this.themeRepository.findOne({ where: { slug } });
   }

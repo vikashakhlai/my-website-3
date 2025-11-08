@@ -17,7 +17,7 @@ export class DialectTopicsService {
   findOne(id: number) {
     return this.topicsRepo.findOne({
       where: { id },
-      relations: ['medias'], // можно сразу смотреть где используется
+      relations: ['medias'],
     });
   }
 

@@ -1,4 +1,3 @@
-// src/config/configuration.types.ts
 export interface DatabaseConfig {
   host: string;
   port: number;

@@ -4,11 +4,11 @@
 
 // Тип упражнения — строго 5 вариантов
 export type ExerciseType =
-  | "multiple_choice"
-  | "fill_in_the_blanks"
-  | "open_question"
-  | "flashcards"
-  | "matching_pairs";
+	| 'multiple_choice'
+	| 'fill_in_the_blanks'
+	| 'open_question'
+	| 'flashcards'
+	| 'matching_pairs';
 
 // ========================
 // Задания (items) — по типу упражнения
@@ -16,53 +16,53 @@ export type ExerciseType =
 
 // 1. Fill in the Blanks
 export interface FillInTheBlanksItem {
-  id: number;
-  position: number;
-  partBefore: string;
-  partAfter: string;
-  correctAnswer: string;
-  distractors: string[];
-  options: string[];
-  wordRu: string;
-  wordAr: string;
+	id: number;
+	position: number;
+	partBefore: string;
+	partAfter: string;
+	correctAnswer: string;
+	distractors: string[];
+	options: string[];
+	wordRu: string;
+	wordAr: string;
 }
 
 // 2. Multiple Choice
 export interface MultipleChoiceItem {
-  id: number;
-  position: number;
-  questionRu: string | null;
-  questionAr: string | null;
-  correctAnswer: string;
-  options: string[];
+	id: number;
+	position: number;
+	questionRu: string | null;
+	questionAr: string | null;
+	correctAnswer: string;
+	options: string[];
 }
 
 // 3. Open Question
 export interface OpenQuestionItem {
-  id: number;
-  position: number;
-  questionRu: string | null;
-  questionAr: string | null;
-  correctAnswer: string;
-  // options не нужны
+	id: number;
+	position: number;
+	questionRu: string | null;
+	questionAr: string | null;
+	correctAnswer: string;
+	// options не нужны
 }
 
 // 4. Flashcards (карточки на перевод)
 export interface FlashcardItem {
-  id: number;
-  position: number;
-  wordAr: string;
-  wordRu: string;
-  correctAnswer: string; // можно не использовать, но для единообразия оставим
+	id: number;
+	position: number;
+	wordAr: string;
+	wordRu: string;
+	correctAnswer: string; // можно не использовать, но для единообразия оставим
 }
 
 // 5. Matching Pairs (найти пару)
 export interface MatchingPairItem {
-  id: number;
-  position: number;
-  wordAr: string;
-  wordRu: string;
-  correctAnswer: string; // обычно совпадает с wordRu или wordAr
+	id: number;
+	position: number;
+	wordAr: string;
+	wordRu: string;
+	correctAnswer: string; // обычно совпадает с wordRu или wordAr
 }
 
 // ========================
@@ -70,41 +70,41 @@ export interface MatchingPairItem {
 // ========================
 
 export interface BaseExercise {
-  id: number;
-  type: ExerciseType;
-  instructionRu: string;
-  instructionAr: string;
-  // audioCorrectUrl и audioIncorrectUrl НЕ НУЖНЫ — звуки на фронтенде
+	id: number;
+	type: ExerciseType;
+	instructionRu: string;
+	instructionAr: string;
+	// audioCorrectUrl и audioIncorrectUrl НЕ НУЖНЫ — звуки на фронтенде
 }
 
 // 1. Fill in the Blanks
 export interface FillInTheBlanksExercise extends BaseExercise {
-  type: "fill_in_the_blanks";
-  items: FillInTheBlanksItem[];
+	type: 'fill_in_the_blanks';
+	items: FillInTheBlanksItem[];
 }
 
 // 2. Multiple Choice
 export interface MultipleChoiceExercise extends BaseExercise {
-  type: "multiple_choice";
-  items: MultipleChoiceItem[];
+	type: 'multiple_choice';
+	items: MultipleChoiceItem[];
 }
 
 // 3. Open Question
 export interface OpenQuestionExercise extends BaseExercise {
-  type: "open_question";
-  items: OpenQuestionItem[];
+	type: 'open_question';
+	items: OpenQuestionItem[];
 }
 
 // 4. Flashcards
 export interface FlashcardsExercise extends BaseExercise {
-  type: "flashcards";
-  items: FlashcardItem[];
+	type: 'flashcards';
+	items: FlashcardItem[];
 }
 
 // 5. Matching Pairs
 export interface MatchingPairsExercise extends BaseExercise {
-  type: "matching_pairs";
-  items: MatchingPairItem[];
+	type: 'matching_pairs';
+	items: MatchingPairItem[];
 }
 
 // ========================
@@ -112,41 +112,41 @@ export interface MatchingPairsExercise extends BaseExercise {
 // ========================
 
 export type Exercise =
-  | FillInTheBlanksExercise
-  | MultipleChoiceExercise
-  | OpenQuestionExercise
-  | FlashcardsExercise
-  | MatchingPairsExercise;
+	| FillInTheBlanksExercise
+	| MultipleChoiceExercise
+	| OpenQuestionExercise
+	| FlashcardsExercise
+	| MatchingPairsExercise;
 
 // ========================
 // Статья
 // ========================
 
 export interface Article {
-  id: number;
-  titleRu: string;
-  titleAr: string;
-  description: string;
-  content: string;
-  imageUrl: string;
-  videoUrl: string | null;
-  themeRu: string | null;
-  themeAr: string | null;
-  themeSlug: string | null;
-  createdAt: string;
-  exercises?: Exercise[];
-  averageRating?: number | null;
-  userRating?: number | null;
-  isDimmed?: boolean;
-  onHover?: () => void;
-  onLeave?: () => void;
+	id: number;
+	titleRu: string;
+	titleAr: string;
+	description: string;
+	content: string;
+	imageUrl: string;
+	videoUrl: string | null;
+	themeRu: string | null;
+	themeAr: string | null;
+	themeSlug: string | null;
+	createdAt: string;
+	exercises?: Exercise[];
+	averageRating?: number | null;
+	userRating?: number | null;
+	isDimmed?: boolean;
+	onHover?: () => void;
+	onLeave?: () => void;
 }
 
 // Type guards
 // ========================
 
 export function isFillInTheBlanksExercise(
-  exercise: Exercise
+	exercise: Exercise
 ): exercise is FillInTheBlanksExercise {
-  return exercise.type === "fill_in_the_blanks";
+	return exercise.type === 'fill_in_the_blanks';
 }

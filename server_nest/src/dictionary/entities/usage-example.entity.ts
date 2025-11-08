@@ -9,7 +9,7 @@ import {
 import { Word } from './word.entity';
 
 @Entity({ name: 'usage_examples' })
-@Index(['word_id']) // ✅ Для быстрого поиска по слову
+@Index(['word_id'])
 export class UsageExample {
   @PrimaryGeneratedColumn()
   id!: number;

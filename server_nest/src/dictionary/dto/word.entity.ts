@@ -10,8 +10,8 @@ import { UsageExample } from '../entities/usage-example.entity';
 import { VerbForm } from '../entities/verb-form.entity';
 
 @Entity({ name: 'words' })
-@Index(['root_ar']) // ✅ Для быстрого поиска по корню
-@Index(['word_ar_normalized']) // ✅ Для поиска по слову
+@Index(['root_ar'])
+@Index(['word_ar_normalized'])
 export class Word {
   @PrimaryGeneratedColumn()
   id!: number;

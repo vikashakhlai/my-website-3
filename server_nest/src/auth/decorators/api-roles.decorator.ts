@@ -1,4 +1,3 @@
-// src/auth/decorators/api-roles.decorator.ts
 import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { Role } from '../roles.enum';

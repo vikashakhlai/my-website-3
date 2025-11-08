@@ -1,42 +1,42 @@
 import {
+  Body,
   Controller,
+  DefaultValuePipe,
+  Delete,
   Get,
-  Query,
+  MessageEvent,
   Param,
   ParseIntPipe,
-  DefaultValuePipe,
   Post,
-  Body,
-  UseGuards,
-  Request,
   Put,
-  Delete,
+  Query,
+  Request,
   Sse,
-  MessageEvent,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { interval, Observable, switchMap } from 'rxjs';
 
-import { ArticlesService } from './articles.service';
 import { Article } from './article.entity';
+import { ArticlesService } from './articles.service';
 import { Exercise } from './entities/exercise.entity';
 
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/roles.enum';
 
-import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
-import { RateArticleDto } from './dto/rate-article.dto';
 import { CreateArticleCommentDto } from './dto/create-article-comment.dto';
+import { CreateArticleDto } from './dto/create-article.dto';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
+import { RateArticleDto } from './dto/rate-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
-import { RatingsService } from 'src/ratings/ratings.service';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { CommentsService } from 'src/comments/comments.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { RatingsService } from 'src/ratings/ratings.service';
 
 @ApiTags('Articles')
 @Controller('articles')
@@ -48,9 +48,6 @@ export class ArticlesController {
     private readonly favoritesService: FavoritesService,
   ) {}
 
-  // ====================== Публичные ======================
-
-  /** 📰 Последние статьи (публично) */
   @Public()
   @ApiOperation({ summary: 'Последние статьи (публично)' })
   @Get('latest')
@@ -60,7 +57,6 @@ export class ArticlesController {
     return this.articlesService.getLatest(limit);
   }
 
-  /** 📋 Список статей (публично, с фильтром по теме) */
   @Public()
   @ApiOperation({ summary: 'Список статей (публично)' })
   @Get()
@@ -71,7 +67,6 @@ export class ArticlesController {
     return this.articlesService.getArticles(theme, limit);
   }
 
-  /** 🔍 Получить статью (публично). JWT добавляет userId */
   @Public()
   @ApiOperation({
     summary: 'Получить статью (публично). Если есть JWT — вернётся userId',
@@ -80,8 +75,6 @@ export class ArticlesController {
   async getById(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.articlesService.getById(id, req.user?.sub);
   }
-
-  // ====================== CRUD (ADMIN+) ======================
 
   @ApiOperation({ summary: 'Создать статью (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
@@ -113,8 +106,6 @@ export class ArticlesController {
     return this.articlesService.remove(id);
   }
 
-  // ====================== Exercises ======================
-
   @ApiOperation({ summary: 'Список упражнений (только авторизованные)' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
@@ -135,8 +126,6 @@ export class ArticlesController {
     dto.articleId = articleId;
     return this.articlesService.addExerciseToArticle(articleId, dto);
   }
-
-  // ====================== Rating ======================
 
   @ApiOperation({ summary: 'Оценить статью (1–5, только авторизованные)' })
   @ApiBearerAuth('access-token')
@@ -166,8 +155,6 @@ export class ArticlesController {
       }),
     );
   }
-
-  // ====================== Comments ======================
 
   @Public()
   @ApiOperation({ summary: 'Список комментариев (публично)' })
@@ -208,8 +195,6 @@ export class ArticlesController {
       })),
     );
   }
-
-  // ====================== Favorites ======================
 
   @ApiOperation({
     summary: 'Добавить статью в избранное (только авторизованные)',

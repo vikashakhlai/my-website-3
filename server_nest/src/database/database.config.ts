@@ -9,5 +9,4 @@ export const loadDatabaseConfig = (): DatabaseConfig => ({
   database: process.env.DB_NAME ?? 'postgres',
 });
 
-// ✅ используется Nest'ом
 export default registerAs<DatabaseConfig>('database', loadDatabaseConfig);

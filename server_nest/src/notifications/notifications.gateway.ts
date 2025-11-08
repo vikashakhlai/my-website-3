@@ -14,7 +14,7 @@ import { NotificationsService } from './notifications.service';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // ✅ Используйте env
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   },
   namespace: '/notifications',
 })
@@ -25,14 +25,13 @@ export class NotificationsGateway
   server!: Server;
 
   private readonly logger = new Logger(NotificationsGateway.name);
-  private readonly connectedUsers = new Map<string, string>(); // userId -> socketId
+  private readonly connectedUsers = new Map<string, string>();
 
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly jwtService: JwtService,
   ) {}
 
-  // === Подключение клиента ===
   async handleConnection(client: Socket): Promise<void> {
     try {
       const token = client.handshake.auth?.token as string | undefined;
@@ -57,7 +56,6 @@ export class NotificationsGateway
         `✅ Пользователь ${payload.sub} подключился к уведомлениям`,
       );
 
-      // ✅ Автоматически отправляем список уведомлений при подключении
       const notifications = await this.notificationsService.findForUser({
         id: payload.sub,
       } as any);
@@ -71,7 +69,6 @@ export class NotificationsGateway
     }
   }
 
-  // === Отключение клиента ===
   handleDisconnect(client: Socket): void {
     const userId = [...this.connectedUsers.entries()].find(
       ([, socketId]) => socketId === client.id,
@@ -83,7 +80,6 @@ export class NotificationsGateway
     }
   }
 
-  // === Отправка уведомления конкретному пользователю ===
   async sendNotificationToUser(
     userId: string,
     notification: unknown,
@@ -99,7 +95,6 @@ export class NotificationsGateway
     }
   }
 
-  // === Запрос всех уведомлений через WebSocket ===
   @SubscribeMessage('getNotifications')
   async handleGetNotifications(
     @ConnectedSocket() client: Socket,

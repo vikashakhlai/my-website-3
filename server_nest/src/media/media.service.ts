@@ -32,10 +32,6 @@ export class MediaService {
     private readonly ratingsService: RatingsService,
   ) {}
 
-  /* =========================================
-   * SELECTS
-   * ========================================= */
-
   async findAll(): Promise<Media[]> {
     const list = await this.mediaRepository
       .createQueryBuilder('media')
@@ -122,7 +118,6 @@ export class MediaService {
 
     const normalized = this.normalizeMediaPaths(media);
 
-    // Возвращаем то же, что и раньше + нормализованные пути.
     return Object.assign(normalized, {
       dialogueGroupId: media.dialogueGroupId ?? null,
       averageRating: avg.average ?? 0,
@@ -130,10 +125,6 @@ export class MediaService {
       userRating,
     });
   }
-
-  /* =========================================
-   * CREATE / UPDATE / DELETE
-   * ========================================= */
 
   async create(data: Partial<Media>): Promise<Media> {
     const entity = this.mediaRepository.create(data);
@@ -161,7 +152,6 @@ export class MediaService {
 
     const prevMediaUrl = media.mediaUrl;
 
-    // simple fields
     if (dto.title !== undefined) media.title = dto.title;
     if (dto.mediaUrl !== undefined) media.mediaUrl = dto.mediaUrl;
     if (dto.previewUrl !== undefined) media.previewUrl = dto.previewUrl;
@@ -224,10 +214,6 @@ export class MediaService {
     await this.mediaRepository.remove(media);
   }
 
-  /* =========================================
-   * EXERCISES
-   * ========================================= */
-
   async findExercisesByMedia(mediaId: number) {
     return this.exerciseRepository.find({
       where: { media: { id: mediaId } },
@@ -274,10 +260,6 @@ export class MediaService {
       this.exerciseRepository.create(exercise),
     );
   }
-
-  /* =========================================
-   * HELPERS
-   * ========================================= */
 
   private normalizeMediaPaths(media: Media): Media {
     media.mediaUrl = makeAbsoluteUrl(media.mediaUrl);

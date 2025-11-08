@@ -32,8 +32,6 @@ import { UpdateAuthorDto } from './dto/update-author.dto';
 export class AuthorsController {
   constructor(private readonly authorsService: AuthorsService) {}
 
-  // ==================== Публичный ====================
-
   @Public()
   @ApiOperation({ summary: 'Получить автора с его книгами (публично)' })
   @ApiParam({ name: 'id', example: 1, description: 'ID автора' })
@@ -45,7 +43,7 @@ export class AuthorsController {
   @Get(':id')
   async getAuthor(@Param('id', ParseIntPipe) id: number) {
     const result = await this.authorsService.getAuthorById(id);
-    // Т.к. `books` внутри `result` уже подготовлены, мы вручную формируем DTO
+
     return {
       id: result.id,
       full_name: result.full_name,
@@ -67,8 +65,6 @@ export class AuthorsController {
     const authors = await this.authorsService.getAllAuthors();
     return authors.map((a) => mapToDto(AuthorListResponseDto, a));
   }
-
-  // ==================== ADMIN+ ====================
 
   @ApiOperation({ summary: 'Создать автора (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')

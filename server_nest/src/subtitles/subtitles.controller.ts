@@ -27,7 +27,7 @@ export class SubtitlesController {
 
   @ApiOperation({ summary: 'Сгенерировать субтитры (только авторизованные)' })
   @ApiBearerAuth('access-token')
-  @Auth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN) // ✅ Уточните, кто может использовать
+  @Auth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiResponse({
     status: 201,
     description: 'Субтитры успешно созданы',

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { MediaResponseDto } from 'src/media/dto/media.response.dto'; // ✅ Убедитесь, что путь правильный
+import { MediaResponseDto } from 'src/media/dto/media.response.dto';
 
 export class DialogueGroupResponseDto {
   @ApiProperty({ example: 1, description: 'ID группы диалога' })
@@ -20,7 +20,7 @@ export class DialogueGroupResponseDto {
     description: 'Описание',
   })
   @Expose()
-  description!: string | null; // ✅ Изменили на `string | null`
+  description!: string | null;
 
   @ApiProperty({ example: 'fusha', description: 'Базовый язык' })
   @Expose()

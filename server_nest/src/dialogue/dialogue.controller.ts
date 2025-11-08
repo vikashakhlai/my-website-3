@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Role } from 'src/auth/roles.enum';
-import { mapToDto } from 'src/common/utils/map-to-dto.util'; // ✅ Импортируем утилиту
+import { mapToDto } from 'src/common/utils/map-to-dto.util';
 import { DialogueService } from './dialogue.service';
 import { CreateDialogueGroupDto } from './dto/create-dialogue-group.dto';
 import { DialogueGroupResponseDto } from './dto/dialogue-group-response.dto';
@@ -30,7 +30,6 @@ import { UpdateDialogueGroupDto } from './dto/update-dialogue-group.dto';
 export class DialogueController {
   constructor(private readonly dialogueService: DialogueService) {}
 
-  /** 📜 Получить список всех диалогов (требуется авторизация) */
   @ApiOperation({
     summary: 'Получить список диалогов (авторизованные пользователи)',
   })
@@ -44,10 +43,9 @@ export class DialogueController {
   @Get()
   async findAll(): Promise<DialogueGroupResponseDto[]> {
     const groups = await this.dialogueService.findAllGroups();
-    return groups.map((g) => mapToDto(DialogueGroupResponseDto, g)); // ✅ Преобразуем в DTO
+    return groups.map((g) => mapToDto(DialogueGroupResponseDto, g));
   }
 
-  /** 🔍 Получить один диалог (требуется авторизация) */
   @ApiOperation({
     summary: 'Получить один диалог (авторизованные пользователи)',
   })
@@ -64,10 +62,9 @@ export class DialogueController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<DialogueGroupResponseDto> {
     const group = await this.dialogueService.findGroupById(id);
-    return mapToDto(DialogueGroupResponseDto, group); // ✅ Преобразуем в DTO
+    return mapToDto(DialogueGroupResponseDto, group);
   }
 
-  /** ➕ Создать диалог (ADMIN, SUPER_ADMIN) */
   @ApiOperation({ summary: 'Создать диалог (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
@@ -82,10 +79,9 @@ export class DialogueController {
     @Body() dto: CreateDialogueGroupDto,
   ): Promise<DialogueGroupResponseDto> {
     const group = await this.dialogueService.createGroup(dto);
-    return mapToDto(DialogueGroupResponseDto, group); // ✅ Преобразуем в DTO
+    return mapToDto(DialogueGroupResponseDto, group);
   }
 
-  /** ♻️ Обновить диалог (ADMIN, SUPER_ADMIN) */
   @ApiOperation({ summary: 'Обновить диалог (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)
@@ -102,10 +98,9 @@ export class DialogueController {
     @Body() dto: UpdateDialogueGroupDto,
   ): Promise<DialogueGroupResponseDto> {
     const group = await this.dialogueService.updateGroup(id, dto);
-    return mapToDto(DialogueGroupResponseDto, group); // ✅ Преобразуем в DTO
+    return mapToDto(DialogueGroupResponseDto, group);
   }
 
-  /** 🗑 Удалить диалог (ADMIN, SUPER_ADMIN) */
   @ApiOperation({ summary: 'Удалить диалог (ADMIN, SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.ADMIN, Role.SUPER_ADMIN)

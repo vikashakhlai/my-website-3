@@ -1,14 +1,13 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ThemesService } from './themes.service';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ThemesService } from './themes.service';
 
 @ApiTags('Themes')
 @Controller('themes')
 export class ThemesController {
   constructor(private readonly themesService: ThemesService) {}
 
-  /** 📋 Все темы (публично) */
   @Public()
   @ApiOperation({ summary: 'Получить список всех тем (публично)' })
   @Get()
@@ -16,7 +15,6 @@ export class ThemesController {
     return this.themesService.findAll();
   }
 
-  /** 🔍 Тема по slug (публично) */
   @Public()
   @ApiOperation({ summary: 'Получить тему по slug (публично)' })
   @ApiParam({

@@ -17,7 +17,6 @@ export function makeAbsoluteUrl<T extends string | null | undefined>(
     base = `http://localhost:${port}`;
   }
 
-  // гарантируем наличие протокола
   if (!base.startsWith('http://') && !base.startsWith('https://')) {
     base = `http://${base}`;
   }

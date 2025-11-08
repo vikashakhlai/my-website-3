@@ -32,7 +32,6 @@ import { UpdateDialectTopicDto } from './dto/update-dialect-topic.dto';
 export class DialectTopicsController {
   constructor(private readonly topicsService: DialectTopicsService) {}
 
-  /** 📜 Получить все топики (публично) */
   @Public()
   @ApiOperation({ summary: 'Получить все темы диалектов (публично)' })
   @ApiResponse({
@@ -46,7 +45,6 @@ export class DialectTopicsController {
     return topics.map((t) => mapToDto(DialectTopicResponseDto, t));
   }
 
-  /** 🔍 Один топик (публично) */
   @Public()
   @ApiOperation({ summary: 'Получить тему диалекта по ID (публично)' })
   @ApiParam({ name: 'id', example: 1, description: 'ID темы' })
@@ -64,7 +62,6 @@ export class DialectTopicsController {
     return mapToDto(DialectTopicResponseDto, topic);
   }
 
-  /** ➕ Создать топик (только супер-админ) */
   @ApiOperation({ summary: 'Создать тему диалекта (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.SUPER_ADMIN)
@@ -80,7 +77,6 @@ export class DialectTopicsController {
     return mapToDto(DialectTopicResponseDto, topic);
   }
 
-  /** ♻️ Обновить топик (только супер-админ) */
   @ApiOperation({ summary: 'Обновить тему диалекта (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.SUPER_ADMIN)
@@ -100,7 +96,6 @@ export class DialectTopicsController {
     return mapToDto(DialectTopicResponseDto, topic);
   }
 
-  /** 🗑 Удалить топик (только супер-админ) */
   @ApiOperation({ summary: 'Удалить тему диалекта (SUPER_ADMIN)' })
   @ApiBearerAuth('access-token')
   @Auth(Role.SUPER_ADMIN)

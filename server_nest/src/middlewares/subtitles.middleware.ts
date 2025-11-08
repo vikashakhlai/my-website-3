@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { createReadStream, statSync, readFileSync, existsSync } from 'fs';
-import { join, extname, normalize } from 'path';
+import { createReadStream, existsSync, readFileSync, statSync } from 'fs';
+import { extname, join, normalize } from 'path';
 
 export function subtitlesMiddleware(req: Request, res: Response) {
   try {
@@ -17,12 +17,10 @@ export function subtitlesMiddleware(req: Request, res: Response) {
       join(baseDir, dialect, 'subtitles', filename),
     );
 
-    // 🔐 Защита от path traversal
     if (!subtitlesPath.startsWith(baseDir)) {
       return res.status(400).send('Недопустимый путь к файлу');
     }
 
-    // 🔍 Проверяем существование файла
     if (!existsSync(subtitlesPath)) {
       return res.status(404).send('Субтитры не найдены');
     }
@@ -34,7 +32,6 @@ export function subtitlesMiddleware(req: Request, res: Response) {
       return res.status(400).send('Неподдерживаемый формат субтитров');
     }
 
-    // ✅ Если WebVTT — отдаём как есть
     if (ext === '.vtt') {
       const stat = statSync(subtitlesPath);
       res.writeHead(200, {
@@ -44,7 +41,6 @@ export function subtitlesMiddleware(req: Request, res: Response) {
       return createReadStream(subtitlesPath).pipe(res);
     }
 
-    // 🔄 Если SRT — конвертируем в VTT
     if (ext === '.srt') {
       const srtContent = readFileSync(subtitlesPath, 'utf-8');
 

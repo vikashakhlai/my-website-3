@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 
 @Index(['userId', 'targetType', 'targetId'], { unique: true })
-@Index(['userId']) // ✅ Для быстрого поиска по пользователю
-@Index(['targetType', 'targetId']) // ✅ Для быстрого поиска по цели
+@Index(['userId'])
+@Index(['targetType', 'targetId'])
 @Entity('favorites')
 export class Favorite {
   @PrimaryGeneratedColumn()

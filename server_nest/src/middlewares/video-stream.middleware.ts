@@ -3,7 +3,6 @@ import { createReadStream, statSync } from 'fs';
 import { join } from 'path';
 
 export function videoStreamMiddleware(req: Request, res: Response) {
-  // ✅ Явные CORS заголовки
   res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header(
@@ -16,7 +15,6 @@ export function videoStreamMiddleware(req: Request, res: Response) {
   );
   res.header('Accept-Ranges', 'bytes');
 
-  // ✅ Разрешаем preflight
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.sendStatus(200);

@@ -1,16 +1,16 @@
+import { Personality } from 'src/personalities/personality.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
-  JoinColumn,
-  CreateDateColumn,
-  ManyToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Theme } from './themes/theme.entity';
 import { Exercise } from './entities/exercise.entity';
-import { Personality } from 'src/personalities/personality.entity';
+import { Theme } from './themes/theme.entity';
 
 @Entity('articles')
 export class Article {
@@ -38,7 +38,6 @@ export class Article {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt?: Date;
 
-  // 🔗 Связь с темой
   @ManyToOne(() => Theme, (theme) => theme.articles, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -46,12 +45,9 @@ export class Article {
   @JoinColumn({ name: 'theme_id' })
   theme?: Theme;
 
-  // ⚙️ Не обязательно хранить отдельный themeId,
-  // но если нужно для фильтрации — оставляем.
   @Column({ name: 'theme_id', type: 'int', nullable: true })
   themeId?: number | null;
 
-  // 📚 Упражнения, связанные со статьёй
   @OneToMany(() => Exercise, (exercise) => exercise.article, {
     cascade: ['insert', 'update'],
   })

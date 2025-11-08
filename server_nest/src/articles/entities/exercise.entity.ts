@@ -1,15 +1,15 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-} from 'typeorm';
 import { Article } from 'src/articles/article.entity';
 import { Media } from 'src/media/media.entity';
-import { ExerciseItem } from './exercise-item.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { DistractorPool } from './distractor-pool.entity';
+import { ExerciseItem } from './exercise-item.entity';
 import { ExerciseType } from './exercise-type.enum';
 
 @Entity('exercises')
@@ -17,7 +17,6 @@ export class Exercise {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  // Enum остаётся в TypeScript, но в БД — обычный varchar
   @Column({ type: 'varchar', length: 50, nullable: true })
   type?: ExerciseType;
 
@@ -27,7 +26,6 @@ export class Exercise {
   @Column({ name: 'instruction_ar', type: 'text', nullable: true })
   instructionAr?: string;
 
-  // связь с Article
   @ManyToOne(() => Article, (article) => article.exercises, {
     onDelete: 'CASCADE',
     nullable: true,
@@ -38,7 +36,6 @@ export class Exercise {
   @Column({ name: 'article_id', nullable: true })
   articleId?: number;
 
-  // связь с Media (новое)
   @ManyToOne(() => Media, (media) => media.exercises, {
     onDelete: 'CASCADE',
     nullable: true,
