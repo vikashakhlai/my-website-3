@@ -1,39 +1,44 @@
+/* ============================================
+   FAVORITE BUTTON COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .favorite-btn {
   width: 42px;
   height: 42px;
   border: none;
   outline: none;
   cursor: pointer;
-  border-radius: 50%;
-  background-color: #6366f1; /* насыщенный фиолетовый */
+  border-radius: var(--border-radius-full);
+  background-color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(107, 33, 168, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.3s ease,
-    background-color 0.3s ease;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-normal),
+    background-color var(--transition-normal);
 }
 
 .favorite-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 6px 14px rgba(107, 33, 168, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 .icon {
   width: 22px;
   height: 22px;
-  color: #ffffff;
-  transition: transform 0.3s ease, fill 0.3s ease, color 0.3s ease;
+  color: var(--color-text-inverse);
+  transition: transform var(--transition-normal), fill var(--transition-normal), color var(--transition-normal);
 }
 
 .favorite-btn.active {
-  background-color: #6c70d7; /* чуть ярче при активации */
-  box-shadow: 0 6px 14px rgba(121, 113, 242, 0.4);
+  background-color: var(--color-primary-light);
+  box-shadow: var(--shadow-lg);
 }
 
 .favorite-btn.active .icon {
-  color: #ffffff;
-  fill: #ffffff;
+  color: var(--color-text-inverse);
+  fill: var(--color-text-inverse);
   transform: scale(1.1);
 }
 

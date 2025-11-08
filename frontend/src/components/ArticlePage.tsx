@@ -22,6 +22,7 @@ import useScrollToTop from "../hooks/useScrollToTop";
 import FavoriteButton from "../components/FavoriteButton";
 import { StarRating } from "../components/StarRating";
 import { CommentsSection } from "../components/CommentsSection";
+import BackZone from "./BackZone";
 import { api } from "../api/auth";
 import { favoritesApi } from "../api/favorites";
 
@@ -86,6 +87,8 @@ const ArticlePage = () => {
 
   return (
     <div className={styles.articlePage}>
+      <BackZone to="/ArticlesPage" label="Вернуться к списку статей" />
+      
       <img
         src={article.imageUrl}
         alt={article.titleRu}

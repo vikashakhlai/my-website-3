@@ -22,19 +22,7 @@
   z-index: 2;
 }
 
-/* 📍 Стрелка "парит" слева от обложки */
-.floatingBack {
-  position: absolute;
-  top: 40px; /* отступ сверху */
-  left: -60px; /* вынесена за пределы контейнера */
-  z-index: 5;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.floatingBack:hover {
-  transform: scale(1.08);
-  opacity: 0.85;
-}
+/* BackZone is now fixed, no need for floatingBack styles */
 
 /* --- Заголовок и избранное --- */
 .header {
@@ -109,19 +97,7 @@
 }
 
 /* --- Адаптив --- */
-@media (max-width: 1024px) {
-  .floatingBack {
-    left: -40px;
-  }
-}
-
 @media (max-width: 768px) {
-  .floatingBack {
-    position: absolute;
-    left: 10px;
-    top: 10px;
-  }
-
   .metaBlock {
     flex-direction: column;
     align-items: flex-start;

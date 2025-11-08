@@ -1,25 +1,30 @@
+/* ============================================
+   AUTH PAGE STYLES
+   Using global styles system
+   ============================================ */
+
 .auth-container {
   max-width: 400px;
-  margin: 80px auto;
-  padding: 40px 30px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin: var(--space-20) auto;
+  padding: var(--space-10) var(--space-8);
+  background: var(--color-bg);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
   text-align: center;
-  font-family: "Inter", sans-serif;
-  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+  transition: var(--transition-all);
 }
 
 .auth-container h2 {
-  margin-bottom: 24px;
-  font-size: 24px;
-  color: #222;
+  margin-bottom: var(--space-6);
+  font-size: var(--font-size-2xl);
+  color: var(--color-text);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 .form-group {
@@ -27,94 +32,95 @@
 }
 
 .form-group label {
-  font-weight: 500;
-  font-size: 14px;
-  color: #555;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
 }
 
 .form-group input {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  font-size: 15px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid var(--color-border);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .form-group input:focus {
-  border-color: #5b67f1;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(91, 103, 241, 0.2);
   outline: none;
 }
 
-.btn {
-  background: #5b67f1;
-  color: white;
+/* Button styles are now in global components.css */
+.auth-container .btn {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   border: none;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 16px;
+  padding: var(--space-3);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.3s ease, transform 0.1s ease;
+  font-weight: var(--font-weight-medium);
+  transition: background var(--transition-normal), transform var(--transition-fast);
 }
 
-.btn:hover {
-  background: #4a56d4;
+.auth-container .btn:hover {
+  background: var(--color-primary-dark);
 }
 
-.btn:active {
+.auth-container .btn:active {
   transform: scale(0.98);
 }
 
 .switch-text {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #444;
+  margin-top: var(--space-5);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
 }
 
 .link-btn {
   background: none;
   border: none;
-  color: #5b67f1;
-  font-weight: 600;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color var(--transition-fast);
 }
 
 .link-btn:hover {
-  color: #3a46c3;
+  color: var(--color-primary-dark);
 }
 
 .error-message {
-  color: #e53e3e;
-  font-size: 13px;
-  margin-top: 4px;
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-1);
 }
 
 /* ✅ Toast */
 .toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: var(--space-5);
+  right: var(--space-5);
   background: #333;
-  color: #fff;
-  padding: 14px 18px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: var(--color-text-inverse);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
   animation: fadeInOut 4s ease forwards;
-  z-index: 9999;
-  font-size: 14px;
+  z-index: var(--z-index-tooltip);
+  font-size: var(--font-size-sm);
 }
 
 .toast.success {
-  background: #48bb78;
+  background: var(--color-success);
 }
 
 .toast.error {
-  background: #e53e3e;
+  background: var(--color-danger);
 }
 
 @keyframes fadeInOut {

@@ -246,6 +246,7 @@ const DictionaryWidget: React.FC<DictionaryWidgetProps> = ({
       {showKeyboard && (
         <div className={styles.keyboardContainer}>
           <ArabicKeyboard
+            variant="widget"
             onKeyPress={handleKeyPress}
             onClose={() => setShowKeyboard(false)}
             onClear={() => setQuery("")}

@@ -1,15 +1,19 @@
+/* ============================================
+   ARTICLE CARD COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .card {
   display: flex;
-  gap: 20px;
-  padding: 22px;
-  background: white;
-  border-radius: 22px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--color-bg);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-md);
   text-decoration: none;
   color: inherit;
-  transition: all 0.25s ease;
+  transition: var(--transition-all);
   align-items: stretch;
-  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .card,
@@ -25,7 +29,7 @@
 .imageWrapper {
   flex: 0 0 240px;
   height: 160px;
-  border-radius: 18px;
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
 }
 
@@ -46,59 +50,56 @@
 .header {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .titleRu {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
 }
 
 .titleAr {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   text-align: right;
   direction: rtl;
 }
 
 .tag {
   display: inline-block;
-  padding: 4px 10px;
-  font-size: 0.8rem;
-  background: #eef0ff;
-  color: #6366f1;
-  border-radius: 8px;
-  margin: 6px 0 10px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  background: var(--color-primary-lightest);
+  color: var(--color-primary);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-2) 0 var(--space-3);
   width: fit-content;
 }
 
 .description {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #444;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
 }
 
 .readMore {
-  margin-top: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #6366f1;
-  transition: opacity 0.2s;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  transition: opacity var(--transition-fast);
   text-decoration: none;
 }
 
 .card:hover .readMore {
   text-decoration: underline;
-}
-
-.card:hover .readMore {
   opacity: 0.7;
 }
 
 .dimmed {
   opacity: 0.45;
   filter: grayscale(25%);
-  pointer-events: none; /* ✅ чтобы затемнённые карточки не ловили ховеры */
+  pointer-events: none;
 }
 
 /* ✅ Адаптив */

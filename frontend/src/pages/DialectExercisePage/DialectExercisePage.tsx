@@ -207,13 +207,13 @@ export default function DialectExercisePage() {
 
   return (
     <div className="dialect-exercise">
+      <BackZone to="/dialects" label="Вернуться к диалектам" />
+      
       {mediaPlayer}
 
       {/* 🧾 Meta */}
       <div className="exercise-meta">
         <div className="meta-inline">
-          <BackZone to="/dialects" />
-
           {media.licenseType === "original" && (
             <div className="exclusive">Эксклюзив Oasis</div>
           )}

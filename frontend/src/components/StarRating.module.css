@@ -1,23 +1,27 @@
+/* ============================================
+   STAR RATING COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .ratingContainer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-family: var(--font-sans);
 }
 
 /* --- Ряд звёзд --- */
 .starsRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .starWrapper {
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.2s ease;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
 .starWrapper:hover {
@@ -25,7 +29,7 @@
 }
 
 .starIcon {
-  transition: all 0.25s ease;
+  transition: var(--transition-all);
   filter: drop-shadow(0 2px 4px rgba(255, 214, 107, 0.25));
 }
 
@@ -36,22 +40,22 @@
 
 /* --- Средний рейтинг --- */
 .averageText {
-  font-size: 0.9rem;
-  color: #555;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .averageValue {
-  color: #5b67f1;
-  font-weight: 600;
-  font-size: 1rem;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
 }
 
 .votes {
-  color: #777;
-  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
 }
 
 /* --- Hover Glow эффект при наведении --- */
@@ -66,10 +70,10 @@
   }
 
   .starsRow {
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .averageText {
-    font-size: 0.85rem;
+    font-size: var(--font-size-xs);
   }
 }

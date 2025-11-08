@@ -111,10 +111,7 @@ const TextbookPage = () => {
 
   return (
     <div className="textbook-page">
-      {/* 🔙 Кнопка назад */}
-      <div className="back-fixed">
-        <BackZone to="/StudentBooksPage" />
-      </div>
+      <BackZone to="/StudentBooksPage" label="Вернуться к списку учебников" />
 
       {/* Основной контент */}
       <div className="textbook-header">

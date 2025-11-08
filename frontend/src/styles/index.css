@@ -1,0 +1,97 @@
+/* ============================================
+   GLOBAL STYLES - Main Entry Point
+   ============================================ */
+
+/* Import all style modules */
+@import './variables.css';
+@import './reset.css';
+@import './utilities.css';
+@import './components.css';
+
+/* ===== ADDITIONAL GLOBAL STYLES ===== */
+
+/* Article Styles */
+.article-page {
+  padding: var(--space-6);
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+}
+
+.article-image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--space-6);
+}
+
+.article-theme {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin-bottom: var(--space-2);
+}
+
+.article-theme-label {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-full);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  display: inline-block;
+  margin-left: var(--space-1);
+}
+
+.article-title {
+  font-size: var(--font-size-3xl);
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--color-text);
+}
+
+.article-title-arabic {
+  font-family: var(--font-arabic);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-2xl);
+  color: var(--color-text);
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  direction: rtl;
+  text-align: right;
+  line-height: var(--line-height-snug);
+}
+
+.article-description {
+  font-style: italic;
+  color: var(--color-text-light);
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-6);
+  font-size: var(--font-size-lg);
+}
+
+.article-content {
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+}
+
+.article-content p {
+  margin-bottom: var(--space-4);
+}
+
+.article-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.article-exercises {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.article-exercises-title {
+  margin-bottom: var(--space-6);
+  color: var(--color-text);
+}
+

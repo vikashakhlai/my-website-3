@@ -1,58 +1,63 @@
+/* ============================================
+   PAGINATION COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 2rem;
+  gap: var(--space-1);
+  margin-top: var(--space-8);
   flex-wrap: wrap;
 }
 
 /* Кнопки страниц */
 .pagination button {
-  border: 1px solid #ccc;
-  background: white;
-  border-radius: 6px;
-  padding: 0.35rem 0.7rem;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  padding: var(--space-1) var(--space-2);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-all);
 }
 
 .pagination button:hover:not(:disabled) {
-  background: #f3f6ff;
-  border-color: #6366f1;
-  color: #6366f1;
+  background: var(--color-primary-lightest);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* Активная страница */
 .activePage {
-  background: #6366f1;
-  color: white;
-  border-color: #6366f1;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
 }
 
 /* Отключенные кнопки */
 .pagination button:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 /* Эллипс (...) */
 .pagination span {
-  color: #888;
-  padding: 0 0.3rem;
+  color: var(--color-text-muted);
+  padding: 0 var(--space-1);
   user-select: none;
 }
 
 /* Адаптивность */
 @media (max-width: 768px) {
   .pagination {
-    gap: 0.3rem;
-    margin-top: 1.5rem;
+    gap: var(--space-1);
+    margin-top: var(--space-6);
   }
 
   .pagination button {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.85rem;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 }

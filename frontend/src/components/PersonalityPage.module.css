@@ -4,12 +4,7 @@
   background: #f9f9fb;
 }
 
-.backFixed {
-  position: fixed;
-  top: 2rem;
-  left: 2rem;
-  z-index: 1000;
-}
+/* BackZone is now fixed in its own component, no need for backFixed styles */
 
 .container {
   max-width: 1100px;

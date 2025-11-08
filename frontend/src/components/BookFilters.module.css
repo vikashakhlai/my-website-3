@@ -1,47 +1,51 @@
+/* ============================================
+   BOOK FILTERS COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: flex-start;
-  margin-bottom: 1.5rem;
-  z-index: 10;
+  margin-bottom: var(--space-6);
+  z-index: var(--z-index-dropdown);
 }
 
 /* === Карта одного фильтра === */
 .filterItem {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-1);
   flex: 1 1 240px;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 0.8rem 1rem;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08), 0 4px 10px rgba(0, 0, 0, 0.06);
-  transition: all 0.25s ease;
+  background: var(--color-bg);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-all);
 }
 
 .filterItem:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12),
-    0 6px 14px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
 }
 
 /* inputs & selects */
 .filterItem input,
 .filterItem select {
-  padding: 0.55rem 0.7rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.92rem;
-  background: #fafafa;
-  transition: all 0.2s ease;
+  padding: var(--space-2) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-secondary);
+  transition: var(--transition-all);
 }
 
 .filterItem input:focus,
 .filterItem select:focus {
   outline: none;
-  background: white;
-  border-color: #6366f1;
+  background: var(--color-bg);
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
@@ -52,62 +56,62 @@
 
 .suggestions {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + var(--space-1));
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
   list-style: none;
   margin: 0;
-  padding: 4px 0;
+  padding: var(--space-1) 0;
   max-height: 220px;
   overflow-y: auto;
-  z-index: 9999; /* ✅ Поверх всего */
-  animation: fadeIn 0.15s ease-in;
+  z-index: var(--z-index-popover);
+  animation: fadeIn var(--transition-fast) ease-in;
 }
 
 .suggestions li {
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.15s ease, color 0.15s ease;
+  font-size: var(--font-size-sm);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .suggestions li:hover {
-  background: rgba(99, 102, 241, 0.08);
-  color: #4f46e5;
+  background: var(--color-primary-lightest);
+  color: var(--color-primary-dark);
 }
 
 /* === Reset + Count === */
 .actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .resetButton {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 0.55rem 1.2rem;
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-all);
 }
 
 .resetButton:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
+  background: var(--color-primary-lightest);
+  color: var(--color-primary-dark);
 }
 
 .count {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   margin-left: auto;
 }
 

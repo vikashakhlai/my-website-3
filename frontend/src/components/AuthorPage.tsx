@@ -72,7 +72,7 @@ const AuthorPage = () => {
 
   return (
     <div className={styles.container}>
-      <BackZone to="../" />
+      <BackZone to="../" label="Вернуться к списку авторов" />
 
       <div className={styles.headerRow}>
         <div className={styles.photoWrapper}>

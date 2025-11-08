@@ -1,31 +1,36 @@
+/* ============================================
+   LAYOUT COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .main-content {
   min-height: calc(100vh - 120px);
-  padding: 1.5rem 1rem;
+  padding: var(--space-6) var(--space-4);
 }
 
 .dictionary-trigger {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: var(--space-5);
+  right: var(--space-5);
   width: 50px;
   height: 50px;
-  border-radius: 50%;
-  background: var(--primary-color, #4a6cf7);
-  color: white;
+  border-radius: var(--border-radius-full);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   border: none;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   cursor: pointer;
-  z-index: 9999;
+  z-index: var(--z-index-fixed);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .dictionary-trigger:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-xl);
 }
 
 .dictionary-trigger:focus {

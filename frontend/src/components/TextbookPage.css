@@ -9,15 +9,7 @@
   background-color: #fafafa;
 }
 
-/* 🔙 Фиксированная стрелка */
-.back-fixed {
-  position: fixed;
-  top: 1.5rem;
-  left: 1.5rem;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-}
+/* BackZone is now fixed in its own component, no need for back-fixed styles */
 
 /* 🔹 Заголовочный блок */
 .textbook-header {

@@ -1,12 +1,16 @@
+/* ============================================
+   MEDIA PLAYER COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 /* 🎯 Универсальный контейнер */
 .media-wrapper {
   width: 480px;
   height: auto;
-  /* margin: 1.5rem auto 0; */
-  border-radius: 16px;
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: var(--shadow-xl);
+  transition: var(--transition-all);
 }
 
 /* 🎥 Видеорежим */
@@ -27,13 +31,13 @@
 .media-wrapper.audio .video-js {
   width: 100% !important;
   height: 60px !important;
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
+  background: var(--color-bg) !important;
+  border: var(--border-width) solid var(--color-border) !important;
+  border-radius: var(--border-radius-lg) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: var(--shadow-md) !important;
   padding: 0 !important;
   margin: 0 !important;
 }
@@ -45,65 +49,65 @@
 
 /* 🎛 Контрольная панель — белая, с рамкой */
 .media-wrapper.audio .vjs-control-bar {
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
+  background: var(--color-bg) !important;
+  border: var(--border-width) solid var(--color-border) !important;
+  border-radius: var(--border-radius-lg) !important;
   box-shadow: none !important;
   height: 48px !important;
   width: 100% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 0 8px !important;
+  padding: 0 var(--space-2) !important;
   margin: 0 !important;
-  color: #111 !important;
+  color: var(--color-text) !important;
 }
 
 /* Кнопки управления */
 .media-wrapper.audio .vjs-button {
-  padding: 0 8px !important;
+  padding: 0 var(--space-2) !important;
   margin: 0 !important;
-  font-size: 16px !important;
-  color: #111 !important;
-  fill: #111 !important; /* SVG-иконки */
+  font-size: var(--font-size-base) !important;
+  color: var(--color-text) !important;
+  fill: var(--color-text) !important;
 }
 
 .media-wrapper.audio .vjs-button:hover {
   filter: brightness(0.8);
-  transition: all 0.15s ease-in-out;
+  transition: var(--transition-fast);
 }
 
 /* 🔘 Ползунок прогресса */
 .media-wrapper.audio .vjs-progress-control .vjs-progress-holder {
-  background-color: #e5e7eb !important;
+  background-color: var(--color-border) !important;
   height: 4px !important;
-  border-radius: 2px !important;
+  border-radius: var(--border-radius-sm) !important;
 }
 
 /* 🟢 Прогресс воспроизведения */
 .media-wrapper.audio .vjs-progress-control .vjs-play-progress {
-  background-color: #3b82f6 !important; /* синий акцент */
+  background-color: var(--color-info) !important;
   height: 4px !important;
 }
 
 /* ⚪ Бегунок (ручка) */
 .media-wrapper.audio .vjs-slider-handle {
-  background-color: #3b82f6 !important;
-  border: 2px solid #fff !important;
+  background-color: var(--color-info) !important;
+  border: 2px solid var(--color-bg) !important;
   width: 12px !important;
   height: 12px !important;
-  border-radius: 50% !important;
+  border-radius: var(--border-radius-full) !important;
   top: -4px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 /* Текст времени и скорости */
 .media-wrapper.audio .vjs-current-time,
 .media-wrapper.audio .vjs-duration,
 .media-wrapper.audio .vjs-playback-rate-value {
-  color: #111 !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 /* Убираем большую кнопку воспроизведения */

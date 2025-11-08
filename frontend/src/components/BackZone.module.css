@@ -1,32 +1,100 @@
+/* ============================================
+   BACK ZONE COMPONENT STYLES
+   Fixed left-side navigation button
+   Using global styles system
+   ============================================ */
+
 .backZone {
-  width: 44px;
-  height: 44px;
+  position: fixed;
+  left: var(--space-4);
+  /* Position in the middle of viewport, accounting for header (~80px) and footer */
+  top: clamp(100px, 50vh, calc(100vh - 150px));
+  transform: translateY(-50%);
+  z-index: var(--z-index-fixed);
+  
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.08),
-    -2px -2px 6px rgba(255, 255, 255, 0.9);
-  color: #333;
+  border-radius: var(--border-radius-full);
+  
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  
+  color: var(--color-primary);
   cursor: pointer;
-  transition: all 0.25s ease;
-  margin: 16px 0 16px 16px;
+  
+  transition: all var(--transition-normal);
+  
+  /* Accessibility */
+  outline: none;
+}
+
+.backZone:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
 }
 
 .backZone:hover {
-  transform: translateX(-3px);
-  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1),
-    -2px -2px 6px rgba(255, 255, 255, 0.8);
-  background: linear-gradient(145deg, #e8e8e8, #ffffff);
+  transform: translateY(-50%) translateX(-4px);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-xl);
+}
+
+.backZone:active {
+  transform: translateY(-50%) translateX(-2px) scale(0.95);
 }
 
 .arrow {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.25s ease;
+  width: 24px;
+  height: 24px;
+  transition: transform var(--transition-normal);
+  stroke: currentColor;
 }
 
 .backZone:hover .arrow {
-  transform: translateX(-2px);
+  transform: translateX(-3px);
+}
+
+.backZone:active .arrow {
+  transform: translateX(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .backZone {
+    width: 48px;
+    height: 48px;
+    left: var(--space-2);
+  }
+  
+  .arrow {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .backZone {
+    width: 44px;
+    height: 44px;
+    left: var(--space-2);
+  }
+  
+  .arrow {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Ensure it doesn't overlap header/footer */
+@media (min-height: 600px) {
+  .backZone {
+    /* Already positioned at 50% from top, which is fine */
+  }
 }

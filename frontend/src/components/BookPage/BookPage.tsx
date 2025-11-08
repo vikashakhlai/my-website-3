@@ -92,6 +92,10 @@ const BookPage = () => {
           ? data.otherBooksByAuthor
           : rootBook.otherBooksByAuthor ?? [],
         isFavorite: Boolean(rootBook.isFavorite),
+        // Сохраняем рейтинги из API
+        averageRating: rootBook.averageRating ? Number(rootBook.averageRating) : null,
+        ratingCount: rootBook.ratingCount ? Number(rootBook.ratingCount) : 0,
+        userRating: rootBook.userRating ? Number(rootBook.userRating) : null,
       };
 
       setBook(safeBook);
@@ -126,13 +130,10 @@ const BookPage = () => {
 
   return (
     <div className={styles.pageWrapper}>
+      <BackZone to="/BooksPage" label="Вернуться к списку книг" />
+      
       <div className={styles.container}>
         <div className={styles.bookSection}>
-          {/* 📍 Абсолютно позиционированная стрелка */}
-          <div className={styles.floatingBack}>
-            <BackZone to="/BooksPage" />
-          </div>
-
           {/* Основной контент книги */}
           <div className={styles.bookContent}>
             <div className={styles.header}>

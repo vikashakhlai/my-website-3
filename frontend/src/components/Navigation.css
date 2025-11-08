@@ -1,6 +1,7 @@
-:root {
-  --primary-color: #6b46c1;
-}
+/* ============================================
+   NAVIGATION COMPONENT STYLES
+   Using global styles system
+   ============================================ */
 
 /* Основная навигация */
 .navigation {
@@ -20,26 +21,26 @@
 /* Ссылки */
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  gap: var(--space-6);
   align-items: center;
-  transition: all 0.3s ease;
+  transition: var(--transition-all);
 }
 
 .nav-link {
   text-decoration: none;
-  color: #4a5568;
-  font-weight: 500;
-  transition: color 0.25s ease, transform 0.2s ease;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-normal), transform var(--transition-fast);
 }
 
 .nav-link:hover {
-  color: var(--primary-color);
+  color: var(--color-primary);
   transform: scale(1.05);
 }
 
 .nav-link.active {
-  color: var(--primary-color);
-  font-weight: 600;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
   transform: scale(1.05);
 }
 
@@ -53,16 +54,16 @@
   background: none;
   border: none;
   cursor: pointer;
-  gap: 5px;
+  gap: var(--space-1);
   padding: 0;
 }
 
 .burger span {
   width: 100%;
   height: 3px;
-  background-color: #4a5568;
-  border-radius: 2px;
-  transition: all 0.3s ease;
+  background-color: var(--color-text-muted);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-all);
 }
 
 .burger.open span:nth-child(1) {
@@ -87,13 +88,13 @@
     position: absolute;
     top: 60px;
     right: 0;
-    background: white;
+    background: var(--color-bg);
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
     opacity: 0;
     pointer-events: none;
     transform: translateY(-10px);
@@ -107,6 +108,6 @@
 
   .nav-link {
     width: 100%;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
 }

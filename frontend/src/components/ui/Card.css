@@ -1,0 +1,7 @@
+/* Card component styles are handled by global components.css */
+/* Additional card-specific styles */
+
+.card-hoverable:hover {
+  transform: translateY(-2px);
+}
+

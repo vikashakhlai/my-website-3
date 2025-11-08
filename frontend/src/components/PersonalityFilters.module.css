@@ -1,54 +1,58 @@
+/* ============================================
+   PERSONALITY FILTERS COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: flex-start;
-  margin-bottom: 1.5rem;
-  z-index: 100;
+  margin-bottom: var(--space-6);
+  z-index: var(--z-index-dropdown);
 }
 
 /* === Элемент фильтра (карточка) === */
 .filterItem {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-1);
   flex: 1 1 220px;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 0.8rem 1rem;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08), 0 4px 10px rgba(0, 0, 0, 0.05);
-  transition: all 0.25s ease;
+  background: var(--color-bg);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-all);
 }
 
 .filterItem:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12),
-    0 6px 14px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-lg);
 }
 
 /* === Заголовок поля === */
 .filterItem label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #333;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
 }
 
 /* === Инпут / Селект === */
 .filterItem input,
 .filterItem select {
-  padding: 0.5rem 0.7rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background: #fafafa;
-  transition: all 0.2s ease;
+  padding: var(--space-2) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-secondary);
+  transition: var(--transition-all);
 }
 
 .filterItem input:focus,
 .filterItem select:focus {
   outline: none;
-  background: #fff;
-  border-color: #6366f1;
+  background: var(--color-bg);
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
@@ -56,26 +60,26 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
   width: 100%;
 }
 
 .resetButton {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 0.55rem 1.2rem;
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-all);
 }
 
 .resetButton:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
+  background: var(--color-primary-lightest);
+  color: var(--color-primary-dark);
 }
 
 .resetButton:active {
@@ -83,8 +87,8 @@
 }
 
 .count {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   margin-left: auto;
 }
 
@@ -92,23 +96,23 @@
 @media (max-width: 768px) {
   .filters {
     flex-direction: column;
-    gap: 0.7rem;
+    gap: var(--space-2);
   }
 
   .filterItem {
     width: 100%;
     flex: none;
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--border-radius-lg);
   }
 
   .filterItem input,
   .filterItem select {
-    padding: 0.45rem 0.6rem;
-    font-size: 0.85rem;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .actions {
-    margin-top: 0.2rem;
+    margin-top: var(--space-1);
   }
 }

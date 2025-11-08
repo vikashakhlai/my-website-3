@@ -1,7 +1,12 @@
+/* ============================================
+   QUOTES BLOCK COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 /* === Контейнер секции === */
 .quotes-section {
   width: 100%;
-  padding: 4rem 2rem;
+  padding: var(--space-16) var(--space-8);
   position: relative;
   background: linear-gradient(
     180deg,
@@ -23,18 +28,18 @@
   opacity: 0.05;
   pointer-events: none;
   mix-blend-mode: multiply;
-  z-index: -1; /* ✅ фон под карточками */
+  z-index: -1;
 }
 
 /* === Сетка === */
 .quotes-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ✅ адаптив */
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-8);
   justify-content: center;
   align-items: stretch;
-  max-width: 1200px;
+  max-width: var(--container-max-width);
   margin: 0 auto;
   z-index: 2;
 }
@@ -42,12 +47,12 @@
 /* === Карточка цитаты === */
 .quote-card {
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: var(--border-radius-2xl);
+  padding: var(--space-8);
   box-shadow: 0 6px 22px rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.1);
+  border: var(--border-width) solid rgba(99, 102, 241, 0.1);
   backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
+  transition: var(--transition-all);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -62,32 +67,32 @@
 .quote-ar {
   direction: rtl;
   text-align: right;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.5;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--space-4);
 }
 
 .quote-ru {
-  font-size: 1.15rem;
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--space-4);
 }
 
 /* === Автор === */
 .quote-author {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #6366f1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
   text-decoration: none;
   align-self: flex-start;
-  transition: color 0.2s ease;
+  transition: color var(--transition-fast);
 }
 
 .quote-author:hover {
-  color: #4f46e5;
+  color: var(--color-primary-dark);
 }
 
 /* === Skeleton при загрузке === */
@@ -103,18 +108,18 @@
 @media (max-width: 768px) {
   .quotes-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: var(--space-6);
   }
 
   .quote-card {
-    padding: 1.5rem;
+    padding: var(--space-6);
   }
 
   .quote-ar {
-    font-size: 1.6rem;
+    font-size: var(--font-size-2xl);
   }
 
   .quote-ru {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
 }

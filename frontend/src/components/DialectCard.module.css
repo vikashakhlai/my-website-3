@@ -1,9 +1,14 @@
+/* ============================================
+   DIALECT CARD COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 .card {
   display: block;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--color-bg);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
@@ -12,7 +17,7 @@
 
 .card:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-xl);
 }
 
 /* === Превью === */
@@ -20,17 +25,17 @@
   position: relative;
   width: 100%;
   height: 220px;
-  background: #f3f4f6;
+  background: var(--color-bg-muted);
   overflow: hidden;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  border-top-left-radius: var(--border-radius-2xl);
+  border-top-right-radius: var(--border-radius-2xl);
 }
 
 /* Скелетон */
 .skeleton {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg-secondary) 50%, var(--color-border) 75%);
   background-size: 400% 100%;
   animation: shimmer 1.5s infinite linear;
   z-index: 1;
@@ -50,7 +55,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.6s ease, transform 0.4s ease;
+  transition: opacity var(--transition-slow), transform var(--transition-normal);
 }
 
 .visible {
@@ -64,92 +69,92 @@
 /* === Бейджи === */
 .badge {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-lg);
   z-index: 3;
 }
 
 /* === Контент === */
 .content {
-  padding: 16px;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
   margin: 0;
 }
 
 .topics {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 4px 0;
+  gap: var(--space-2);
+  margin: var(--space-1) 0;
 }
 
 .topic {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition-all);
 }
 
 .topic:hover {
-  background: #e5e7eb;
+  background: var(--color-bg-hover);
   transform: scale(1.05);
 }
 
 .topicActive {
-  background: #ede9fe;
-  color: #4f46e5;
-  font-weight: 600;
+  background: var(--color-secondary-lightest);
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* === Источник и метаданные === */
 .exclusive {
-  color: #7c3aed;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: linear-gradient(90deg, #c084fc, #7c3aed);
+  color: var(--color-secondary-dark);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  background: linear-gradient(90deg, var(--color-secondary-light), var(--color-secondary-dark));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .source {
-  font-size: 0.85rem;
-  color: #4b5563;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
 }
 
 .metaInfo {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-top: 6px;
-  color: #374151;
-  font-size: 0.85rem;
+  margin-top: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
 }
 
 .metaInfo span {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 3px 8px;
-  border-radius: 6px;
+  gap: var(--space-1);
+  background: var(--color-bg-muted);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--border-radius);
 }
 
 /* === Уровень === */
@@ -157,33 +162,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
-  border-radius: 8px;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
 }
 
 /* === Fusha === */
 .fusha {
-  font-size: 0.9rem;
-  color: #4b5563;
-  margin-top: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
 }
 
 .partner {
-  font-size: 0.85rem;
-  color: #4b5563;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
 }
 
 .partner svg {
-  color: #6366f1;
+  color: var(--color-primary);
 }
 
 /* === 📱 Адаптив === */
@@ -193,16 +198,16 @@
   }
 
   .title {
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
   }
 
   .badge {
-    font-size: 0.75rem;
-    padding: 3px 8px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
   }
 
   .topic {
-    font-size: 0.75rem;
-    padding: 2px 6px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
   }
 }

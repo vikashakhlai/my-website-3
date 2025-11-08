@@ -1,17 +1,7 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* ============================================
+   APP STYLES
+   Note: Global styles are now in styles/index.css
+   This file can be used for app-specific overrides
+   ============================================ */
 
-/* Корневые переменные */
-:root {
-  /* Цвета */
-  --color-primary: #686cdf;
-  --color-secondary: #4a90e2;
-
-  /* Типографика */
-  --font-arabic: "Scheherazade New", "Amiri", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-}
+/* App-specific styles can be added here if needed */

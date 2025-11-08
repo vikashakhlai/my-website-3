@@ -1,3 +1,8 @@
+/* ============================================
+   PERSON CARD COMPONENT STYLES
+   Using global styles system
+   ============================================ */
+
 /* 🔵 Убираем стили браузера для всех ссылок внутри карточки */
 .card a,
 .card a:visited,
@@ -12,22 +17,22 @@
 .card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* текст по левому краю */
+  align-items: flex-start;
   height: 100%;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-bg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow);
   text-decoration: none;
   color: inherit;
   width: 100%;
-  overflow: hidden; /* чтобы увеличение не выходило за границы */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
 }
 
 .card:hover {
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   transform: scale(1.02);
   z-index: 1;
 }
@@ -40,30 +45,30 @@
 }
 
 .content {
-  padding: 20px;
+  padding: var(--space-5);
   width: 100%;
 }
 
 .name {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin: 0 0 10px 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-3) 0;
 }
 
 .position {
-  font-size: 1.125rem;
-  font-weight: bold;
-  margin: 0 0 10px 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-3) 0;
 }
 
 .factsList {
-  margin: 10px 0 0 0;
-  padding-left: 20px;
+  margin: var(--space-3) 0 0 0;
+  padding-left: var(--space-5);
   text-align: left;
 }
 
 .factItem {
-  font-size: 1rem;
-  margin-top: 5px;
+  font-size: var(--font-size-base);
+  margin-top: var(--space-1);
   margin-bottom: 0;
 }

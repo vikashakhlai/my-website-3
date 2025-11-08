@@ -1,16 +1,17 @@
-/*************************************************************
- * 🌐 ArabicKeyboard.module.css — улучшенная версия
- *************************************************************/
+/* ============================================
+   ARABIC KEYBOARD COMPONENT STYLES
+   Using global styles system
+   ============================================ */
 
 /* Общая обертка */
 .virtualKeyboard {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.8rem;
-  background: var(--background, #fafafa);
-  border-radius: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-md);
   width: 100%;
   box-sizing: border-box;
 }
@@ -20,7 +21,7 @@
   display: flex;
   justify-content: center;
   flex-wrap: nowrap;
-  gap: 0.6rem;
+  gap: var(--space-2);
   width: 100%;
 }
 
@@ -29,43 +30,50 @@
   flex: 1;
   max-width: 60px;
   aspect-ratio: 1 / 1;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #fff;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-bg);
   font-size: 1.9rem;
-  font-weight: 500;
-  color: #222;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  outline: none;
 }
 
 .keyButton:hover {
-  background: #f8f8f8;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  background: var(--color-bg-hover);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
 }
 
 .keyButton:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.keyButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* СЛУЖЕБНЫЕ КНОПКИ  */
 .serviceKey {
   height: 48px;
   aspect-ratio: unset;
-  padding: 0 0.8rem;
-  border-radius: 10px;
-  font-size: 1.2rem;
-  font-weight: 500;
+  padding: 0 var(--space-3);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: var(--transition-all);
   white-space: nowrap;
   min-width: 60px;
   max-width: none;
@@ -73,41 +81,55 @@
 
 /* Цветные служебные клавиши: Shift, Translate */
 .actionKey {
-  background: var(--color-primary, #6672f5);
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   border: none;
-  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3),
-    0 3px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3), var(--shadow-md);
 }
 
 .actionKey:hover {
-  background: color-mix(in srgb, var(--color-primary) 85%, white 15%);
-  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25),
-    0 4px 8px rgba(0, 0, 0, 0.18);
+  background: var(--color-primary-dark);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25), var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .actionKey:active {
   transform: translateY(1px);
-  background: color-mix(in srgb, var(--color-primary) 70%, black 30%);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.12);
+  background: var(--color-primary-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), var(--shadow);
+}
+
+.actionKey:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
 }
 
 /* Пробел */
 .space {
   flex: 3;
   min-width: 120px;
-  font-size: 1.3rem;
+  font-size: var(--font-size-xl);
   white-space: nowrap;
   justify-content: center;
 }
 
 .langToggle {
   max-width: 160px;
-  font-size: 1rem;
-  white-space: normal; /* разрешаем перенос */
+  font-size: var(--font-size-base);
+  white-space: normal;
   text-align: center;
-  line-height: 1.2;
-  padding: 0.4rem 0.6rem;
+  line-height: var(--line-height-snug);
+  padding: var(--space-1) var(--space-2);
+}
+
+/* Shift активное состояние */
+.shiftActive {
+  background: var(--color-secondary);
+  color: var(--color-text-inverse);
+}
+
+.shiftActive:hover {
+  background: var(--color-secondary-dark);
 }
 
 /* ====== НИЖНИЙ БЛОК ====== */
@@ -115,7 +137,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   width: 100%;
 }
 
@@ -123,140 +145,203 @@
 .bottomRight {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .bottomLeft {
   flex: 1;
 }
 
-/*************************************************************
- * 📱 Виджет (компактная версия) — АДАПТИВНАЯ ВЕРСИЯ
- *************************************************************/
+/* ============================================
+   📱 WIDGET KEYBOARD (Compact Version)
+   Fixed visibility issues and production-ready
+   ============================================ */
 
 .widgetKeyboard {
   width: 100%;
   max-width: 450px;
   margin: 0 auto;
-  padding: 0.6rem;
-  border-radius: 0.8rem;
+  padding: var(--space-2);
+  border-radius: var(--border-radius-md);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+  overflow: visible; /* Ensure all buttons are visible */
 }
 
 /* ====== СТРОКИ В ВИДЖЕТЕ — разрешаем перенос ====== */
 .widgetKeyboard .keyboardRow {
   display: flex;
-  flex-wrap: wrap; /* ⭐️ Ключевой параметр! */
-  justify-content: flex-start; /* выравниваем слева */
-  gap: 0.5rem;
+  flex-wrap: wrap; /* Allow wrapping */
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-1);
   width: 100%;
+  min-height: 42px; /* Ensure row has minimum height */
 }
 
-/* ====== БАЗОВЫЕ КНОПКИ В ВИДЖЕТЕ — без жёстких размеров ====== */
+/* ====== БАЗОВЫЕ КНОПКИ В ВИДЖЕТЕ — гибкие размеры ====== */
 .widgetKeyboard .keyButton {
-  min-width: 30px;
+  min-width: 32px;
   height: 42px;
-  font-size: 1.4rem;
-  border-radius: 8px;
-  border: 1px solid #dcdcdc;
-  background: linear-gradient(to bottom, #ffffff, #f3f3f3);
-  color: #222;
+  font-size: var(--font-size-2xl);
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.8),
-    0 3px 5px rgba(0, 0, 0, 0.1);
-  transition: all 0.15s ease-in-out;
-
-  /* ⭐️ Чтобы текст не переносился и кнопка растягивалась под него */
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-all);
   white-space: nowrap;
-  padding: 0 0.4rem;
+  padding: 0 var(--space-1);
   max-width: none;
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+  outline: none;
 }
 
 .widgetKeyboard .keyButton:hover {
-  background: linear-gradient(to bottom, #fafafa, #eaeaea);
-  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.7),
-    0 4px 6px rgba(0, 0, 0, 0.15);
+  background: var(--color-bg-hover);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
 }
 
 .widgetKeyboard .keyButton:active {
   transform: translateY(1px);
-  background: linear-gradient(to bottom, #eaeaea, #dcdcdc);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.widgetKeyboard .keyButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* ====== СЛУЖЕБНЫЕ КНОПКИ В ВИДЖЕТЕ — гибкая ширина ====== */
 .widgetKeyboard .serviceKey {
   height: 36px;
-  font-size: 1.1rem;
-  padding: 0 0.4rem;
-  border-radius: 8px;
+  font-size: var(--font-size-lg);
+  padding: 0 var(--space-1);
+  border-radius: var(--border-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: var(--transition-all);
   white-space: nowrap;
   min-width: 50px;
   max-width: none;
+  flex-shrink: 0; /* Prevent service keys from shrinking */
 }
 
 /* Цветные кнопки в виджете */
 .widgetKeyboard .actionKey {
-  background: var(--color-primary, #6672f5);
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   border: none;
-  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3),
-    0 3px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3), var(--shadow-md);
 }
 
 .widgetKeyboard .actionKey:hover {
-  background: color-mix(in srgb, var(--color-primary) 85%, white 15%);
+  background: var(--color-primary-dark);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25), var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .widgetKeyboard .actionKey:active {
   transform: translateY(1px);
-  background: color-mix(in srgb, var(--color-primary) 70%, black 30%);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.12);
+  background: var(--color-primary-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), var(--shadow);
 }
 
-/* ====== ПРОБЕЛ В ВИДЖЕТЕ — особый случай ====== */
+.widgetKeyboard .actionKey:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* ====== ПРОБЕЛ В ВИДЖЕТЕ ====== */
 .widgetKeyboard .space {
   min-width: 80px;
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
   justify-content: center;
   white-space: nowrap;
-  padding: 0 0.6rem;
+  padding: 0 var(--space-2);
+  flex-shrink: 0;
 }
 
-/* ====== НИЖНИЙ БЛОК В ВИДЖЕТЕ — тоже гибкий ====== */
+/* ====== НИЖНИЙ БЛОК В ВИДЖЕТЕ — двухстрочный layout ====== */
 .widgetKeyboard .bottomControls {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--space-1);
   width: 100%;
 }
 
-.widgetKeyboard .bottomLeft,
-.widgetKeyboard .bottomRight {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
+/* Первая строка: Shift и Language toggle */
 .widgetKeyboard .bottomLeft {
-  justify-content: flex-start;
+  display: contents; /* Remove the container, let buttons be direct grid children */
 }
 
 .widgetKeyboard .bottomRight {
-  justify-content: flex-end;
+  display: contents; /* Remove the container, let buttons be direct grid children */
+}
+
+/* Первая строка, левая колонка: Shift */
+.widgetKeyboard .bottomLeft > *:first-child {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+/* Первая строка, правая колонка: Language toggle */
+.widgetKeyboard .bottomRight > *:first-child {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Вторая строка, левая колонка: Space */
+.widgetKeyboard .bottomLeft > *:last-child {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+}
+
+/* Вторая строка, правая колонка: Translation */
+.widgetKeyboard .bottomRight > *:last-child {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+}
+
+/* Ensure lang toggle button doesn't break layout */
+.widgetKeyboard .langToggle {
+  max-width: 140px;
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-2);
+  line-height: var(--line-height-tight);
+}
+
+/* Responsive adjustments for widget */
+@media (max-width: 400px) {
+  .widgetKeyboard .keyButton {
+    min-width: 28px;
+    height: 38px;
+    font-size: var(--font-size-xl);
+    padding: 0 var(--space-1);
+  }
+  
+  .widgetKeyboard .serviceKey {
+    height: 32px;
+    font-size: var(--font-size-base);
+    min-width: 45px;
+  }
+  
+  .widgetKeyboard .langToggle {
+    max-width: 120px;
+    font-size: var(--font-size-xs);
+  }
 }

@@ -25,14 +25,23 @@ export const StarRating: React.FC<StarRatingProps> = ({
   const [votes, setVotes] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
-  // 🧩 Сброс состояния при смене книги / статьи
+  // 🧩 Обновление состояния при изменении targetId или props
   useEffect(() => {
     setHovered(null);
-    if (initialUserRating !== undefined && initialUserRating !== null) {
-      setRating(initialUserRating);
+    
+    // Обновляем рейтинг пользователя
+    // Если передан null, значит пользователь не оценил (rating = 0)
+    // Если передан number, используем его
+    // Если undefined, оставляем текущее значение (не перезаписываем)
+    if (initialUserRating !== undefined) {
+      setRating(initialUserRating ?? 0);
     }
+    
+    // Обновляем средний рейтинг
     if (initialAverage !== undefined && initialAverage !== null) {
       setAverage(initialAverage);
+    } else if (initialAverage === null) {
+      setAverage(0);
     }
   }, [targetId, initialAverage, initialUserRating]);
 

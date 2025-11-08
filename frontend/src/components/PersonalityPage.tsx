@@ -106,9 +106,7 @@ const PersonalityPage = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.backFixed}>
-        <BackZone to="/personalities" />
-      </div>
+      <BackZone to="/personalities" label="Вернуться к списку личностей" />
 
       <div className={styles.container}>
         <div className={styles.mainContent}>

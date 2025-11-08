@@ -1,14 +1,15 @@
-:root {
-  --primary-color: #6366f1; /* фиолетовый */
-}
+/* ============================================
+   HEADER COMPONENT STYLES
+   Using global styles system
+   ============================================ */
 
 .header {
   position: sticky;
   top: 0;
-  z-index: 1000;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: var(--z-index-sticky);
+  background-color: var(--color-bg);
+  border-bottom: var(--border-width) solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   width: 100%;
 }
 
@@ -16,9 +17,9 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  max-width: 1280px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  max-width: var(--container-max-width);
   margin: 0 auto;
 }
 
@@ -30,7 +31,7 @@ nav.navigation {
 .brand {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   text-decoration: none;
   cursor: pointer;
 }
@@ -38,17 +39,16 @@ nav.navigation {
 .brand-text {
   font-family: "Marhey", "Cairo", "Poppins", sans-serif;
   font-size: 1.55rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
-  background: linear-gradient(90deg, #6366f1, #7c3aed, #a855f7);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary), #a855f7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: all 0.3s ease;
+  transition: var(--transition-all);
 }
 
 .brand:hover .brand-text {
   transform: translateY(-1px);
-  /* filter: drop-shadow(0 0 6px rgba(124, 58, 237, 0.25)); */
 }
 
 /* 📱 адаптив */
@@ -62,16 +62,16 @@ nav.navigation {
 .auth-buttons {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-shrink: 0;
   justify-self: end;
 }
 
 .user-email {
-  color: var(--primary-color);
-  font-weight: 500;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--transition-fast);
 }
 
 .user-email:hover {
@@ -81,47 +81,25 @@ nav.navigation {
 .logout-icon {
   background: none;
   border: none;
-  color: var(--primary-color);
+  color: var(--color-primary);
   font-size: 1.3rem;
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 .logout-icon:hover {
-  color: #4f46e5;
+  color: var(--color-primary-dark);
   transform: scale(1.1);
 }
 
 /* ---------- КНОПКИ НЕАВТОРИЗОВАННОГО ---------- */
-.btn {
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--primary-color);
-  color: var(--primary-color);
-}
-
-.btn-outline:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-  border: 1.5px solid var(--primary-color);
-}
-
-.btn-primary:hover {
-  background: #4f46e5;
+/* Button styles are now in global components.css */
+/* These are specific overrides for header buttons */
+.header .btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--border-radius-md);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
 }
 
 /* ---------- АДАПТИВ ---------- */
@@ -135,7 +113,7 @@ nav.navigation {
     order: 3;
     width: 100%;
     justify-content: center;
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
   }
 
   .logo-link {
@@ -146,7 +124,7 @@ nav.navigation {
     order: 2;
     width: 100%;
     justify-content: center;
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
   }
 }
 
@@ -154,7 +132,7 @@ nav.navigation {
   .header-container {
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     text-align: center;
   }
 
@@ -164,7 +142,7 @@ nav.navigation {
     align-items: center;
   }
 
-  .btn {
+  .header .btn {
     width: 100%;
     max-width: 180px;
   }
