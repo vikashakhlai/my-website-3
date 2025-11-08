@@ -1,13 +1,15 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
+  Entity,
+  Index,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Word } from './word.entity';
 
 @Entity({ name: 'verb_forms' })
+@Index(['word_id']) // ✅ Для быстрого поиска по слову
 export class VerbForm {
   @PrimaryGeneratedColumn()
   id!: number;

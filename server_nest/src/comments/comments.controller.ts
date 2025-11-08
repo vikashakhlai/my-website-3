@@ -1,40 +1,39 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  UseGuards,
-  Request,
-  ParseIntPipe,
-  Query,
-  BadRequestException,
-  ValidationPipe,
-  UsePipes,
-  Sse,
+  Controller,
+  Delete,
+  Get,
   MessageEvent,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  Sse,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
-import { CommentsService } from './comments.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
-import sanitizeHtml from 'sanitize-html';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Observable } from 'rxjs';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-  ApiBody,
-} from '@nestjs/swagger';
-import { TargetType } from 'src/common/enums/target-type.enum';
+import sanitizeHtml from 'sanitize-html';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Public } from 'src/auth/decorators/public.decorator';
-
-class ReactDto {
-  value!: 1 | -1 | 0;
-}
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { mapToDto } from 'src/common/utils/map-to-dto.util';
+import { CommentsService } from './comments.service';
+import { CommentResponseDto } from './dto/comment-response.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { ReactCommentDto } from './dto/react-comment.dto';
 
 @ApiTags('Comments')
 @Controller('comments')
@@ -44,10 +43,14 @@ export class CommentsController {
     private readonly jwtService: JwtService,
   ) {}
 
-  // =====================================================
-  // 🔥 SSE STREAM (публичный, без авторизации)
-  // =====================================================
   @Public()
+  @ApiOperation({ summary: 'SSE: стрим обновлений комментариев (публично)' })
+  @ApiParam({
+    name: 'target_type',
+    enum: TargetType,
+    description: 'Тип сущности',
+  })
+  @ApiParam({ name: 'target_id', example: 1, description: 'ID сущности' })
   @Get('stream/:target_type/:target_id')
   @Sse()
   stream(
@@ -57,11 +60,16 @@ export class CommentsController {
     return this.commentsService.subscribe(target_type, target_id);
   }
 
-  // =====================================================
-  // 📝 Создать комментарий
-  // =====================================================
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Создать комментарий (авторизованные пользователи)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Комментарий создан',
+    type: CommentResponseDto,
+  })
+  @Auth()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -71,14 +79,22 @@ export class CommentsController {
       allowedAttributes: {},
     });
 
-    return this.commentsService.create(dto, req.user);
+    const comment = await this.commentsService.create(dto, req.user);
+    return mapToDto(CommentResponseDto, comment);
   }
 
-  // =====================================================
-  // 📌 Получить комментарии (через query)
-  // =====================================================
   @ApiOperation({ summary: 'Получить комментарии по query (публично)' })
-  @ApiResponse({ status: 200, description: 'Список комментариев' })
+  @ApiQuery({
+    name: 'target_type',
+    enum: TargetType,
+    description: 'Тип сущности',
+  })
+  @ApiQuery({ name: 'target_id', example: 1, description: 'ID сущности' })
+  @ApiResponse({
+    status: 200,
+    description: 'Список комментариев',
+    type: [CommentResponseDto],
+  })
   @Get()
   async getByQuery(
     @Query('target_type') target_type: TargetType,
@@ -86,76 +102,77 @@ export class CommentsController {
     @Request() req: any,
   ) {
     const viewerId = this.tryGetUserId(req);
-    return this.commentsService.findByTarget(target_type, target_id, viewerId);
+    const comments = await this.commentsService.findByTarget(
+      target_type,
+      target_id,
+      viewerId,
+    );
+    return comments.map((c) => mapToDto(CommentResponseDto, c));
   }
 
-  // =====================================================
-  // 📌 Получить комментарии (REST вариант)
-  // =====================================================
   @ApiOperation({
     summary: 'Получить комментарии по целевой сущности (публично)',
   })
+  @ApiParam({
+    name: 'target_type',
+    enum: TargetType,
+    description: 'Тип сущности',
+  })
+  @ApiParam({ name: 'target_id', example: 1, description: 'ID сущности' })
+  @ApiResponse({
+    status: 200,
+    description: 'Список комментариев',
+    type: [CommentResponseDto],
+  })
   @Get(':target_type/:target_id')
   async getComments(
-    @Param('target_type') target_type: string,
+    @Param('target_type') target_type: TargetType,
     @Param('target_id', ParseIntPipe) target_id: number,
     @Request() req: any,
   ) {
     const viewerId = this.tryGetUserId(req);
-    return this.commentsService.findByTarget(
+    const comments = await this.commentsService.findByTarget(
       target_type as any,
       target_id,
       viewerId,
     );
+    return comments.map((c) => mapToDto(CommentResponseDto, c));
   }
 
-  // =====================================================
-  // 👍 Лайк / 👎 Дизлайк / ❌ Убрать реакцию
-  // =====================================================
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Поставить/снять реакцию (like/dislike)' })
-  @UseGuards(JwtAuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @ApiBody({
-    schema: { properties: { value: { type: 'integer', enum: [1, -1, 0] } } },
+  @ApiParam({ name: 'id', example: 1, description: 'ID комментария' })
+  @ApiResponse({
+    status: 200,
+    description: 'Комментарий с обновленной статистикой',
+    type: CommentResponseDto,
   })
+  @Auth()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiBody({ type: ReactCommentDto })
   @Post(':id/react')
   async react(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: any, // ← any вместо ReactDto
+    @Body() dto: ReactCommentDto,
     @Request() req: any,
   ) {
-    const rawValue = body?.value;
-
-    // Валидация вручную
-    if (rawValue === undefined || rawValue === null) {
-      throw new BadRequestException('Field "value" is required');
-    }
-
-    const value = Number(rawValue);
-    if (!Number.isInteger(value) || ![1, -1, 0].includes(value)) {
-      throw new BadRequestException('value must be 1, -1 or 0');
-    }
-
-    return this.commentsService.react(id, req.user, value as 1 | -1 | 0);
+    const comment = await this.commentsService.react(id, req.user, dto.value);
+    return mapToDto(CommentResponseDto, comment);
   }
 
-  // =====================================================
-  // 🗑️ Удалить комментарий (только автор или admin/super_admin)
-  // =====================================================
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Удалить комментарий (автор или ADMIN/SUPER_ADMIN)',
   })
-  @UseGuards(JwtAuthGuard)
+  @ApiParam({ name: 'id', example: 1, description: 'ID комментария' })
+  @ApiResponse({ status: 200, description: 'Комментарий удален', type: Object })
+  @Auth()
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.commentsService.delete(id, req.user);
+    await this.commentsService.delete(id, req.user);
+    return { success: true };
   }
 
-  // =====================================================
-  // 🔍 helper: достаём userId из Bearer без guard
-  // =====================================================
   private tryGetUserId(req: any): string | undefined {
     const auth = req.headers?.authorization;
     if (!auth?.startsWith('Bearer ')) return undefined;

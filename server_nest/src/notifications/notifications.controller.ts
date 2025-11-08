@@ -1,36 +1,63 @@
 import {
   Controller,
-  Get,
-  Patch,
   Delete,
+  Get,
   Param,
-  UseGuards,
-  Request,
   ParseIntPipe,
+  Patch,
+  Request,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { NotificationResponseDto } from './dto/notification-response.dto';
 import { NotificationsService } from './notifications.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+@ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  // --- Получить все уведомления пользователя ---
+  @ApiOperation({ summary: 'Получить все уведомления пользователя' })
+  @ApiBearerAuth('access-token')
+  @Auth()
+  @ApiResponse({
+    status: 200,
+    description: 'Список уведомлений',
+    type: [NotificationResponseDto],
+  })
   @Get()
   async getAll(@Request() req) {
     const user = req.user;
     return this.notificationsService.findForUser(user);
   }
 
-  // --- Пометить уведомление как прочитанное ---
+  @ApiOperation({ summary: 'Пометить уведомление как прочитанное' })
+  @ApiBearerAuth('access-token')
+  @Auth()
+  @ApiResponse({
+    status: 200,
+    description: 'Уведомление обновлено',
+    type: NotificationResponseDto,
+  })
   @Patch(':id/read')
   async markAsRead(@Param('id', ParseIntPipe) id: number, @Request() req) {
     const user = req.user;
     return this.notificationsService.markAsRead(id, user);
   }
 
-  // --- Пометить все уведомления как прочитанные ---
+  @ApiOperation({ summary: 'Пометить все уведомления как прочитанные' })
+  @ApiBearerAuth('access-token')
+  @Auth()
+  @ApiResponse({
+    status: 200,
+    description: 'Все уведомления помечены как прочитанные',
+    type: Object,
+  })
   @Patch('read/all')
   async markAllAsRead(@Request() req) {
     const user = req.user;
@@ -38,10 +65,18 @@ export class NotificationsController {
     return { message: 'Все уведомления помечены как прочитанные' };
   }
 
-  // --- Удалить уведомление ---
+  @ApiOperation({ summary: 'Удалить уведомление' })
+  @ApiBearerAuth('access-token')
+  @Auth()
+  @ApiResponse({
+    status: 200,
+    description: 'Уведомление удалено',
+    type: Object,
+  })
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
     const user = req.user;
-    return this.notificationsService.delete(id, user);
+    await this.notificationsService.delete(id, user);
+    return { message: 'Уведомление удалено' };
   }
 }

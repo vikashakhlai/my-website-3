@@ -1,16 +1,16 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
-import { Textbook } from './textbook.entity';
-import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { Rating } from 'src/ratings/rating.entity';
 import { makeAbsoluteUrl } from 'src/utils/media-url.util';
+import { Textbook } from './textbook.entity';
 
 @Injectable()
 export class TextbooksService {
@@ -25,7 +25,33 @@ export class TextbooksService {
     private readonly commentRepo: Repository<Comment>,
   ) {}
 
-  /** 📚 Получить все учебники с рейтингом, количеством комментариев и пагинацией */
+  private buildQueryWithStats(): SelectQueryBuilder<Textbook> {
+    return this.textbookRepo.createQueryBuilder('t').select([
+      't.id AS id',
+      't.title AS title',
+      't.authors AS authors',
+      't.publication_year AS publication_year',
+      't.cover_image_url AS cover_image_url',
+      't.description AS description',
+      't.level AS level',
+      't.pdf_url AS pdf_url',
+      't.createdAt AS createdAt',
+      't.updatedAt AS updatedAt',
+      `(SELECT AVG(r.value)
+          FROM ratings r
+          WHERE r.target_id = t.id
+          AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
+      `(SELECT COUNT(*)
+          FROM ratings r
+          WHERE r.target_id = t.id
+          AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
+      `(SELECT COUNT(*)
+          FROM comments c
+          WHERE c.target_id = t.id
+          AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
+    ]);
+  }
+
   async getAll(options?: {
     page?: number;
     limit?: number;
@@ -33,34 +59,11 @@ export class TextbooksService {
     level?: string;
   }) {
     const page = Math.max(options?.page || 1, 1);
-    const limit = Math.max(options?.limit || 10, 1);
+    const limit = Math.max(Math.min(options?.limit || 10, 100), 1);
     const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
     const levelFilter = options?.level?.trim();
 
-    const qb = this.textbookRepo
-      .createQueryBuilder('t')
-      .select([
-        't.id AS id',
-        't.title AS title',
-        't.authors AS authors',
-        't.publication_year AS publication_year',
-        't.cover_image_url AS cover_image_url',
-        't.description AS description',
-        't.level AS level',
-        't.pdf_url AS pdf_url',
-        `(SELECT AVG(r.value)
-          FROM ratings r
-          WHERE r.target_id = t.id
-          AND r.target_type = '${TargetType.TEXTBOOK}') AS averageRating`,
-        `(SELECT COUNT(*)
-          FROM ratings r
-          WHERE r.target_id = t.id
-          AND r.target_type = '${TargetType.TEXTBOOK}') AS ratingCount`,
-        `(SELECT COUNT(*)
-          FROM comments c
-          WHERE c.target_id = t.id
-          AND c.target_type = '${TargetType.TEXTBOOK}') AS commentCount`,
-      ])
+    const qb = this.buildQueryWithStats()
       .orderBy('t.id', sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
@@ -85,6 +88,8 @@ export class TextbooksService {
       description: t.description,
       level: t.level,
       pdf_url: makeAbsoluteUrl(t.pdf_url),
+      createdAt: new Date(t.createdAt),
+      updatedAt: new Date(t.updatedAt),
       averageRating: t.averageRating ? parseFloat(t.averageRating) : null,
       ratingCount: Number(t.ratingCount),
       commentCount: Number(t.commentCount),
@@ -94,11 +99,11 @@ export class TextbooksService {
       data: formatted,
       total,
       page,
+      limit,
       totalPages: Math.ceil(total / limit),
     };
   }
 
-  /** 🔍 Публичное получение — pdf_url есть, но скачать нельзя без авторизации */
   async getPublicView(id: number, userId?: string | null) {
     const book = await this.textbookRepo.findOne({ where: { id } });
     if (!book) throw new NotFoundException('Учебник не найден');
@@ -121,9 +126,16 @@ export class TextbooksService {
       : null;
 
     return {
-      ...book,
+      id: book.id,
+      title: book.title,
+      authors: book.authors,
+      description: book.description,
+      level: book.level,
+      publication_year: book.publication_year,
       cover_image_url: makeAbsoluteUrl(book.cover_image_url),
       pdf_url: makeAbsoluteUrl(book.pdf_url),
+      createdAt: book.createdAt,
+      updatedAt: book.updatedAt,
       canDownload: Boolean(userId),
       averageRating: average,
       ratingCount: ratings.length,
@@ -132,7 +144,6 @@ export class TextbooksService {
     };
   }
 
-  /** 📥 Скачивание PDF — только авторизованные */
   async getDownloadFile(id: number, userId: string) {
     if (!userId)
       throw new ForbiddenException('Требуется авторизация для скачивания');
@@ -143,11 +154,10 @@ export class TextbooksService {
     if (!textbook.pdf_url) throw new NotFoundException('PDF-файл отсутствует');
 
     return {
-      url: `/uploads/textbooks-pdfs/${textbook.pdf_url}`, // ✅ прямой путь к файлу
+      url: `/uploads/textbooks-pdfs/${textbook.pdf_url}`,
     };
   }
 
-  /** 🎲 Случайный учебник с PDF */
   async getRandom() {
     const book = await this.textbookRepo
       .createQueryBuilder('t')
@@ -158,9 +168,16 @@ export class TextbooksService {
     if (!book) throw new NotFoundException('Нет учебников с PDF');
 
     return {
-      ...book,
+      id: book.id,
+      title: book.title,
+      authors: book.authors,
+      description: book.description,
+      level: book.level,
+      publication_year: book.publication_year,
       cover_image_url: makeAbsoluteUrl(book.cover_image_url),
       pdf_url: makeAbsoluteUrl(book.pdf_url),
+      createdAt: book.createdAt,
+      updatedAt: book.updatedAt,
     };
   }
 
@@ -178,6 +195,6 @@ export class TextbooksService {
     const book = await this.textbookRepo.findOne({ where: { id } });
     if (!book) throw new NotFoundException('Учебник не найден');
     await this.textbookRepo.remove(book);
-    return { message: 'Учебник удалён' };
+    return { message: 'Учебник удален' };
   }
 }

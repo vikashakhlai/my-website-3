@@ -1,16 +1,16 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Personality } from './personality.entity';
-import { PersonalitiesService } from './personalities.service';
 import { PersonalitiesController } from './personalities.controller';
+import { PersonalitiesService } from './personalities.service';
+import { Personality } from './personality.entity';
 
 import { CommentsModule } from 'src/comments/comments.module';
-import { RatingsModule } from 'src/ratings/ratings.module';
 import { FavoritesModule } from 'src/favorites/favorites.module';
+import { RatingsModule } from 'src/ratings/ratings.module';
 
 import { Comment } from 'src/comments/comment.entity';
-import { Rating } from 'src/ratings/rating.entity';
 import { Favorite } from 'src/favorites/favorite.entity';
+import { Rating } from 'src/ratings/rating.entity';
 
 @Module({
   imports: [
@@ -19,7 +19,6 @@ import { Favorite } from 'src/favorites/favorite.entity';
     CommentsModule,
     RatingsModule,
 
-    // ✅ обязательно через forwardRef, чтобы разорвать цикл!
     forwardRef(() => FavoritesModule),
   ],
   controllers: [PersonalitiesController],

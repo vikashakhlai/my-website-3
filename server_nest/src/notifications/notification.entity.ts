@@ -1,13 +1,16 @@
+import { User } from 'src/user/user.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  Index,
   ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from 'src/user/user.entity';
 
 @Entity('notifications')
+@Index(['recipient_id', 'created_at'])
+@Index(['recipient_id', 'is_read'])
 export class Notification {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -15,22 +18,24 @@ export class Notification {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   recipient!: User;
 
-  @Column()
+  @Column({ type: 'uuid' })
   recipient_id!: string;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
   sender?: User;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   sender_id?: string;
 
   @Column({
-    type: 'text',
+    type: 'enum',
+    enum: ['comment_reply', 'rating_reply', 'like', 'dislike'],
   })
   type!: 'comment_reply' | 'rating_reply' | 'like' | 'dislike';
 
   @Column({
-    type: 'text',
+    type: 'enum',
+    enum: ['comment', 'rating'],
   })
   entity_type!: 'comment' | 'rating';
 

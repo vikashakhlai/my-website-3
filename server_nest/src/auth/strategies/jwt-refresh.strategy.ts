@@ -1,10 +1,9 @@
-// src/auth/strategies/jwt-refresh.strategy.ts
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
-import { UserService } from '../../user/user.service';
 import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UserService } from '../../user/user.service';
 
 function cookieExtractor(req: Request) {
   return req?.cookies?.['refresh_token'] ?? null;
@@ -36,7 +35,12 @@ export class JwtRefreshStrategy extends PassportStrategy(
   async validate(payload: JwtPayload) {
     const user = await this.userService.findById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
-    // при желании: проверка jti/refreshHash (реализация ниже — в сервисе)
-    return { id: user.id, role: user.role };
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      sub: payload.sub,
+    };
   }
 }

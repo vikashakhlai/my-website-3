@@ -1,22 +1,22 @@
 import {
   Injectable,
-  NotFoundException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
 import { spawn } from 'child_process';
-import { join, parse, dirname } from 'path';
-import { promises as fs } from 'fs';
 import ffmpegPath from 'ffmpeg-static';
+import { promises as fs } from 'fs';
+import { dirname, join, parse } from 'path';
+import { DeepPartial, Repository } from 'typeorm';
 
-import { Media } from './media.entity';
-import { Exercise } from 'src/articles/entities/exercise.entity';
-import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
 import { CreateExerciseDto } from 'src/articles/dto/create-exercise.dto';
+import { ExerciseItem } from 'src/articles/entities/exercise-item.entity';
+import { Exercise } from 'src/articles/entities/exercise.entity';
+import { Media } from './media.entity';
 
-import { RatingsService } from 'src/ratings/ratings.service';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { RatingsService } from 'src/ratings/ratings.service';
 import { makeAbsoluteUrl } from 'src/utils/media-url.util';
 import { UpdateMediaRequestDto } from './dto/update-media.request.dto';
 
@@ -270,7 +270,7 @@ export class MediaService {
       }) as any,
     };
 
-    return this.exerciseRepository.save(
+    return await this.exerciseRepository.save(
       this.exerciseRepository.create(exercise),
     );
   }

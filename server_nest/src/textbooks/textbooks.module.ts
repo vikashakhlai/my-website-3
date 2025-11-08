@@ -1,14 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Textbook } from './textbook.entity';
-import { TextbooksService } from './textbooks.service';
-import { TextbooksController } from './textbooks.controller';
-import { Rating } from 'src/ratings/rating.entity';
 import { Comment } from 'src/comments/comment.entity';
-import { RatingsModule } from 'src/ratings/ratings.module';
-import { Favorite } from 'src/favorites/favorite.entity';
 import { CommentsModule } from 'src/comments/comments.module';
+import { Favorite } from 'src/favorites/favorite.entity';
 import { FavoritesModule } from 'src/favorites/favorites.module';
+import { Rating } from 'src/ratings/rating.entity';
+import { RatingsModule } from 'src/ratings/ratings.module';
+import { Textbook } from './textbook.entity';
+import { TextbooksController } from './textbooks.controller';
+import { TextbooksService } from './textbooks.service';
 
 @Module({
   imports: [

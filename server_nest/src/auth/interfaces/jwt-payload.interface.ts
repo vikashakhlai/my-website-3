@@ -1,7 +1,12 @@
-// src/auth/interfaces/jwt-payload.interface.ts
-import { Role } from '../roles.enum';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export interface JwtPayload {
-  sub: string; // user.id
-  role: Role; // SUPER_ADMIN | ADMIN | USER
+export class RefreshTokenDto {
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'Refresh token',
+  })
+  @IsString()
+  @IsNotEmpty()
+  refresh_token!: string;
 }

@@ -1,22 +1,30 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUrl, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateAuthorDto {
-  @ApiProperty({ example: 'Куделин А.А.' })
-  @IsString()
-  @MinLength(3)
+  @ApiProperty({
+    example: 'Ибн Сина',
+    description: 'Полное имя автора',
+  })
+  @IsString({ message: 'fullName должно быть строкой' })
+  @MaxLength(200, { message: 'fullName не может быть длиннее 200 символов' })
   fullName!: string;
 
-  @ApiProperty({
-    example: 'Лучший писатель русского происхождения...',
-    required: false,
+  @ApiPropertyOptional({
+    example: 'Персидский философ и врач...',
+    description: 'Биография автора',
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'bio должно быть строкой' })
+  @MaxLength(10000, { message: 'bio не может быть длиннее 10000 символов' })
   bio?: string;
 
-  @ApiProperty({ example: 'https://example.com/azimov.jpg', required: false })
+  @ApiPropertyOptional({
+    example: '/uploads/authors/ibn_sina.jpg',
+    description: 'Ссылка на фото автора',
+  })
   @IsOptional()
-  @IsUrl()
+  @IsString({ message: 'photoUrl должно быть строкой' })
+  @MaxLength(500, { message: 'photoUrl не может быть длиннее 500 символов' })
   photoUrl?: string;
 }

@@ -1,16 +1,16 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  JoinTable,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
 import { Article } from 'src/articles/article.entity';
-import { Book } from '../books/book.entity';
 import { Quote } from 'src/quotes/quote.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Book } from '../books/book.entity';
 
 export enum Era {
   PRE_ISLAMIC = 'pre_islamic', // Доисламский
@@ -27,13 +27,13 @@ export class Personality {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   name!: string;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   years?: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   position?: string;
 
   @Column({ type: 'text', array: true, nullable: true })
@@ -42,10 +42,10 @@ export class Personality {
   @Column({ type: 'text', nullable: true })
   biography?: string;
 
-  @Column({ name: 'image_url', length: 512, nullable: true })
+  @Column({ name: 'image_url', type: 'varchar', length: 512, nullable: true })
   imageUrl?: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'enum', enum: Era, nullable: true })
   era?: Era;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -54,7 +54,6 @@ export class Personality {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  // === связи ===
   @ManyToMany(() => Article, (article) => article.personalities, {
     eager: false,
   })

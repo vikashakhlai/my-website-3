@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SubtitlesService } from './subtitles.service';
 import { SubtitlesController } from './subtitles.controller';
+import { SubtitlesService } from './subtitles.service';
 
 @Module({
   controllers: [SubtitlesController],

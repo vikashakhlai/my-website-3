@@ -1,4 +1,3 @@
-// src/user/dto/user-response.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from 'src/auth/roles.enum';
 import { AccessLevel } from '../user.entity';
@@ -23,9 +22,9 @@ export class UserResponseDto {
   })
   accessLevel!: AccessLevel;
 
-  @ApiProperty()
+  @ApiProperty({ example: '2025-10-16T12:34:56.789Z' })
   createdAt!: Date;
 
-  @ApiProperty()
+  @ApiProperty({ example: '2025-10-16T12:34:56.789Z' })
   updatedAt!: Date;
 }

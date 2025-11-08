@@ -1,19 +1,23 @@
+import { Personality } from 'src/personalities/personality.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
-  JoinTable,
-  JoinColumn,
-  CreateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Author } from '../authors/authors.entity';
-import { Tag } from '../tags/tags.entity';
 import { Publisher } from '../publishers/publisher.entity';
-import { Personality } from 'src/personalities/personality.entity';
+import { Tag } from '../tags/tags.entity';
 
 @Entity('books')
+@Index(['title'])
+@Index(['publication_year'])
+@Index(['created_at'])
 export class Book {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -39,7 +43,6 @@ export class Book {
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 
-  // 🔗 Авторы — связь многие ко многим
   @ManyToMany(() => Author, (author) => author.books)
   @JoinTable({
     name: 'book_authors',
@@ -48,7 +51,6 @@ export class Book {
   })
   authors!: Author[];
 
-  // 🔗 Теги — связь многие ко многим
   @ManyToMany(() => Tag, (tag) => tag.books, { cascade: true })
   @JoinTable({
     name: 'book_tags',
@@ -57,14 +59,12 @@ export class Book {
   })
   tags!: Tag[];
 
-  // 🏢 Издательство (многие книги могут иметь одно издательство)
   @ManyToOne(() => Publisher, (publisher) => publisher.books, {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'publisher_id' })
   publisher!: Publisher | null;
 
-  // 🧠 Личности, связанные с книгой
   @ManyToMany(() => Personality, (p) => p.books)
   personalities!: Personality[];
 }

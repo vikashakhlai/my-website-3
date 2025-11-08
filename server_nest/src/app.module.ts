@@ -1,34 +1,34 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
-import databaseConfig from './config/database.config';
 import { AllConfigType, DatabaseConfig } from './config/configuration.types';
+import databaseConfig from './config/database.config';
 
 // modules
 import { AppController } from './app.controller';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
-import { BookModule } from './books/books.module';
-import { AuthorsModule } from './authors/authors.module';
-import { TagsModule } from './tags/tags.module';
-import { FavoritesModule } from './favorites/favorites.module';
-import { TextbooksModule } from './textbooks/textbooks.module';
 import { ArticlesModule } from './articles/articles.module';
-import { DictionaryModule } from './dictionary/dictionary.module';
-import { PersonalitiesModule } from './personalities/personalities.module';
-import { QuotesModule } from './quotes/quotes.module';
-import { SubtitlesModule } from './subtitles/subtitles.module';
-import { MediaModule } from './media/media.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthorsModule } from './authors/authors.module';
+import { BookModule } from './books/books.module';
+import { CommentsModule } from './comments/comments.module';
 import { DialectsModule } from './dialect/dialects.module';
 import { DialectTopicsModule } from './dialect_topics/dialect_topics.module';
 import { DialogueModule } from './dialogue/dialogue.module';
+import { DictionaryModule } from './dictionary/dictionary.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { MediaModule } from './media/media.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { CommentsModule } from './comments/comments.module';
+import { PersonalitiesModule } from './personalities/personalities.module';
+import { QuotesModule } from './quotes/quotes.module';
 import { RatingsModule } from './ratings/ratings.module';
+import { SubtitlesModule } from './subtitles/subtitles.module';
+import { TagsModule } from './tags/tags.module';
+import { TextbooksModule } from './textbooks/textbooks.module';
+import { UserModule } from './user/user.module';
 
 import { ConfigService } from '@nestjs/config';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
@@ -55,6 +55,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt.guard';
           password: db.password,
           database: db.database,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          // synchronize: true,
           synchronize: false,
           logging: process.env.NODE_ENV === 'development',
           ssl:

@@ -7,7 +7,7 @@ export class RegisterDto {
     description: 'Email нового пользователя',
   })
   @IsEmail()
-  email!: string; // ✅ добавлен "!" для устранения TS2564
+  email!: string;
 
   @ApiProperty({
     example: 'strongPassword123',
@@ -15,5 +15,5 @@ export class RegisterDto {
   })
   @IsNotEmpty()
   @MinLength(6)
-  password!: string; // ✅ добавлен "!" для устранения TS2564
+  password!: string;
 }

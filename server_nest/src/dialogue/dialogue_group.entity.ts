@@ -1,12 +1,12 @@
+import { Media } from 'src/media/media.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
   OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Media } from 'src/media/media.entity';
 
 @Entity('dialogue_groups')
 export class DialogueGroup {
@@ -28,7 +28,6 @@ export class DialogueGroup {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  /** 🔗 Связанные медиа (видео/аудио/тексты для фусхи и диалектов) */
   @OneToMany(() => Media, (media) => media.dialogueGroup)
   medias!: Media[];
 }

@@ -1,16 +1,15 @@
-// src/user/user.entity.ts
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
-
+import { Role } from 'src/auth/roles.enum';
 import { Comment } from 'src/comments/comment.entity';
 import { Rating } from 'src/ratings/rating.entity';
-import { Role } from 'src/auth/roles.enum';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum AccessLevel {
   BASIC = 'BASIC',
@@ -19,18 +18,17 @@ export enum AccessLevel {
 }
 
 @Entity('users')
+@Index(['email'], { unique: true })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, length: 254 })
   email!: string;
 
-  // ✅ Никогда не возвращаем пароль в API/QueryBuilder
-  @Column({ select: false })
+  @Column({ select: false, length: 128 })
   password!: string;
 
-  // ✅ Роли: USER / ADMIN / SUPER_ADMIN / TUTOR / etc
   @Column({
     type: 'enum',
     enum: Role,
@@ -48,13 +46,11 @@ export class User {
   })
   accessLevel!: AccessLevel;
 
-  // ✅ HASH от refresh-токена (cookie-based) — null после logoutAll
   @Column({ type: 'text', nullable: true })
   refreshTokenHash!: string | null;
 
-  // ✅ Версия токена (инвалидирует ВСЕ access при logoutAll / смене пароля)
   @Column({ type: 'bigint', nullable: true })
-  tokenVersion!: number | null;
+  tokenVersion?: number;
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -62,7 +58,6 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  // === Relations ===
   @OneToMany(() => Comment, (comment) => comment.user, { cascade: true })
   comments!: Comment[];
 

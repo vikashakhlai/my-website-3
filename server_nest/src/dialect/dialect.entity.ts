@@ -1,16 +1,17 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  Index,
-} from 'typeorm';
 import { Media } from 'src/media/media.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Index(['name'])
 @Index(['region'])
+@Index(['slug'])
 @Entity('dialects')
 export class Dialect {
   @PrimaryGeneratedColumn()
@@ -19,7 +20,7 @@ export class Dialect {
   @Column({ length: 100 })
   name!: string;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, unique: true })
   slug!: string;
 
   @Column({ type: 'text', nullable: true })
@@ -34,7 +35,6 @@ export class Dialect {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  // ✅ правильная связь
   @OneToMany(() => Media, (media) => media.dialect)
   medias!: Media[];
 }

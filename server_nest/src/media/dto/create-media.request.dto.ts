@@ -1,52 +1,98 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  ArrayUnique,
   IsArray,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
-  ArrayUnique,
+  IsUrl,
+  MaxLength,
+  ValidateNested,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { MediaType } from './media-type.enum';
-import { MediaLevel } from './media-level.enum';
+import { MediaLevel } from '../enums/media-level.enum';
+import { MediaType } from '../enums/media-type.enum';
 
 export class CreateMediaRequestDto {
-  @ApiProperty({ example: 'Traditional Wedding Song' })
-  @IsString()
+  @ApiProperty({
+    example: 'Traditional Wedding Song',
+    description: 'Название медиа',
+  })
+  @IsString({ message: 'Название должно быть строкой' })
+  @MaxLength(300, { message: 'Название не может быть длиннее 300 символов' })
   title!: string;
 
-  @ApiPropertyOptional({ example: '/uploads/media/file.mp4', nullable: true })
+  @ApiPropertyOptional({
+    example: '/uploads/media/file.mp4',
+    nullable: true,
+    description: 'Путь к медиа-файлу',
+  })
   @IsOptional()
-  @IsString()
+  @IsUrl(
+    { require_tld: false },
+    { message: 'mediaUrl должен быть корректным URL или путем' },
+  )
+  @MaxLength(500, { message: 'mediaUrl не может быть длиннее 500 символов' })
   mediaUrl?: string;
 
   @ApiPropertyOptional({
     example: '/uploads/media/thumbnails/file.jpg',
     nullable: true,
+    description: 'Путь к превью',
   })
   @IsOptional()
-  @IsString()
+  @IsUrl(
+    { require_tld: false },
+    { message: 'previewUrl должен быть корректным URL или путем' },
+  )
+  @MaxLength(500, { message: 'previewUrl не может быть длиннее 500 символов' })
   previewUrl?: string;
 
-  @ApiPropertyOptional({ enum: MediaType, example: MediaType.VIDEO })
+  @ApiPropertyOptional({
+    enum: MediaType,
+    example: MediaType.VIDEO,
+    description: 'Тип медиа',
+  })
   @IsOptional()
-  @IsEnum(MediaType)
+  @IsEnum(MediaType, { message: 'type должен быть допустимым значением' })
   type?: MediaType;
 
-  @ApiPropertyOptional({ example: '/uploads/subs/file.vtt', nullable: true })
+  @ApiPropertyOptional({
+    example: '/uploads/subs/file.vtt',
+    nullable: true,
+    description: 'Путь к субтитрам',
+  })
   @IsOptional()
-  @IsString()
+  @IsUrl(
+    { require_tld: false },
+    { message: 'subtitlesLink должен быть корректным URL или путем' },
+  )
+  @MaxLength(500, {
+    message: 'subtitlesLink не может быть длиннее 500 символов',
+  })
   subtitlesLink?: string;
 
-  @ApiPropertyOptional({ example: '/uploads/grammar/file.pdf', nullable: true })
+  @ApiPropertyOptional({
+    example: '/uploads/grammar/file.pdf',
+    nullable: true,
+    description: 'Путь к грамматике',
+  })
   @IsOptional()
-  @IsString()
+  @IsUrl(
+    { require_tld: false },
+    { message: 'grammarLink должен быть корректным URL или путем' },
+  )
+  @MaxLength(500, { message: 'grammarLink не может быть длиннее 500 символов' })
   grammarLink?: string;
 
-  @ApiPropertyOptional({ enum: MediaLevel, example: MediaLevel.BEGINNER })
+  @ApiPropertyOptional({
+    enum: MediaLevel,
+    example: MediaLevel.BEGINNER,
+    description: 'Уровень сложности',
+  })
   @IsOptional()
-  @IsEnum(MediaLevel)
+  @IsEnum(MediaLevel, { message: 'level должен быть допустимым значением' })
   level?: MediaLevel;
 
   @ApiPropertyOptional({
@@ -54,8 +100,10 @@ export class CreateMediaRequestDto {
     additionalProperties: true,
     example: { pdf: '/file.pdf' },
     nullable: true,
+    description: 'Дополнительные ресурсы',
   })
   @IsOptional()
+  @ValidateNested()
   resources?: Record<string, any>;
 
   @ApiPropertyOptional({
@@ -65,32 +113,55 @@ export class CreateMediaRequestDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsInt({ message: 'dialectId должно быть целым числом' })
   dialectId?: number;
 
-  @ApiPropertyOptional({ example: 'public' })
+  @ApiPropertyOptional({ example: 'public', description: 'Тип лицензии' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'licenseType должно быть строкой' })
+  @MaxLength(50, { message: 'licenseType не может быть длиннее 50 символов' })
   licenseType?: string;
 
-  @ApiPropertyOptional({ example: 'Al Jazeera', nullable: true })
+  @ApiPropertyOptional({
+    example: 'Al Jazeera',
+    nullable: true,
+    description: 'Автор лицензии',
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'licenseAuthor должно быть строкой' })
+  @MaxLength(200, {
+    message: 'licenseAuthor не может быть длиннее 200 символов',
+  })
   licenseAuthor?: string;
 
-  @ApiPropertyOptional({ example: '00:03:24', nullable: true })
+  @ApiPropertyOptional({
+    example: '00:03:24',
+    nullable: true,
+    description: 'Длительность',
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'duration должно быть строкой' })
+  @MaxLength(20, { message: 'duration не может быть длиннее 20 символов' })
   duration?: string;
 
-  @ApiPropertyOptional({ example: 'محمد', nullable: true })
+  @ApiPropertyOptional({
+    example: 'محمد',
+    nullable: true,
+    description: 'Говорящий',
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'speaker должно быть строкой' })
+  @MaxLength(200, { message: 'speaker не может быть длиннее 200 символов' })
   speaker?: string;
 
-  @ApiPropertyOptional({ example: 'Эксклюзив Oasis', nullable: true })
+  @ApiPropertyOptional({
+    example: 'Эксклюзив Oasis',
+    nullable: true,
+    description: 'Роль источника',
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'sourceRole должно быть строкой' })
+  @MaxLength(100, { message: 'sourceRole не может быть длиннее 100 символов' })
   sourceRole?: string;
 
   @ApiPropertyOptional({
@@ -100,7 +171,7 @@ export class CreateMediaRequestDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsInt({ message: 'dialogueGroupId должно быть целым числом' })
   dialogueGroupId?: number;
 
   @ApiPropertyOptional({
@@ -109,9 +180,12 @@ export class CreateMediaRequestDto {
     nullable: true,
   })
   @IsOptional()
-  @IsArray()
-  @ArrayUnique()
+  @IsArray({ message: 'topicIds должно быть массивом' })
+  @ArrayUnique({ message: 'topicIds должны быть уникальными' })
   @Type(() => Number)
-  @IsInt({ each: true })
+  @IsInt({
+    each: true,
+    message: 'Каждый элемент topicIds должен быть целым числом',
+  })
   topicIds?: number[];
 }

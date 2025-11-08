@@ -1,22 +1,22 @@
 import {
   Controller,
   Get,
+  MessageEvent,
   Param,
   ParseIntPipe,
   Query,
-  Sse,
-  MessageEvent,
   Req,
+  Sse,
 } from '@nestjs/common';
-import { interval, Observable, switchMap, from, map } from 'rxjs';
+import { from, interval, map, Observable, switchMap } from 'rxjs';
 
-import { PersonalitiesService } from './personalities.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { RatingsService } from 'src/ratings/ratings.service';
+import { PersonalitiesService } from './personalities.service';
 
-import { Era } from './personality.entity';
-import { TargetType } from 'src/common/enums/target-type.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { Era } from './personality.entity';
 
 @Controller('personalities')
 export class PersonalitiesController {
@@ -79,7 +79,7 @@ export class PersonalitiesController {
     @Query('era') era?: string,
     @Req() req?: any,
   ) {
-    const userId = req?.user?.sub ?? null;
+    const userId = req?.user?.id ?? null; // ✅ Используем id, а не sub
     return this.personalitiesService.findAll(
       Number(page) || 1,
       Math.min(Number(limit) || 12, 50),
@@ -100,6 +100,6 @@ export class PersonalitiesController {
   @Public()
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.personalitiesService.findOne(id, req.user?.sub ?? null);
+    return this.personalitiesService.findOne(id, req.user?.id ?? null);
   }
 }

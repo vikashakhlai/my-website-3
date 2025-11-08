@@ -1,22 +1,21 @@
 import {
-  Injectable,
-  NotFoundException,
   ForbiddenException,
+  Injectable,
   MessageEvent,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
-import { Comment } from './comment.entity';
-import { CreateCommentDto } from './dto/create-comment.dto';
+import { Role } from 'src/auth/roles.enum';
+import { TargetType } from 'src/common/enums/target-type.enum';
 import { User } from 'src/user/user.entity';
 import { CommentReaction } from './comment-reaction.entity';
-import { TargetType } from 'src/common/enums/target-type.enum';
-import { Role } from 'src/auth/roles.enum';
+import { Comment } from './comment.entity';
+import { CreateCommentDto } from './dto/create-comment.dto';
 
-import { Subject, Observable, map } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 
-/** Тип событий, которые уходит в SSE */
 export type StreamEvent =
   | { type: 'created'; comment: Comment }
   | { type: 'react'; comment: Comment }
@@ -32,7 +31,6 @@ export class CommentsService {
     private readonly reactionRepo: Repository<CommentReaction>,
   ) {}
 
-  /** Хранилище стримов: `${target_type}:${target_id}` → Subject */
   private streams = new Map<string, Subject<StreamEvent>>();
 
   private getStream(target_type: TargetType, target_id: number) {
@@ -43,19 +41,17 @@ export class CommentsService {
     return this.streams.get(key)!;
   }
 
-  /** ✅ SSE подписка */
   subscribe(
     target_type: TargetType,
     target_id: number,
   ): Observable<MessageEvent> {
     return this.getStream(target_type, target_id).pipe(
       map((event) => ({
-        data: event, // здесь лежит StreamEvent
+        data: event,
       })),
     );
   }
 
-  // --- Создание комментария ---
   async create(dto: CreateCommentDto, user: User): Promise<Comment> {
     const entity = this.commentRepository.create({
       ...dto,
@@ -74,7 +70,6 @@ export class CommentsService {
     return saved;
   }
 
-  // --- Получить комментарии по сущности ---
   async findByTarget(
     target_type: TargetType,
     target_id: number,
@@ -109,7 +104,6 @@ export class CommentsService {
     return list.map((c) => attach(c));
   }
 
-  // --- Реакция (лайк / дизлайк / снять) ---
   async react(commentId: number, user: User, value: 1 | -1 | 0) {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
@@ -180,7 +174,6 @@ export class CommentsService {
     return updated;
   }
 
-  // --- Удаление комментария ---
   async delete(id: number, user: User): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id },

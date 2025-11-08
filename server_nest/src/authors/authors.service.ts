@@ -4,9 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Author } from './authors.entity';
-import { Repository } from 'typeorm';
 import { Book } from 'src/books/book.entity';
+import { makeAbsoluteUrl } from 'src/utils/media-url.util';
+import { Repository } from 'typeorm';
+import { Author } from './authors.entity';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
@@ -36,7 +37,7 @@ export class AuthorsService {
     const books = (author.books ?? []).map((b: Book) => ({
       id: b.id,
       title: b.title,
-      cover_url: b.cover_url,
+      cover_url: makeAbsoluteUrl(b.cover_url),
       publication_year: b.publication_year,
     }));
 
@@ -44,13 +45,13 @@ export class AuthorsService {
       id: author.id,
       full_name: author.fullName,
       bio: author.bio,
-      photo_url: author.photoUrl,
+      photo_url: makeAbsoluteUrl(author.photoUrl),
       books,
     };
   }
 
   async getAllAuthors() {
-    return this.authorsRepo
+    return await this.authorsRepo
       .createQueryBuilder('a')
       .select(['a.id', 'a.fullName AS full_name'])
       .orderBy('a.fullName', 'ASC')

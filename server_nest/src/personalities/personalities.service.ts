@@ -1,11 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
-import { Personality, Era } from './personality.entity';
 import { Comment } from 'src/comments/comment.entity';
-import { Rating } from 'src/ratings/rating.entity';
-import { Favorite } from 'src/favorites/favorite.entity';
 import { TargetType } from 'src/common/enums/target-type.enum';
+import { Favorite } from 'src/favorites/favorite.entity';
+import { Rating } from 'src/ratings/rating.entity';
+import { Not, Repository } from 'typeorm';
+import { ArticleRefDto } from './dto/article-ref.dto';
+import { BookRefDto } from './dto/book-ref.dto';
+import { PersonalityResponseDto } from './dto/personality-response.dto';
+import { QuoteDto } from './dto/quote.dto';
+import { Era, Personality } from './personality.entity';
 
 @Injectable()
 export class PersonalitiesService {
@@ -23,7 +32,6 @@ export class PersonalitiesService {
     private readonly favoriteRepo: Repository<Favorite>,
   ) {}
 
-  /** ✅ Список личностей */
   async findAll(
     page: number,
     limit: number,
@@ -32,197 +40,389 @@ export class PersonalitiesService {
     userId?: string,
     sort: 'latest' | 'rating' | 'popular' = 'latest',
   ) {
-    const qb = this.personalityRepo
-      .createQueryBuilder('p')
-      .leftJoinAndSelect('p.articles', 'articles')
-      .leftJoinAndSelect('p.books', 'books')
-      .skip((page - 1) * limit)
-      .take(limit);
+    try {
+      if (!page || page <= 0) {
+        throw new BadRequestException(
+          'Номер страницы должен быть положительным числом',
+        );
+      }
 
-    // ==== Поиск ====
-    const term = (search ?? '').trim();
-    if (term) {
-      qb.andWhere(
-        `(p.name ILIKE :term OR array_to_string(p.facts, ' ') ILIKE :term)`,
-        { term: `%${term}%` },
-      );
-    }
+      if (!limit || limit <= 0) {
+        throw new BadRequestException(
+          'Лимит должен быть положительным числом ',
+        );
+      }
 
-    // ==== Фильтр по эпохе ====
-    if (era) qb.andWhere('p.era = :era', { era });
+      if (search && typeof search !== 'string') {
+        throw new BadRequestException('Поисковый запрос должен быть строкой');
+      }
 
-    // ==== Подсчёт комментариев ====
-    qb.leftJoin(
-      (sub) =>
-        sub
-          .from(Comment, 'c')
-          .select('c.target_id', 'pid')
-          .addSelect('COUNT(c.id)', 'count')
-          .where('c.target_type = :t', { t: TargetType.PERSONALITY })
-          .groupBy('c.target_id'),
-      'comments',
-      'comments.pid = p.id',
-    );
+      if (era && !Object.values(Era).includes(era)) {
+        throw new BadRequestException(
+          `Некорректная эпоха. Допустимые значения: ${Object.values(Era).join(', ')}`,
+        );
+      }
 
-    qb.addSelect('COALESCE(comments.count, 0)', 'commentCount');
+      if (sort && !['latest', 'rating', 'popular'].includes(sort)) {
+        throw new BadRequestException('Некорректный тип сортировки');
+      }
 
-    // ==== LEFT JOIN Рейтинг ====
-    qb.leftJoin(
-      (sub) =>
-        sub
-          .from(Rating, 'r')
-          .select('r.target_id', 'pid')
-          .addSelect('AVG(r.value)', 'avg')
-          .addSelect('COUNT(r.id)', 'count')
-          .where('r.target_type = :t', { t: TargetType.PERSONALITY })
-          .groupBy('r.target_id'),
-      'rating',
-      'rating.pid = p.id',
-    );
+      const qb = this.personalityRepo
+        .createQueryBuilder('p')
+        .leftJoinAndSelect('p.articles', 'articles')
+        .leftJoinAndSelect('p.books', 'books')
+        .skip((page - 1) * limit)
+        .take(limit);
 
-    qb.addSelect('COALESCE(rating.avg, 0)', 'averageRating');
-    qb.addSelect('COALESCE(rating.count, 0)', 'ratingCount');
+      const term = (search ?? '').trim();
+      if (term) {
+        qb.andWhere(
+          `(p.name ILIKE :term OR array_to_string(p.facts, ' ') ILIKE :term)`,
+          { term: `%${term}%` },
+        );
+      }
 
-    // ==== Избранное ====
-    if (userId) {
+      if (era) qb.andWhere('p.era = :era', { era });
+
       qb.leftJoin(
-        Favorite,
-        'fav',
-        'fav.targetId = p.id AND fav.targetType = :ft AND fav.userId = :uid',
-        { ft: TargetType.PERSONALITY, uid: userId },
+        (sub) =>
+          sub
+            .from(Comment, 'c')
+            .select('c.target_id', 'pid')
+            .addSelect('COUNT(c.id)', 'count')
+            .where('c.target_type = :t', { t: TargetType.PERSONALITY })
+            .groupBy('c.target_id'),
+        'comments',
+        'comments.pid = p.id',
       );
-      qb.addSelect(
-        'CASE WHEN fav.id IS NULL THEN false ELSE true END',
-        'isFavorite',
+
+      qb.addSelect('COALESCE(comments.count, 0)', 'commentCount');
+
+      qb.leftJoin(
+        (sub) =>
+          sub
+            .from(Rating, 'r')
+            .select('r.target_id', 'pid')
+            .addSelect('AVG(r.value)', 'avg')
+            .addSelect('COUNT(r.id)', 'count')
+            .where('r.target_type = :t', { t: TargetType.PERSONALITY })
+            .groupBy('r.target_id'),
+        'rating',
+        'rating.pid = p.id',
       );
-    } else {
-      qb.addSelect('false', 'isFavorite');
+
+      qb.addSelect('COALESCE(rating.avg, 0)', 'averageRating');
+      qb.addSelect('COALESCE(rating.count, 0)', 'ratingCount');
+
+      if (userId) {
+        qb.leftJoin(
+          Favorite,
+          'fav',
+          'fav.targetId = p.id AND fav.targetType = :ft AND fav.userId = :uid',
+          { ft: TargetType.PERSONALITY, uid: userId },
+        );
+        qb.addSelect(
+          'CASE WHEN fav.id IS NULL THEN false ELSE true END',
+          'isFavorite',
+        );
+      } else {
+        qb.addSelect('false', 'isFavorite');
+      }
+
+      switch (sort) {
+        case 'rating':
+          qb.orderBy('averageRating', 'DESC');
+          break;
+        case 'popular':
+          qb.orderBy('commentCount', 'DESC');
+          break;
+        default:
+          qb.orderBy('p.id', 'DESC');
+      }
+
+      const [entities, total] = await qb.getManyAndCount();
+      const raw = await qb.getRawMany();
+
+      const items = entities.map((entity, i) => ({
+        id: entity.id,
+        name: entity.name,
+        years: entity.years ?? '',
+        position: entity.position ?? '',
+        biography: entity.biography ?? '',
+        facts: entity.facts ?? [],
+        era: entity.era ?? Era.MODERN,
+        imageUrl: entity.imageUrl ?? '',
+        books: entity.books.map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          publication_year: b.publication_year,
+          cover_url: b.cover_url,
+        })) as BookRefDto[],
+        articles: entity.articles.map((a) => ({
+          id: a.id,
+          title: a.titleRu,
+          created_at: a.createdAt?.toISOString() ?? '',
+        })) as ArticleRefDto[],
+        quotes: [] as QuoteDto[],
+        averageRating: Number(raw[i].averageRating),
+        ratingCount: Number(raw[i].ratingCount),
+        commentsCount: Number(raw[i].commentCount),
+        isFavorite:
+          raw[i].isFavorite === true ||
+          raw[i].isFavorite === 'true' ||
+          raw[i].isFavorite === 1,
+        userRating: null,
+        canRate: Boolean(userId),
+        canComment: Boolean(userId),
+      }));
+
+      return {
+        items,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при получении списка личностей',
+      );
     }
-
-    // ==== Сортировка ====
-    switch (sort) {
-      case 'rating':
-        qb.orderBy('averageRating', 'DESC');
-        break;
-      case 'popular':
-        qb.orderBy('commentCount', 'DESC');
-        break;
-      default:
-        qb.orderBy('p.id', 'DESC');
-    }
-
-    const [entities, total] = await qb.getManyAndCount();
-    const raw = await qb.getRawMany();
-
-    const items = entities.map((entity, i) => ({
-      ...entity,
-      averageRating: Number(raw[i].averageRating),
-      ratingCount: Number(raw[i].ratingCount),
-      commentCount: Number(raw[i].commentCount),
-      isFavorite:
-        raw[i].isFavorite === true ||
-        raw[i].isFavorite === 'true' ||
-        raw[i].isFavorite === 1,
-    }));
-
-    return {
-      items,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-    };
   }
 
-  /** ✅ Одна личность + рейтинг + избранное + комментарии */
   async findOne(id: number, userId?: string) {
-    const personality = await this.personalityRepo.findOne({
-      where: { id },
-      relations: ['articles', 'books'],
-    });
+    if (!id || id <= 0) {
+      throw new BadRequestException(
+        'ID личности должен быть положительным числом',
+      );
+    }
 
-    if (!personality) throw new NotFoundException('Личность не найдена');
+    if (userId && typeof userId !== 'string') {
+      throw new BadRequestException('ID пользователя должен быть строкой');
+    }
 
-    const comments = await this.commentRepo.find({
-      where: { target_type: TargetType.PERSONALITY, target_id: id },
-      order: { created_at: 'DESC' },
-      relations: ['user'],
-    });
+    try {
+      const personality = await this.personalityRepo.findOne({
+        where: { id },
+        relations: ['articles', 'books', 'quotes'],
+      });
 
-    const [avgRow, userRating, isFavorite] = await Promise.all([
-      this.ratingRepo
-        .createQueryBuilder('r')
-        .select('AVG(r.value)', 'average')
-        .addSelect('COUNT(*)', 'count')
-        .where('r.target_id = :id', { id })
-        .andWhere('r.target_type = :type', { type: TargetType.PERSONALITY })
-        .getRawOne(),
+      if (!personality) throw new NotFoundException('Личность не найдена');
 
-      userId
-        ? this.ratingRepo.findOne({
-            where: {
-              target_id: id,
-              target_type: TargetType.PERSONALITY,
-              user_id: userId,
-            },
-          })
-        : null,
+      const comments = await this.commentRepo.find({
+        where: { target_type: TargetType.PERSONALITY, target_id: id },
+        order: { created_at: 'DESC' },
+        relations: ['user'],
+      });
 
-      userId
-        ? this.favoriteRepo.exists({
-            where: { targetId: id, targetType: TargetType.PERSONALITY, userId },
-          })
-        : false,
-    ]);
+      const [avgRow, userRating, isFavorite] = await Promise.all([
+        this.ratingRepo
+          .createQueryBuilder('r')
+          .select('AVG(r.value)', 'average')
+          .addSelect('COUNT(*)', 'count')
+          .where('r.target_id = :id', { id })
+          .andWhere('r.target_type = :type', { type: TargetType.PERSONALITY })
+          .getRawOne(),
 
-    return {
-      ...personality,
-      comments,
-      commentCount: comments.length,
+        userId
+          ? this.ratingRepo.findOne({
+              where: {
+                target_id: id,
+                target_type: TargetType.PERSONALITY,
+                user_id: userId,
+              },
+            })
+          : null,
 
-      averageRating: avgRow?.average ? Number(avgRow.average) : null,
-      ratingCount: avgRow?.count ? Number(avgRow.count) : 0,
-      userRating: userRating?.value ?? null,
+        userId
+          ? this.favoriteRepo.exists({
+              where: {
+                targetId: id,
+                targetType: TargetType.PERSONALITY,
+                userId,
+              },
+            })
+          : false,
+      ]);
 
-      isFavorite: Boolean(isFavorite),
-      canRate: Boolean(userId),
-      canComment: Boolean(userId),
-    };
+      return {
+        id: personality.id,
+        name: personality.name,
+        years: personality.years ?? '',
+        position: personality.position ?? '',
+        biography: personality.biography ?? '',
+        facts: personality.facts ?? [],
+        era: personality.era ?? Era.MODERN,
+        imageUrl: personality.imageUrl ?? '',
+        books: personality.books.map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          publication_year: b.publication_year,
+          cover_url: b.cover_url,
+        })) as BookRefDto[],
+        articles: personality.articles.map((a) => ({
+          id: a.id,
+          title: a.titleRu,
+          created_at: a.createdAt?.toISOString() ?? '',
+        })) as ArticleRefDto[],
+        quotes: personality.quotes.map((q) => ({
+          id: q.id,
+          text_ar: q.text_ar,
+          text_ru: q.text_ru,
+        })) as QuoteDto[],
+        comments,
+        commentsCount: comments.length,
+
+        averageRating: avgRow?.average ? Number(avgRow.average) : null,
+        ratingCount: avgRow?.count ? Number(avgRow.count) : 0,
+        userRating: userRating?.value ?? null,
+
+        isFavorite: Boolean(isFavorite),
+        canRate: Boolean(userId),
+        canComment: Boolean(userId),
+      } as PersonalityResponseDto;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при получении данных личности',
+      );
+    }
   }
 
-  /** ✅ Случайные личности */
-  async getRandom(limit = 3): Promise<Personality[]> {
-    return this.personalityRepo
-      .createQueryBuilder('p')
-      .leftJoinAndSelect('p.articles', 'articles')
-      .leftJoinAndSelect('p.books', 'books')
-      .orderBy('RANDOM()')
-      .limit(limit)
-      .getMany();
+  async getRandom(limit = 3): Promise<PersonalityResponseDto[]> {
+    if (limit <= 0) {
+      throw new BadRequestException('Лимит должен быть положительным числом');
+    }
+
+    try {
+      const personalities = await this.personalityRepo
+        .createQueryBuilder('p')
+        .leftJoinAndSelect('p.articles', 'articles')
+        .leftJoinAndSelect('p.books', 'books')
+        .leftJoinAndSelect('p.quotes', 'quotes')
+        .orderBy('RANDOM()')
+        .limit(limit)
+        .getMany();
+
+      return personalities.map((p) => ({
+        id: p.id,
+        name: p.name,
+        years: p.years ?? '',
+        position: p.position ?? '',
+        biography: p.biography ?? '',
+        facts: p.facts ?? [],
+        era: p.era ?? Era.MODERN,
+        imageUrl: p.imageUrl ?? '',
+        books: p.books.map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          publication_year: b.publication_year,
+          cover_url: b.cover_url,
+        })) as BookRefDto[],
+        articles: p.articles.map((a) => ({
+          id: a.id,
+          title: a.titleRu,
+          created_at: a.createdAt?.toISOString() ?? '',
+        })) as ArticleRefDto[],
+        quotes: p.quotes.map((q) => ({
+          id: q.id,
+          text_ar: q.text_ar,
+          text_ru: q.text_ru,
+        })) as QuoteDto[],
+        averageRating: null,
+        ratingCount: 0,
+        commentsCount: 0,
+        userRating: null,
+        isFavorite: false,
+        canRate: false,
+        canComment: false,
+      }));
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при получении случайных личностей',
+      );
+    }
   }
 
-  /** ✅ Современники */
-  async getContemporaries(targetId: number): Promise<Personality[]> {
-    const target = await this.personalityRepo.findOne({
-      where: { id: targetId },
-      select: ['years'],
-    });
+  async getContemporaries(targetId: number): Promise<PersonalityResponseDto[]> {
+    if (!targetId || targetId <= 0) {
+      throw new BadRequestException(
+        'ID личности должен быть положительным числом',
+      );
+    }
 
-    if (!target?.years) return [];
+    try {
+      const target = await this.personalityRepo.findOne({
+        where: { id: targetId },
+        select: ['years'],
+      });
 
-    const targetRange = this.parseYears(target.years);
-    if (!targetRange) return [];
+      if (!target?.years) return [];
 
-    const all = await this.personalityRepo.find({
-      where: { id: Not(targetId) },
-      relations: ['articles', 'books'],
-    });
+      const targetRange = this.parseYears(target.years);
+      if (!targetRange) return [];
 
-    return all.filter((p) => {
-      const range = this.parseYears(p.years);
-      return range
-        ? targetRange[0] <= range[1] && range[0] <= targetRange[1]
-        : false;
-    });
+      const all = await this.personalityRepo.find({
+        where: { id: Not(targetId) },
+        relations: ['articles', 'books', 'quotes'],
+      });
+
+      const contemporaries = all.filter((p) => {
+        const range = this.parseYears(p.years);
+        return range
+          ? targetRange[0] <= range[1] && range[0] <= targetRange[1]
+          : false;
+      });
+
+      return contemporaries.map((p) => ({
+        id: p.id,
+        name: p.name,
+        years: p.years ?? '',
+        position: p.position ?? '',
+        biography: p.biography ?? '',
+        facts: p.facts ?? [],
+        era: p.era ?? Era.MODERN,
+        imageUrl: p.imageUrl ?? '',
+        books: p.books.map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          publication_year: b.publication_year,
+          cover_url: b.cover_url,
+        })) as BookRefDto[],
+        articles: p.articles.map((a) => ({
+          id: a.id,
+          title: a.titleRu,
+          created_at: a.createdAt?.toISOString() ?? '',
+        })) as ArticleRefDto[],
+        quotes: p.quotes.map((q) => ({
+          id: q.id,
+          text_ar: q.text_ar,
+          text_ru: q.text_ru,
+        })) as QuoteDto[],
+        averageRating: null,
+        ratingCount: 0,
+        commentsCount: 0,
+        userRating: null,
+        isFavorite: false,
+        canRate: false,
+        canComment: false,
+      }));
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при получении современников',
+      );
+    }
   }
 
   private parseYears(yearsStr?: string): [number, number] | null {

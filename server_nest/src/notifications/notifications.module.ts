@@ -1,15 +1,21 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from 'src/user/user.entity';
 import { Notification } from './notification.entity';
-import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsGateway } from './notifications.gateway';
-import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/user/user.entity';
+import { NotificationsService } from './notifications.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification, User])],
-  providers: [NotificationsService, NotificationsGateway, JwtService],
+  imports: [
+    TypeOrmModule.forFeature([Notification, User]),
+    JwtModule.register({
+      secret: process.env.JWT_ACCESS_SECRET || 'default_secret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [NotificationsService, NotificationsGateway],
   controllers: [NotificationsController],
   exports: [NotificationsGateway],
 })

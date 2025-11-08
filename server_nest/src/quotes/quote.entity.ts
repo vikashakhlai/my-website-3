@@ -1,11 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
 import { Personality } from 'src/personalities/personality.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('quotes')
 export class Quote {
@@ -18,11 +20,20 @@ export class Quote {
   @Column({ type: 'text', nullable: true })
   text_ru!: string | null;
 
+  @Column({ name: 'personality_id', nullable: true })
+  personality_id!: number | null;
+
   @ManyToOne(() => Personality, (personality) => personality.quotes, {
     onDelete: 'CASCADE',
     eager: true,
-    nullable: true, // ✅ можно убрать, если хочешь запрещать null в БД
+    nullable: true,
   })
   @JoinColumn({ name: 'personality_id' })
   personality!: Personality | null;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

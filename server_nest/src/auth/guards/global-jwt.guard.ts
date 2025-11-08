@@ -15,12 +15,10 @@ export class GlobalJwtAuthGuard extends AuthGuard('jwt') {
       context.getClass(),
     ]);
 
-    // ✅ Если публичный — просто пропускаем, но НЕ ломаем flow
     if (isPublic) {
       return true;
     }
 
-    // ✅ иначе обычная JWT проверка
     return super.canActivate(context);
   }
 }

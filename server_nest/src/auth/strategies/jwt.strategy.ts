@@ -1,9 +1,8 @@
-// src/auth/strategies/jwt.strategy.ts
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '../../user/user.service';
 import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UserService } from '../../user/user.service';
 
 interface JwtPayload {
   sub: string;
@@ -31,11 +30,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const user = await this.userService.findById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
 
-    // опционально: инвалидировать access при изменении tokenVersion
+    const payloadTokenVersion =
+      payload.tokenVersion != null ? Number(payload.tokenVersion) : null;
+
+    const dbTokenVersion =
+      user.tokenVersion != null ? Number(user.tokenVersion) : null;
+
     if (
-      user.tokenVersion &&
-      payload.tokenVersion &&
-      user.tokenVersion !== payload.tokenVersion
+      dbTokenVersion !== null &&
+      payloadTokenVersion !== null &&
+      dbTokenVersion !== payloadTokenVersion
     ) {
       throw new UnauthorizedException('Token is outdated');
     }

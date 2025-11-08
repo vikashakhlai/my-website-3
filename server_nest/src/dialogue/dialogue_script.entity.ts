@@ -1,13 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  JoinColumn,
-} from 'typeorm';
 import { Media } from 'src/media/media.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('dialogue_scripts')
 export class DialogueScript {
@@ -21,7 +21,6 @@ export class DialogueScript {
   @Column({ name: 'text_original', type: 'text', nullable: false })
   textOriginal!: string;
 
-  /** 🗣 Имя говорящего (может быть null) */
   @Column({
     name: 'speaker_name',
     type: 'varchar',
@@ -30,7 +29,6 @@ export class DialogueScript {
   })
   speakerName?: string | null;
 
-  /** 🔢 Порядок реплики (может быть null) */
   @Column({ name: 'order_index', type: 'int', nullable: true })
   orderIndex?: number | null;
 

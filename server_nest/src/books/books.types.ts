@@ -1,13 +1,19 @@
-// src/books/books.types.ts
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface NormalizedAuthor {
-  id: number;
-  full_name: string;
+export class NormalizedAuthor {
+  @ApiProperty({ example: 1, description: 'ID автора' })
+  id!: number;
+
+  @ApiProperty({ example: 'Ибн Сина', description: 'Полное имя' })
+  full_name!: string;
 }
 
-export interface NormalizedTag {
-  id: number;
-  name: string;
+export class NormalizedTag {
+  @ApiProperty({ example: 1, description: 'ID тега' })
+  id!: number;
+
+  @ApiProperty({ example: 'история', description: 'Название' })
+  name!: string;
 }
 
 export interface NormalizedBook {

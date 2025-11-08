@@ -1,16 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Book } from './book.entity';
+import { Comment } from 'src/comments/comment.entity';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { Favorite } from 'src/favorites/favorite.entity';
+import { Rating } from 'src/ratings/rating.entity';
+import { In, Repository } from 'typeorm';
 import { Author } from '../authors/authors.entity';
 import { Tag } from '../tags/tags.entity';
+import { Book } from './book.entity';
 import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
-import { Comment } from 'src/comments/comment.entity';
-import { Rating } from 'src/ratings/rating.entity';
-import { Favorite } from 'src/favorites/favorite.entity';
-import { TargetType } from 'src/common/enums/target-type.enum';
 import { SearchBooksDto } from './dto/search-books.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
 
 @Injectable()
 export class BookService {
@@ -34,16 +34,14 @@ export class BookService {
     private readonly favoriteRepo: Repository<Favorite>,
   ) {}
 
-  // 🕐 Последние книги
   async findLatest(limit: number) {
-    return this.bookRepo.find({
+    return await this.bookRepo.find({
       relations: ['authors', 'tags'],
       order: { created_at: 'DESC' },
       take: limit,
     });
   }
 
-  // === 🔍 Поиск с вычисляемыми полями ===
   async searchBooks(dto: SearchBooksDto) {
     const { page = 1, limit = 20, title, tag, author } = dto;
 
@@ -79,7 +77,6 @@ export class BookService {
     };
   }
 
-  // === 📘 Одна книга + связанные ===
   async findOneWithRelated(id: number, userId?: string) {
     const book = await this.findOne(id, userId);
 
@@ -91,7 +88,6 @@ export class BookService {
     return { book, similarBooks, otherBooksByAuthor };
   }
 
-  // === 📘 Одна книга ===
   async findOne(id: number, userId?: string) {
     const qb = this.bookRepo
       .createQueryBuilder('b')
@@ -138,7 +134,6 @@ export class BookService {
     return result.entities[0];
   }
 
-  // === CRUD ===
   async create(dto: CreateBookDto) {
     const authors = dto.authorIds?.length
       ? await this.authorRepo.find({ where: { id: In(dto.authorIds) } })
@@ -148,7 +143,7 @@ export class BookService {
       : [];
 
     const book = this.bookRepo.create({ ...dto, authors, tags });
-    return this.bookRepo.save(book);
+    return await this.bookRepo.save(book);
   }
 
   async update(id: number, dto: UpdateBookDto) {
@@ -165,7 +160,7 @@ export class BookService {
       });
 
     Object.assign(book, dto);
-    return this.bookRepo.save(book);
+    return await this.bookRepo.save(book);
   }
 
   async remove(id: number) {
@@ -173,9 +168,8 @@ export class BookService {
     await this.bookRepo.remove(book);
   }
 
-  // === Комментарии ===
   async getComments(id: number) {
-    return this.commentRepo.find({
+    return await this.commentRepo.find({
       where: { target_type: TargetType.BOOK, target_id: id },
       relations: ['user'],
       order: { created_at: 'ASC' },
@@ -195,10 +189,9 @@ export class BookService {
       content,
       parent: parentId ? ({ id: parentId } as Comment) : null,
     });
-    return this.commentRepo.save(comment);
+    return await this.commentRepo.save(comment);
   }
 
-  // === Рейтинг ===
   async rateBook(id: number, userId: string, value: number) {
     let rating = await this.ratingRepo.findOne({
       where: { target_type: TargetType.BOOK, target_id: id, user_id: userId },
@@ -213,10 +206,9 @@ export class BookService {
         value,
       });
 
-    return this.ratingRepo.save(rating);
+    return await this.ratingRepo.save(rating);
   }
 
-  // === Похожие и книги автора ===
   async getSimilarBooks(bookId: number) {
     const book = await this.bookRepo.findOne({
       where: { id: bookId },
@@ -227,7 +219,7 @@ export class BookService {
 
     const tagIds = book.tags.map((t) => t.id);
 
-    return this.bookRepo
+    return await this.bookRepo
       .createQueryBuilder('b')
       .leftJoinAndSelect('b.tags', 'tag')
       .leftJoinAndSelect('b.authors', 'author')
@@ -248,7 +240,7 @@ export class BookService {
 
     const authorIds = book.authors.map((a) => a.id);
 
-    return this.bookRepo
+    return await this.bookRepo
       .createQueryBuilder('b')
       .leftJoinAndSelect('b.authors', 'a')
       .leftJoinAndSelect('b.tags', 'tag')

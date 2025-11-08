@@ -1,9 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateTagDto {
   @ApiProperty({ example: 'Фантастика', description: 'Название тега' })
-  @IsString()
-  @MinLength(2)
+  @IsString({ message: 'Название тега должно быть строкой' })
+  @MinLength(2, { message: 'Название тега должно быть не менее 2 символов' })
+  @MaxLength(100, {
+    message: 'Название тега не может быть длиннее 100 символов',
+  })
   name!: string;
 }

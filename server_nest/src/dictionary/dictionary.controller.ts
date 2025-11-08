@@ -1,41 +1,66 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { DictionaryService } from './dictionary.service';
+import {
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { DictionaryService } from './dictionary.service';
+import { AutocompleteDto } from './dto/autocomplete.dto';
+import {
+  AutocompleteResponseDto,
+  SearchByRootResponseDto,
+  SearchDictionaryResponseDto,
+} from './dto/dictionary-response.dto';
+import { SearchByRootDto } from './dto/search-by-root.dto';
+import { SearchDictionaryDto } from './dto/search-dictionary.dto';
 
+@ApiTags('Dictionary')
 @Controller('dictionary')
 export class DictionaryController {
   constructor(private readonly dictService: DictionaryService) {}
 
-  /** 🔍 Поиск слов по словарю (публично) */
   @Public()
+  @ApiOperation({ summary: 'Поиск слов по словарю (арабский/русский)' })
+  @ApiQuery({ name: 'query', example: 'كتب', description: 'Поисковый запрос' })
+  @ApiResponse({
+    status: 200,
+    description: 'Результаты поиска',
+    type: SearchDictionaryResponseDto,
+  })
   @Get('search')
-  async searchDictionary(@Query('query') query: string) {
-    try {
-      return await this.dictService.searchDictionary(query);
-    } catch (err: any) {
-      throw new BadRequestException(err.message || 'Ошибка поиска');
-    }
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async searchDictionary(@Query() dto: SearchDictionaryDto) {
+    return this.dictService.searchDictionary(dto.query);
   }
 
-  /** 🧬 Поиск по корню (публично) */
   @Public()
+  @ApiOperation({ summary: 'Поиск слов по корню' })
+  @ApiQuery({ name: 'root', example: 'كتب', description: 'Корень слова' })
+  @ApiResponse({
+    status: 200,
+    description: 'Слова по корню',
+    type: SearchByRootResponseDto,
+  })
   @Get('by-root')
-  async searchByRoot(@Query('root') root: string) {
-    try {
-      return await this.dictService.searchByRoot(root);
-    } catch (err: any) {
-      throw new BadRequestException(err.message || 'Ошибка поиска по корню');
-    }
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async searchByRoot(@Query() dto: SearchByRootDto) {
+    return this.dictService.searchByRoot(dto.root);
   }
 
-  /** ✨ Автодополнение (публично) */
   @Public()
+  @ApiOperation({ summary: 'Автодополнение для слова' })
+  @ApiQuery({ name: 'q', example: 'كت', description: 'Часть слова' })
+  @ApiResponse({
+    status: 200,
+    description: 'Варианты автодополнения',
+    type: AutocompleteResponseDto,
+  })
   @Get('autocomplete')
-  async autocomplete(@Query('q') q: string) {
-    try {
-      return await this.dictService.autocomplete(q);
-    } catch (err: any) {
-      throw new BadRequestException(err.message || 'Ошибка автодополнения');
-    }
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async autocomplete(@Query() dto: AutocompleteDto) {
+    return this.dictService.autocomplete(dto.q);
   }
 }

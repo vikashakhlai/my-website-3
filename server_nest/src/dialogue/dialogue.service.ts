@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Media } from 'src/media/media.entity';
 import { Repository } from 'typeorm';
 import { DialogueGroup } from './dialogue_group.entity';
 import { DialogueScript } from './dialogue_script.entity';
-import { Media } from 'src/media/media.entity';
 
 @Injectable()
 export class DialogueService {
@@ -20,7 +20,7 @@ export class DialogueService {
 
   /** 📜 Все группы диалогов */
   async findAllGroups(): Promise<DialogueGroup[]> {
-    return this.groupRepo.find({
+    return await this.groupRepo.find({
       relations: ['medias', 'medias.dialect', 'medias.scripts'],
       order: { createdAt: 'DESC' },
     });
@@ -40,7 +40,7 @@ export class DialogueService {
   /** ➕ Создать новую группу диалога */
   async createGroup(data: Partial<DialogueGroup>): Promise<DialogueGroup> {
     const group = this.groupRepo.create(data);
-    return this.groupRepo.save(group);
+    return await this.groupRepo.save(group);
   }
 
   /** ♻️ Обновить группу */
@@ -50,7 +50,7 @@ export class DialogueService {
   ): Promise<DialogueGroup> {
     const group = await this.findGroupById(id);
     Object.assign(group, data);
-    return this.groupRepo.save(group);
+    return await this.groupRepo.save(group);
   }
 
   /** 🗑 Удалить группу */
@@ -76,7 +76,7 @@ export class DialogueService {
       orderIndex: orderIndex ?? null,
     });
 
-    return this.scriptRepo.save(script);
+    return await this.scriptRepo.save(script);
   }
 
   /** ♻️ Обновить реплику */
@@ -85,7 +85,7 @@ export class DialogueService {
     if (!script) throw new NotFoundException('Реплика не найдена');
 
     Object.assign(script, data);
-    return this.scriptRepo.save(script);
+    return await this.scriptRepo.save(script);
   }
 
   /** 🗑 Удалить реплику */

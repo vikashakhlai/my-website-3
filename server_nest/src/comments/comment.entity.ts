@@ -1,50 +1,47 @@
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { User } from 'src/user/user.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User } from 'src/user/user.entity';
-import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Entity('comments')
+@Index(['target_type', 'target_id'])
+@Index(['user_id'])
+@Index(['parent_id'])
 export class Comment {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  // 👤 Пользователь, оставивший комментарий
   @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  // Храним UUID напрямую для удобства
   @Column({ type: 'uuid' })
   user_id!: string;
 
-  // 🎯 Тип сущности, к которой привязан комментарий
   @Column({ type: 'enum', enum: TargetType })
   target_type!: TargetType;
 
-  // 🔗 ID конкретной сущности
   @Column({ type: 'int' })
   target_id!: number;
 
-  // 💬 Текст комментария
   @Column('text')
   content!: string;
 
-  // 📈 Лайки / дизлайки
   @Column({ type: 'int', default: 0 })
   likes_count!: number;
 
   @Column({ type: 'int', default: 0 })
   dislikes_count!: number;
 
-  // 🔁 Родительский комментарий
   @ManyToOne(() => Comment, (comment) => comment.replies, {
     onDelete: 'CASCADE',
     nullable: true,
@@ -52,15 +49,12 @@ export class Comment {
   @JoinColumn({ name: 'parent_id' })
   parent?: Comment | null;
 
-  // Храним parent_id явно для простоты SQL-запросов
   @Column({ type: 'int', nullable: true })
   parent_id!: number | null;
 
-  // 👇 Ответы на этот комментарий
   @OneToMany(() => Comment, (comment) => comment.parent)
   replies!: Comment[];
 
-  // 🕒 Даты
   @CreateDateColumn()
   created_at!: Date;
 

@@ -1,12 +1,23 @@
 import {
   CanActivate,
   ExecutionContext,
-  Injectable,
   ForbiddenException,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { Role } from '../roles.enum';
+
+interface User {
+  id: number;
+  role: Role;
+  [key: string]: any;
+}
+
+interface RequestWithUser extends Request {
+  user?: User;
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -19,12 +30,23 @@ export class RolesGuard implements CanActivate {
     ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true; // если роли не указаны — доступ открыт
+      return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const user = request.user;
 
-    if (!user || !requiredRoles.includes(user.role)) {
+    if (!user) {
+      throw new UnauthorizedException('Требуется аутентификация');
+    }
+
+    if (!user.role) {
+      throw new ForbiddenException('У пользователя отсутствует роль');
+    }
+
+    const hasRole = requiredRoles.some((role) => user.role === role);
+
+    if (!hasRole) {
       throw new ForbiddenException('Недостаточно прав для выполнения действия');
     }
 

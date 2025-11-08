@@ -1,15 +1,16 @@
-// src/user/user.service.ts
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User, AccessLevel } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/auth/roles.enum';
+import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserAdminListDto } from './dto/user-admin-list.dto';
+import { AccessLevel, User } from './user.entity';
 
 @Injectable()
 export class UserService {
@@ -18,138 +19,329 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  // ✅ Новый универсальный update (нужен для AuthService)
-  async update(id: string, data: Partial<User>): Promise<void> {
-    await this.userRepository.update({ id }, data);
+  async findAllForAdmin(): Promise<UserAdminListDto[]> {
+    try {
+      const users = await this.userRepository.find({
+        select: [
+          'id',
+          'email',
+          'role',
+          'isAuthor',
+          'accessLevel',
+          'createdAt',
+          'updatedAt',
+        ],
+        order: { createdAt: 'ASC' },
+      });
+
+      return users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isAuthor: user.isAuthor,
+        accessLevel: user.accessLevel,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }));
+    } catch (error: unknown) {
+      throw new InternalServerErrorException(
+        'Ошибка при получении списка пользователей',
+      );
+    }
   }
 
-  // 🔹 Создание пользователя (всегда USER, без внешней роли)
-  async create(email: string, password: string): Promise<User> {
-    if (!email || !password) {
-      throw new BadRequestException('Email и пароль обязательны');
+  async update(id: string, data: Partial<User>): Promise<void> {
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
     }
 
-    const existing = await this.findByEmail(email);
-    if (existing) {
+    if (!data || Object.keys(data).length === 0) {
+      throw new BadRequestException('Нет данных для обновления');
+    }
+
+    const result = await this.userRepository.update({ id }, data);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Пользователь с ID ${id} не найден`);
+    }
+  }
+
+  async create(email: string, password: string): Promise<User> {
+    if (!email || typeof email !== 'string' || email.trim() === '') {
+      throw new BadRequestException('Email обязателен и должен быть строкой');
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
       throw new BadRequestException(
-        'Пользователь с таким email уже существует',
+        'Пароль обязателен и должен содержать минимум 6 символов',
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('Некорректный формат email');
+    }
 
-    const user = this.userRepository.create({
-      email,
-      password: hashedPassword,
-      role: Role.USER,
-      isAuthor: false,
-      accessLevel: AccessLevel.BASIC,
-    });
+    try {
+      const existing = await this.findByEmail(email);
+      if (existing) {
+        throw new BadRequestException(
+          'Пользователь с таким email уже существует',
+        );
+      }
 
-    return this.userRepository.save(user);
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      const user = this.userRepository.create({
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        role: Role.USER,
+        isAuthor: false,
+        accessLevel: AccessLevel.BASIC,
+      });
+
+      return await this.userRepository.save(user);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при создании пользователя',
+      );
+    }
   }
 
-  // 🔹 Получение всех пользователей (для ADMIN+)
   async findAll(): Promise<Partial<User>[]> {
-    return this.userRepository.find({
-      select: [
-        'id',
-        'email',
-        'role',
-        'isAuthor',
-        'accessLevel',
-        'createdAt',
-        'updatedAt',
-      ],
-    });
+    try {
+      return await this.userRepository.find({
+        select: [
+          'id',
+          'email',
+          'role',
+          'isAuthor',
+          'accessLevel',
+          'createdAt',
+          'updatedAt',
+        ],
+        order: { createdAt: 'ASC' },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при получении списка пользователей',
+      );
+    }
   }
 
-  // 🔹 Поиск пользователя по ID (пароль не возвращается 💡)
   async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('Пользователь не найден');
-    return user;
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
+    }
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+        select: {
+          password: false,
+          refreshTokenHash: false,
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Пользователь не найден');
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Ошибка при поиске пользователя');
+    }
   }
 
-  // 🔹 Поиск по email без пароля
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    if (!email || typeof email !== 'string' || email.trim() === '') {
+      throw new BadRequestException('Email обязателен');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('Некорректный формат email');
+    }
+
+    try {
+      return await this.userRepository.findOne({
+        where: { email: email.toLowerCase().trim() },
+        select: {
+          password: false,
+          refreshTokenHash: false,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при поиске пользователя по email',
+      );
+    }
   }
 
-  // 🔹 Поиск по email + пароль (используется только при логине)
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    return this.userRepository.findOne({
-      where: { email },
-      select: [
-        'id',
-        'email',
-        'password',
-        'role',
-        'isAuthor',
-        'accessLevel',
-        'createdAt',
-        'updatedAt',
-        'refreshTokenHash',
-        'tokenVersion',
-      ],
-    });
+    if (!email || typeof email !== 'string' || email.trim() === '') {
+      throw new BadRequestException('Email обязателен');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('Некорректный формат email');
+    }
+
+    try {
+      return await this.userRepository.findOne({
+        where: { email: email.toLowerCase().trim() },
+        select: [
+          'id',
+          'email',
+          'password',
+          'role',
+          'isAuthor',
+          'accessLevel',
+          'createdAt',
+          'updatedAt',
+          'refreshTokenHash',
+          'tokenVersion',
+        ],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при поиске пользователя по email с паролем',
+      );
+    }
   }
 
-  // 🔹 Проверка пароля
   async validatePassword(
     plainPassword: string,
     hashedPassword: string,
   ): Promise<boolean> {
-    return bcrypt.compare(plainPassword, hashedPassword);
-  }
-
-  // 🔹 Повышение до ADMIN (только SUPER_ADMIN)
-  async promoteToAdmin(userId: string): Promise<User> {
-    const user = await this.findById(userId);
-    if (user.role === Role.SUPER_ADMIN) {
-      throw new BadRequestException('Нельзя менять роль SUPER_ADMIN');
+    if (!plainPassword || !hashedPassword) {
+      return false;
     }
-    user.role = Role.ADMIN;
-    return this.userRepository.save(user);
+
+    try {
+      return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+      console.error('Ошибка при сравнении паролей:', error);
+      return false;
+    }
   }
 
-  // 🔹 Отзыв прав ADMIN (только SUPER_ADMIN)
-  async revokeAdminRights(userId: string): Promise<User> {
+  async promoteToAdmin(userId: string): Promise<User> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
+    }
+
     const user = await this.findById(userId);
+
+    if (user.role === Role.SUPER_ADMIN) {
+      throw new BadRequestException('Нельзя изменить роль SUPER_ADMIN');
+    }
+
+    if (user.role === Role.ADMIN) {
+      throw new BadRequestException('Пользователь уже является ADMIN');
+    }
+
+    user.role = Role.ADMIN;
+
+    try {
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при обновлении роли пользователя',
+      );
+    }
+  }
+
+  async revokeAdminRights(userId: string): Promise<User> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
+    }
+
+    const user = await this.findById(userId);
+
     if (user.role !== Role.ADMIN) {
       throw new BadRequestException('Пользователь не является ADMIN');
     }
+
+    if (user.role !== Role.ADMIN) {
+      throw new BadRequestException('Пользователь не является ADMIN');
+    }
+
     user.role = Role.USER;
-    return this.userRepository.save(user);
+
+    try {
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при изменении прав администратора',
+      );
+    }
   }
 
-  // 🔹 Назначение автора (ADMIN или SUPER_ADMIN)
   async makeAuthor(userId: string): Promise<User> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
+    }
+
     const user = await this.findById(userId);
-    if (user.isAuthor) return user;
+
+    if (user.isAuthor) {
+      return user;
+    }
+
     user.isAuthor = true;
-    return this.userRepository.save(user);
+
+    try {
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException('Ошибка при назначении авторства');
+    }
   }
 
-  // 🔹 Удаление пользователя (только SUPER_ADMIN)
   async deleteUser(userId: string): Promise<{ message: string }> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new BadRequestException('ID пользователя не может быть пустым');
+    }
+
     const user = await this.findById(userId);
+
     if (user.role === Role.SUPER_ADMIN) {
       throw new BadRequestException('Нельзя удалить SUPER_ADMIN');
     }
-    await this.userRepository.remove(user);
-    return { message: `User ${user.email} has been deleted` };
+
+    try {
+      await this.userRepository.remove(user);
+      return { message: `Пользователь ${user.email} был успешно удален` };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Ошибка при удалении пользователя',
+      );
+    }
   }
 
-  // 🔹 Обновление email/пароля (SELF или ADMIN+)
   async updateUser(userId: string, updateDto: UpdateUserDto): Promise<User> {
     const user = await this.findById(userId);
 
-    if (updateDto.email) user.email = updateDto.email;
-    if (updateDto.password)
-      user.password = await bcrypt.hash(updateDto.password, 10);
+    if (updateDto.email) {
+      const existing = await this.findByEmail(updateDto.email);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException(
+          'Email уже используется другим пользователем',
+        );
+      }
+      user.email = updateDto.email;
+    }
+    if (updateDto.password) {
+      user.password = await bcrypt.hash(updateDto.password, 12);
+    }
 
-    await this.userRepository.save(user);
-    return user;
+    return await this.userRepository.save(user);
   }
 }

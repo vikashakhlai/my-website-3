@@ -1,50 +1,50 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Param,
+  BadRequestException,
   Body,
-  Put,
+  Controller,
   Delete,
+  Get,
+  MessageEvent,
+  Param,
   ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  Sse,
   UploadedFile,
   UseInterceptors,
-  Query,
-  Sse,
-  MessageEvent,
-  Req,
-  UseGuards,
-  BadRequestException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { interval, Observable, switchMap } from 'rxjs';
 
-import { MediaService } from './media.service';
-import { RatingsService } from 'src/ratings/ratings.service';
 import { CommentsService } from 'src/comments/comments.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { RatingsService } from 'src/ratings/ratings.service';
+import { MediaService } from './media.service';
 
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Role } from 'src/auth/roles.enum';
-import { Public } from 'src/auth/decorators/public.decorator';
 import {
   ApiBearerAuth,
-  ApiTags,
-  ApiOperation,
-  ApiOkResponse,
   ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { Role } from 'src/auth/roles.enum';
 import { TargetType } from 'src/common/enums/target-type.enum';
 
 import { CreateMediaRequestDto } from './dto/create-media.request.dto';
-import { UpdateMediaRequestDto } from './dto/update-media.request.dto';
-import { MediaResponseDto } from './dto/media.response.dto';
 import { MediaWithRatingResponseDto } from './dto/media-with-rating.response.dto';
+import { MediaResponseDto } from './dto/media.response.dto';
+import { UpdateMediaRequestDto } from './dto/update-media.request.dto';
 
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { mapToDto } from 'src/common/utils/map-to-dto.util';
 
 @ApiTags('Media')
@@ -57,9 +57,12 @@ export class MediaController {
     private readonly favoritesService: FavoritesService,
   ) {}
 
-  /** 📜 Публичный список медиа с фильтрами */
   @ApiOperation({ summary: 'Список медиа (публично)' })
-  @ApiOkResponse({ type: MediaResponseDto, isArray: true })
+  @ApiResponse({
+    status: 200,
+    description: 'Список медиа',
+    type: [MediaResponseDto],
+  })
   @Public()
   @Get()
   async findAll(
@@ -90,15 +93,23 @@ export class MediaController {
     return list.map((m) => mapToDto(MediaResponseDto, m));
   }
 
-  /** 🎬 Просмотр конкретного медиа — только авторизованные */
-  @ApiOkResponse({ type: MediaWithRatingResponseDto })
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Просмотр конкретного медиа (только авторизованные)',
+  })
+  @ApiBearerAuth('access-token')
+  @Auth()
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({
+    status: 200,
+    description: 'Информация о медиа',
+    type: MediaWithRatingResponseDto,
+  })
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: any,
   ): Promise<MediaWithRatingResponseDto> {
-    const result = await this.mediaService.findOneWithRating(id, req.user.sub);
+    const result = await this.mediaService.findOneWithRating(id, req.user.id);
 
     const dto = mapToDto(MediaWithRatingResponseDto, result);
     dto.averageRating = (result as any).averageRating;
@@ -108,12 +119,14 @@ export class MediaController {
     return dto;
   }
 
-  /** 📥 Загрузка файла (ADMIN+) */
   @ApiOperation({ summary: 'Загрузить медиа-файл (ADMIN+)' })
-  @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiResponse({
+    status: 201,
+    description: 'Медиа создано',
+    type: MediaResponseDto,
+  })
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -155,13 +168,17 @@ export class MediaController {
     return mapToDto(MediaResponseDto, created);
   }
 
-  /** 🔄 Обновить (ADMIN+) */
   @ApiOperation({ summary: 'Обновить медиа (ADMIN+)' })
-  @ApiOkResponse({ type: MediaResponseDto })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({
+    status: 200,
+    description: 'Медиа обновлено',
+    type: MediaResponseDto,
+  })
   @Put(':id')
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMediaRequestDto,
@@ -170,26 +187,31 @@ export class MediaController {
     return mapToDto(MediaResponseDto, updated);
   }
 
-  /** 🗑 Удалить (ADMIN+) */
   @ApiOperation({ summary: 'Удалить медиа (ADMIN+)' })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Auth(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({ status: 200, description: 'Медиа удалено', type: Object })
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.mediaService.remove(id);
     return { success: true };
   }
 
-  /** ⭐ Средний рейтинг (публично) */
   @ApiOperation({ summary: 'Средний рейтинг (публично)' })
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({
+    status: 200,
+    description: 'Средний рейтинг и количество голосов',
+    type: Object,
+  })
   @Get(':id/rating')
   async getRating(@Param('id', ParseIntPipe) id: number) {
     return this.ratingsService.getAverage(TargetType.MEDIA, id);
   }
 
-  /** 💬 SSE комментариев (публично) */
   @ApiOperation({ summary: 'SSE: комментарии (публично)' })
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
   @Sse('stream/:id/comments')
   streamComments(
     @Param('id', ParseIntPipe) id: number,
@@ -201,8 +223,8 @@ export class MediaController {
     );
   }
 
-  /** 🌟 SSE рейтинга (публично) */
   @ApiOperation({ summary: 'SSE: рейтинг (публично)' })
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
   @Sse('stream/:id/rating')
   streamRatings(
     @Param('id', ParseIntPipe) id: number,
@@ -218,28 +240,38 @@ export class MediaController {
     );
   }
 
-  /** 💛 Добавить в избранное */
   @ApiOperation({ summary: 'Добавить медиа в избранное' })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @Auth()
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({
+    status: 201,
+    description: 'Добавлено в избранное',
+    type: Object,
+  })
   @Post(':id/favorite')
   async addToFavorites(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.favoritesService.addToFavorites(req.user.sub, {
+    return this.favoritesService.addToFavorites(req.user.id, {
       targetType: TargetType.MEDIA,
       targetId: id,
     });
   }
 
-  /** 💔 Удалить из избранного */
   @ApiOperation({ summary: 'Удалить медиа из избранного' })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @Auth()
+  @ApiParam({ name: 'id', example: 1, description: 'ID медиа' })
+  @ApiResponse({
+    status: 200,
+    description: 'Удалено из избранного',
+    type: Object,
+  })
   @Delete(':id/favorite')
   async removeFromFavorites(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: any,
   ) {
-    return this.favoritesService.removeFromFavorites(req.user.sub, {
+    return this.favoritesService.removeFromFavorites(req.user.id, {
       targetType: TargetType.MEDIA,
       targetId: id,
     });

@@ -1,18 +1,21 @@
+import { User } from 'src/user/user.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
-  Unique,
   CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Comment } from './comment.entity';
-import { User } from 'src/user/user.entity';
 
 @Entity('comment_reactions')
 @Unique('uq_comment_reaction', ['comment_id', 'user_id'])
+@Index(['comment_id'])
+@Index(['user_id'])
 export class CommentReaction {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -23,7 +26,7 @@ export class CommentReaction {
   @Column()
   user_id!: string;
 
-  @Column({ type: 'int' }) // 1 = like, -1 = dislike
+  @Column({ type: 'int' })
   value!: 1 | -1;
 
   @ManyToOne(() => Comment, (c) => c.replies, { onDelete: 'CASCADE' })

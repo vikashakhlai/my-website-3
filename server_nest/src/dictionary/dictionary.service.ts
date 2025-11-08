@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { normalizeArabic as normalizeArabicJS } from './utils/arabic-normalize';
 
@@ -8,7 +8,6 @@ export class DictionaryService {
 
   constructor(private readonly dataSource: DataSource) {}
 
-  // ═════════ helpers ═════════
   private toRoman(num: number | null | undefined): string {
     if (!num || typeof num !== 'number') return String(num ?? '');
     if (num < 1 || num > 15) return String(num);
@@ -40,11 +39,10 @@ export class DictionaryService {
     }));
   }
 
-  // ═════════ main methods ═════════
   async searchDictionary(query: string) {
     const searchQuery = (query ?? '').trim();
     if (!searchQuery) {
-      throw new Error("Параметр 'query' обязателен");
+      throw new BadRequestException("Параметр 'query' обязателен");
     }
 
     const hasArabic = /[\u0600-\u06FF]/.test(searchQuery);
@@ -125,19 +123,17 @@ export class DictionaryService {
   async searchByRoot(root: string) {
     const inputRoot = (root ?? '').trim();
     if (!inputRoot) {
-      throw new Error("Параметр 'root' обязателен");
+      throw new BadRequestException("Параметр 'root' обязателен");
     }
 
     let actualRoot = inputRoot;
 
-    // Шаг 1: прямой чек
     const directCheck = await this.dataSource.query(
       'SELECT 1 FROM words WHERE root_ar = $1 LIMIT 1',
       [inputRoot],
     );
 
     if (directCheck.length === 0) {
-      // Шаг 2: проверить не форма ли это
       const formCheck = await this.dataSource.query(
         `
         SELECT DISTINCT w.root_ar
@@ -153,7 +149,6 @@ export class DictionaryService {
       if (formCheck.length > 0) {
         actualRoot = formCheck[0].root_ar;
       } else {
-        // Шаг 3: поиск по префиксному нормализованному значению в form_ar
         const normalizedFormCheck = await this.dataSource.query(
           `
           SELECT DISTINCT w.root_ar

@@ -1,16 +1,18 @@
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { User } from 'src/user/user.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
+  Entity,
   Index,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from 'src/user/user.entity';
-import { TargetType } from 'src/common/enums/target-type.enum';
 
 @Index(['userId', 'targetType', 'targetId'], { unique: true })
+@Index(['userId']) // ✅ Для быстрого поиска по пользователю
+@Index(['targetType', 'targetId']) // ✅ Для быстрого поиска по цели
 @Entity('favorites')
 export class Favorite {
   @PrimaryGeneratedColumn()
@@ -19,7 +21,11 @@ export class Favorite {
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
 
-  @Column({ name: 'target_type', type: 'varchar', length: 50 })
+  @Column({
+    name: 'target_type',
+    type: 'enum',
+    enum: TargetType,
+  })
   targetType!: TargetType;
 
   @Column({ name: 'target_id', type: 'int' })

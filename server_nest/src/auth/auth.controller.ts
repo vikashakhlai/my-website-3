@@ -1,32 +1,34 @@
 // src/auth/auth.controller.ts
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  Req,
+  Controller,
   Get,
-  UnauthorizedException,
+  Post,
+  Req,
   Res,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
-import type { Response, Request } from 'express';
-import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
+  ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { RegisterDto } from './dto/register.dto';
-import { UserResponseDto } from 'src/user/dto/user-response.dto';
-import { Public } from './decorators/public.decorator';
 import { Throttle } from '@nestjs/throttler';
+import type { Request, Response } from 'express';
+import { UserResponseDto } from 'src/user/dto/user-response.dto';
+import { User } from 'src/user/user.entity';
+import { AuthService, AuthTokens } from './auth.service';
+import { Public } from './decorators/public.decorator';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 interface RequestWithUser extends Request {
-  user: any;
+  user: User;
 }
 
 const COOKIE_NAME = 'refresh_token';
@@ -62,15 +64,16 @@ export class AuthController {
 
   @Public()
   @ApiOperation({ summary: 'Авторизация, получение JWT токенов' })
-  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 200, description: 'Успешная авторизация' })
   @UseGuards(LocalAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   async login(
     @Req() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    if (!req.user) throw new UnauthorizedException('Invalid credentials');
+    @Body() loginDto: LoginDto, // ✅ Добавлено
+  ): Promise<AuthTokens> {
+    // if (!req.user) throw new UnauthorizedException('Invalid credentials');
     const result = await this.authService.login(req.user);
     setRefreshCookie(res, result.refresh_token);
     return result;

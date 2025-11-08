@@ -1,20 +1,20 @@
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { NotificationsService } from './notifications.service';
-import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from 'src/auth/constants';
-import { Logger } from '@nestjs/common';
+import { NotificationsService } from './notifications.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // ✅ Используйте env
   },
   namespace: '/notifications',
 })
@@ -33,12 +33,12 @@ export class NotificationsGateway
   ) {}
 
   // === Подключение клиента ===
-  handleConnection(client: Socket): void {
+  async handleConnection(client: Socket): Promise<void> {
     try {
       const token = client.handshake.auth?.token as string | undefined;
       if (!token) {
         this.logger.warn('❌ Подключение без токена, разрыв соединения');
-        client.disconnect();
+        client.disconnect(true);
         return;
       }
 
@@ -48,7 +48,7 @@ export class NotificationsGateway
 
       if (!payload?.sub) {
         this.logger.warn('❌ JWT не содержит userId (sub)');
-        client.disconnect();
+        client.disconnect(true);
         return;
       }
 
@@ -56,10 +56,18 @@ export class NotificationsGateway
       this.logger.log(
         `✅ Пользователь ${payload.sub} подключился к уведомлениям`,
       );
+
+      // ✅ Автоматически отправляем список уведомлений при подключении
+      const notifications = await this.notificationsService.findForUser({
+        id: payload.sub,
+      } as any);
+
+      client.emit('notificationsList', notifications);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Ошибка JWT при подключении: ${message}`);
-      client.disconnect();
+      client.emit('authError', { message: 'Authentication failed' });
+      client.disconnect(true);
     }
   }
 
@@ -98,13 +106,13 @@ export class NotificationsGateway
   ): Promise<void> {
     try {
       const token = client.handshake.auth?.token as string | undefined;
-      if (!token) throw new Error('Missing JWT token');
+      if (!token) throw new UnauthorizedException('Missing JWT token');
 
       const payload = this.jwtService.verify<{ sub: string }>(token, {
         secret: jwtConstants.secret,
       });
 
-      if (!payload?.sub) throw new Error('Invalid JWT payload');
+      if (!payload?.sub) throw new UnauthorizedException('Invalid JWT payload');
 
       const notifications = await this.notificationsService.findForUser({
         id: payload.sub,

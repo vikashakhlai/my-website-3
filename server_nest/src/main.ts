@@ -1,17 +1,17 @@
 // src/main.ts
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import helmet from 'helmet';
-import * as express from 'express';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import * as express from 'express';
+import helmet from 'helmet';
 import { join } from 'path';
+import { AppModule } from './app.module';
 
-import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
-import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter';
+import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
+import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -51,7 +51,11 @@ async function bootstrap() {
       hidePoweredBy: true,
       hsts:
         process.env.NODE_ENV === 'production'
-          ? { maxAge: 60 * 60 * 24 * 180 } // 180 days
+          ? {
+              maxAge: 60 * 60 * 24 * 180,
+              includeSubDomains: true,
+              preload: true,
+            }
           : false,
       contentSecurityPolicy:
         process.env.NODE_ENV === 'production'

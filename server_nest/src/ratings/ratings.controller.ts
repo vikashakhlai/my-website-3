@@ -1,32 +1,48 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  Request,
-  ParseIntPipe,
-  Sse,
+  Controller,
+  Delete,
+  Get,
   MessageEvent,
+  Param,
+  ParseIntPipe,
+  Post,
+  Request,
+  Sse,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RatingsService } from './ratings.service';
-import { CreateRatingDto } from './dto/create-rating.dto';
-import { Observable, interval, mergeMap, from } from 'rxjs';
-import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
-import { TargetType } from 'src/common/enums/target-type.enum';
+import { Observable, from, interval, mergeMap } from 'rxjs';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { TargetType } from 'src/common/enums/target-type.enum';
+import { CreateRatingDto } from './dto/create-rating.dto';
+import { RatingsService } from './ratings.service';
 
 @ApiTags('Ratings')
 @Controller('ratings')
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
-  /** ⭐ Создать / обновить рейтинг (1–5) */
   @ApiOperation({ summary: 'Поставить или изменить рейтинг (1–5)' })
+  @ApiBearerAuth('access-token')
+  @Auth()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiResponse({
+    status: 201,
+    description: 'Рейтинг создан или обновлен',
+    type: Object,
+  })
   @Post()
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async createOrUpdate(@Body() dto: CreateRatingDto, @Request() req) {
     const user = req.user;
     const result = await this.ratingsService.createOrUpdate(dto, user);
@@ -37,10 +53,11 @@ export class RatingsController {
     return { ...result, ...stats };
   }
 
-  /** 📋 Получить список всех оценок сущности */
   @Public()
   @ApiOperation({ summary: 'Получить все оценки сущности' })
   @ApiParam({ name: 'target_type', enum: TargetType })
+  @ApiParam({ name: 'target_id', example: 1, description: 'ID цели' })
+  @ApiResponse({ status: 200, description: 'Список оценок', type: [Object] })
   @Get(':target_type/:target_id')
   async getRatings(
     @Param('target_type') target_type: TargetType,
@@ -49,9 +66,14 @@ export class RatingsController {
     return this.ratingsService.findByTarget(target_type, target_id);
   }
 
-  /** 📊 Средний рейтинг + количество голосов */
   @ApiOperation({ summary: 'Получить средний рейтинг и число голосов' })
   @ApiParam({ name: 'target_type', enum: TargetType })
+  @ApiParam({ name: 'target_id', example: 1, description: 'ID цели' })
+  @ApiResponse({
+    status: 200,
+    description: 'Средний рейтинг и количество голосов',
+    type: Object,
+  })
   @Get(':target_type/:target_id/average')
   async getAverage(
     @Param('target_type') target_type: TargetType,
@@ -60,9 +82,10 @@ export class RatingsController {
     return this.ratingsService.getAverage(target_type, target_id);
   }
 
-  /** 🔁 Live-обновление рейтинга через SSE */
   @Public()
   @ApiOperation({ summary: 'Live-поток рейтинга через SSE (публично)' })
+  @ApiParam({ name: 'target_type', enum: TargetType })
+  @ApiParam({ name: 'target_id', example: 1, description: 'ID цели' })
   @Sse('stream/:target_type/:target_id')
   streamAverage(
     @Param('target_type') target_type: TargetType,
@@ -79,10 +102,12 @@ export class RatingsController {
     );
   }
 
-  /** ❌ Удалить рейтинг (только свой, SUPER_ADMIN — любой) */
   @ApiOperation({ summary: 'Удалить рейтинг (только свой либо SUPER_ADMIN)' })
+  @ApiBearerAuth('access-token')
+  @ApiResponse({ status: 200, description: 'Рейтинг удален', type: Object })
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.ratingsService.delete(id, req.user);
+    await this.ratingsService.delete(id, req.user);
+    return { message: 'Рейтинг удален' };
   }
 }
