@@ -37,11 +37,24 @@ const DialectPage = () => {
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
+  // Функция для перемешивания массива (Fisher-Yates shuffle)
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // 1) Темы
   useEffect(() => {
     api
       .get("/dialect-topics")
-      .then((res) => setTopics(res.data || []))
+      .then((res) => {
+        const topicsData = res.data || [];
+        setTopics(shuffleArray(topicsData));
+      })
       .catch((e) => console.error("Ошибка при загрузке тем:", e));
   }, []);
 
