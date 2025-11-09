@@ -50,7 +50,7 @@ export class SubtitlesController {
         path: srtPath,
       };
     } catch (error: unknown) {
-      console.error('❌ Ошибка генерации субтитров:', error);
+      console.error('Ошибка генерации субтитров:', error);
 
       if (error instanceof BadRequestException) {
         throw error;

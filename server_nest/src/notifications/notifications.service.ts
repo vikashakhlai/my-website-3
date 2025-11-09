@@ -32,6 +32,12 @@ export class NotificationsService {
         },
       });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении уведомлений',
       );
@@ -80,6 +86,12 @@ export class NotificationsService {
 
       return { marked: result.affected || 0 };
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при пометке всех уведомлений как прочитанных',
       );

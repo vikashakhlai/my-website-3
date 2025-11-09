@@ -1,6 +1,8 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { mapToDto } from 'src/common/utils/map-to-dto.util';
+import { ThemeResponseDto } from './dto/theme-response.dto';
 import { ThemesService } from './themes.service';
 
 @ApiTags('Themes')
@@ -10,9 +12,15 @@ export class ThemesController {
 
   @Public()
   @ApiOperation({ summary: 'Получить список всех тем (публично)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Список тем',
+    type: [ThemeResponseDto],
+  })
   @Get()
-  findAll() {
-    return this.themesService.findAll();
+  async findAll() {
+    const themes = await this.themesService.findAll();
+    return themes.map((t) => mapToDto(ThemeResponseDto, t));
   }
 
   @Public()
@@ -22,8 +30,17 @@ export class ThemesController {
     example: 'literature-classics',
     description: 'URL slug темы',
   })
+  @ApiResponse({
+    status: 200,
+    description: 'Информация о теме',
+    type: ThemeResponseDto,
+  })
   @Get(':slug')
-  findOne(@Param('slug') slug: string) {
-    return this.themesService.findBySlug(slug);
+  async findOne(@Param('slug') slug: string) {
+    const theme = await this.themesService.findBySlug(slug);
+    if (!theme) {
+      throw new NotFoundException('Тема не найдена');
+    }
+    return mapToDto(ThemeResponseDto, theme);
   }
 }

@@ -1,7 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Article } from 'src/articles/article.entity';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('themes')
+@Index(['slug'])
 export class Theme {
   @PrimaryGeneratedColumn()
   id?: number;
@@ -12,7 +19,7 @@ export class Theme {
   @Column({ type: 'text' })
   name_ar?: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', unique: true })
   slug?: string;
 
   @OneToMany(() => Article, (article) => article.theme)

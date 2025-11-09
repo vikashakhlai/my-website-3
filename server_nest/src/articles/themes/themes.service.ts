@@ -11,12 +11,12 @@ export class ThemesService {
   ) {}
 
   async findAll() {
-    return this.themeRepository.find({
+    return await this.themeRepository.find({
       order: { id: 'ASC' },
     });
   }
 
   async findBySlug(slug: string) {
-    return this.themeRepository.findOne({ where: { slug } });
+    return await this.themeRepository.findOne({ where: { slug } });
   }
 }

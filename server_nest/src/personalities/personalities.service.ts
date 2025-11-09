@@ -348,6 +348,12 @@ export class PersonalitiesService {
         canComment: false,
       }));
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении случайных личностей',
       );
@@ -419,6 +425,12 @@ export class PersonalitiesService {
         canComment: false,
       }));
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении современников',
       );

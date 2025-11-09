@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,6 +13,19 @@ import { TargetType } from 'src/common/enums/target-type.enum';
 import { Rating } from 'src/ratings/rating.entity';
 import { makeAbsoluteUrl } from 'src/utils/media-url.util';
 import { Textbook } from './textbook.entity';
+
+interface TextbookWithStats {
+  id: string | number;
+  title: string;
+  authors: string;
+  publication_year: string | null;
+  cover_image_url: string | null;
+  description: string | null;
+  level: string | null;
+  pdf_url: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 @Injectable()
 export class TextbooksService {
@@ -58,143 +73,252 @@ export class TextbooksService {
     sort?: 'asc' | 'desc';
     level?: string;
   }) {
-    const page = Math.max(options?.page || 1, 1);
-    const limit = Math.max(Math.min(options?.limit || 10, 100), 1);
-    const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
-    const levelFilter = options?.level?.trim();
+    try {
+      const page = Math.max(options?.page || 1, 1);
+      const limit = Math.max(Math.min(options?.limit || 10, 100), 1);
+      const sortOrder = options?.sort === 'desc' ? 'DESC' : 'ASC';
+      const levelFilter = options?.level?.trim();
 
-    const qb = this.buildQueryWithStats()
-      .orderBy('t.id', sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit);
+      if (levelFilter) {
+        throw new BadRequestException('Уровень не передан');
+      }
 
-    if (levelFilter) qb.where('t.level = :level', { level: levelFilter });
+      const qb = this.buildQueryWithStats()
+        .orderBy('t.id', sortOrder)
+        .skip((page - 1) * limit)
+        .take(limit);
 
-    const [data, total] = await Promise.all([
-      qb.getRawMany(),
-      this.textbookRepo.count(
-        levelFilter ? { where: { level: levelFilter } } : {},
-      ),
-    ]);
+      if (levelFilter) qb.where('t.level = :level', { level: levelFilter });
 
-    const formatted = data.map((t) => ({
-      id: Number(t.id),
-      title: t.title,
-      authors: t.authors,
-      publication_year: t.publication_year
-        ? Number(t.publication_year)
-        : undefined,
-      cover_image_url: makeAbsoluteUrl(t.cover_image_url),
-      description: t.description,
-      level: t.level,
-      pdf_url: makeAbsoluteUrl(t.pdf_url),
-      createdAt: new Date(t.createdAt),
-      updatedAt: new Date(t.updatedAt),
-      averageRating: t.averageRating ? parseFloat(t.averageRating) : null,
-      ratingCount: Number(t.ratingCount),
-      commentCount: Number(t.commentCount),
-    }));
+      const [data, total] = await Promise.all([
+        qb.getRawMany<TextbookWithStats>(),
+        this.textbookRepo.count(
+          levelFilter ? { where: { level: levelFilter } } : {},
+        ),
+      ]);
 
-    return {
-      data: formatted,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      const formatted = data.map((t) => ({
+        id: Number(t.id),
+        title: t.title,
+        authors: t.authors,
+        publication_year: t.publication_year
+          ? Number(t.publication_year)
+          : undefined,
+        cover_image_url: makeAbsoluteUrl(t.cover_image_url),
+        description: t.description,
+        level: t.level,
+        pdf_url: makeAbsoluteUrl(t.pdf_url),
+        createdAt: new Date(t.createdAt),
+        updatedAt: new Date(t.updatedAt),
+      }));
+
+      return {
+        data: formatted,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при получении списка учебников',
+      );
+    }
   }
 
   async getPublicView(id: number, userId?: string | null) {
-    const book = await this.textbookRepo.findOne({ where: { id } });
-    if (!book) throw new NotFoundException('Учебник не найден');
+    if (!id || id <= 0) {
+      throw new BadRequestException(
+        'ID учебника должен быть положительным числом',
+      );
+    }
 
-    const ratings = await this.ratingRepo.find({
-      where: { target_type: TargetType.TEXTBOOK, target_id: id },
-    });
+    if (userId && typeof userId !== 'string') {
+      throw new BadRequestException('ID пользователя должен быть строкой');
+    }
 
-    const commentsCount = await this.commentRepo.count({
-      where: { target_type: TargetType.TEXTBOOK, target_id: id },
-    });
+    try {
+      const book = await this.textbookRepo.findOne({ where: { id } });
+      if (!book) throw new NotFoundException('Учебник не найден');
 
-    const average =
-      ratings.length > 0
-        ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length
+      const ratings = await this.ratingRepo.find({
+        where: { target_type: TargetType.TEXTBOOK, target_id: id },
+      });
+
+      const commentsCount = await this.commentRepo.count({
+        where: { target_type: TargetType.TEXTBOOK, target_id: id },
+      });
+
+      const average =
+        ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length
+          : null;
+
+      const userRating = userId
+        ? (ratings.find((r) => r.user_id === userId)?.value ?? null)
         : null;
 
-    const userRating = userId
-      ? (ratings.find((r) => r.user_id === userId)?.value ?? null)
-      : null;
-
-    return {
-      id: book.id,
-      title: book.title,
-      authors: book.authors,
-      description: book.description,
-      level: book.level,
-      publication_year: book.publication_year,
-      cover_image_url: makeAbsoluteUrl(book.cover_image_url),
-      pdf_url: makeAbsoluteUrl(book.pdf_url),
-      createdAt: book.createdAt,
-      updatedAt: book.updatedAt,
-      canDownload: Boolean(userId),
-      averageRating: average,
-      ratingCount: ratings.length,
-      userRating,
-      commentCount: commentsCount,
-    };
+      return {
+        id: book.id,
+        title: book.title,
+        authors: book.authors,
+        description: book.description,
+        level: book.level,
+        publication_year: book.publication_year,
+        cover_image_url: makeAbsoluteUrl(book.cover_image_url),
+        pdf_url: makeAbsoluteUrl(book.pdf_url),
+        createdAt: book.createdAt,
+        updatedAt: book.updatedAt,
+        canDownload: Boolean(userId),
+        averageRating: average,
+        ratingCount: ratings.length,
+        userRating,
+        commentCount: commentsCount,
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при получении данных учебника',
+      );
+    }
   }
 
   async getDownloadFile(id: number, userId: string) {
-    if (!userId)
+    if (!id || id <= 0) {
+      throw new BadRequestException(
+        'ID учебника должен быть положительным числом',
+      );
+    }
+
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
       throw new ForbiddenException('Требуется авторизация для скачивания');
+    }
 
-    const textbook = await this.textbookRepo.findOne({ where: { id } });
-    if (!textbook) throw new NotFoundException('Учебник не найден');
+    try {
+      const textbook = await this.textbookRepo.findOne({ where: { id } });
+      if (!textbook) throw new NotFoundException('Учебник не найден');
 
-    if (!textbook.pdf_url) throw new NotFoundException('PDF-файл отсутствует');
+      if (!textbook.pdf_url)
+        throw new NotFoundException('PDF-файл отсутствует');
 
-    return {
-      url: `/uploads/textbooks-pdfs/${textbook.pdf_url}`,
-    };
+      return {
+        url: `/uploads/textbooks-pdfs/${textbook.pdf_url}`,
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при подготовке файла для скачивания',
+      );
+    }
   }
 
   async getRandom() {
-    const book = await this.textbookRepo
-      .createQueryBuilder('t')
-      .where('t.pdf_url IS NOT NULL')
-      .orderBy('RANDOM()')
-      .getOne();
+    try {
+      const book = await this.textbookRepo
+        .createQueryBuilder('t')
+        .where('t.pdf_url IS NOT NULL')
+        .orderBy('RANDOM()')
+        .getOne();
 
-    if (!book) throw new NotFoundException('Нет учебников с PDF');
+      if (!book) throw new NotFoundException('Нет учебников с PDF');
 
-    return {
-      id: book.id,
-      title: book.title,
-      authors: book.authors,
-      description: book.description,
-      level: book.level,
-      publication_year: book.publication_year,
-      cover_image_url: makeAbsoluteUrl(book.cover_image_url),
-      pdf_url: makeAbsoluteUrl(book.pdf_url),
-      createdAt: book.createdAt,
-      updatedAt: book.updatedAt,
-    };
+      return {
+        id: book.id,
+        title: book.title,
+        authors: book.authors,
+        description: book.description,
+        level: book.level,
+        publication_year: book.publication_year,
+        cover_image_url: makeAbsoluteUrl(book.cover_image_url),
+        pdf_url: makeAbsoluteUrl(book.pdf_url),
+        createdAt: book.createdAt,
+        updatedAt: book.updatedAt,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ошибка при получении случайного учебника',
+      );
+    }
   }
 
   async create(data: Partial<Textbook>) {
-    return this.textbookRepo.save(this.textbookRepo.create(data));
+    if (!data || Object.keys(data).length === 0) {
+      throw new BadRequestException('Нет данных для создания учебника');
+    }
+
+    try {
+      return this.textbookRepo.save(this.textbookRepo.create(data));
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Ошибка при создании учебника');
+    }
   }
 
   async update(id: number, data: Partial<Textbook>) {
-    const book = await this.textbookRepo.preload({ id, ...data });
-    if (!book) throw new NotFoundException('Учебник не найден');
-    return this.textbookRepo.save(book);
+    if (!id || id <= 0) {
+      throw new BadRequestException(
+        'ID учебника должен быть положительным числом',
+      );
+    }
+
+    if (!data || Object.keys(data).length === 0) {
+      throw new BadRequestException('Нет данных для обновления учебника');
+    }
+
+    try {
+      const book = await this.textbookRepo.preload({ id, ...data });
+      if (!book) throw new NotFoundException('Учебник не найден');
+      return this.textbookRepo.save(book);
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Ошибка при обновлении учебника');
+    }
   }
 
   async remove(id: number) {
-    const book = await this.textbookRepo.findOne({ where: { id } });
-    if (!book) throw new NotFoundException('Учебник не найден');
-    await this.textbookRepo.remove(book);
-    return { message: 'Учебник удален' };
+    if (!id || id <= 0) {
+      throw new BadRequestException(
+        'ID учебника должен быть положительным числом',
+      );
+    }
+
+    try {
+      const book = await this.textbookRepo.findOne({ where: { id } });
+      if (!book) throw new NotFoundException('Учебник не найден');
+      await this.textbookRepo.remove(book);
+      return { message: 'Учебник удален' };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Ошибка при удалении учебника');
+    }
   }
 }

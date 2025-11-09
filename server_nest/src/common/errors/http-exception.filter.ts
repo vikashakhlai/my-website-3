@@ -1,8 +1,7 @@
-// src/common/errors/http-exception.filter.ts
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';

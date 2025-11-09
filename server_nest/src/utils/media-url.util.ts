@@ -1,14 +1,18 @@
 export function makeAbsoluteUrl<T extends string | null | undefined>(
   path: T,
 ): T extends string ? string : T {
-  if (!path) return path as any;
+  if (!path) {
+    return path as T extends string ? string : T;
+  }
 
   const isAbsolute =
     path.startsWith('http://') ||
     path.startsWith('https://') ||
     path.startsWith('//');
 
-  if (isAbsolute) return path as any;
+  if (isAbsolute) {
+    return path as T extends string ? string : T;
+  }
 
   let base = process.env.BACKEND_URL;
 
@@ -21,5 +25,6 @@ export function makeAbsoluteUrl<T extends string | null | undefined>(
     base = `http://${base}`;
   }
 
-  return `${base}${path.startsWith('/') ? '' : '/'}${path}` as any;
+  const result = `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  return result as T extends string ? string : T;
 }

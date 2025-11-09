@@ -24,6 +24,12 @@ export class TagsService {
         select: ['id', 'name', 'createdAt', 'updatedAt'],
       });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении списка тегов',
       );

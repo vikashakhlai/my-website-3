@@ -23,11 +23,11 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { mapToDto } from 'src/common/utils/map-to-dto.util';
 
-import { CreateDialectDto } from './create-dialect.dto.ts/create-dialect.dto';
-import { DialectResponseDto } from './create-dialect.dto.ts/dialect-response.dto';
-import { FindAllDialectsDto } from './create-dialect.dto.ts/find-all-dialects.dto';
-import { UpdateDialectDto } from './create-dialect.dto.ts/update-dialect.dto';
 import { DialectsService } from './dialects.service';
+import { CreateDialectDto } from './dto/create-dialect.dto';
+import { DialectResponseDto } from './dto/dialect-response.dto';
+import { FindAllDialectsDto } from './dto/find-all-dialects.dto';
+import { UpdateDialectDto } from './dto/update-dialect.dto';
 
 @ApiTags('Dialects')
 @Controller('dialects')

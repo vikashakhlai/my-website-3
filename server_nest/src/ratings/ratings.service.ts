@@ -114,6 +114,12 @@ export class RatingsService {
         },
       });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении рейтингов для цели',
       );
@@ -153,6 +159,12 @@ export class RatingsService {
         votes,
       };
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при вычислении среднего рейтинга',
       );

@@ -22,6 +22,12 @@ export class QuotesService {
     try {
       return await this.quoteRepo.find({ relations: ['personality'] });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении списка цитат',
       );
@@ -54,6 +60,12 @@ export class QuotesService {
           : null,
       }));
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при получении случайных цитат',
       );
@@ -73,6 +85,12 @@ export class QuotesService {
         relations: ['personality'],
       });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ошибка при поиске цитат по личности',
       );

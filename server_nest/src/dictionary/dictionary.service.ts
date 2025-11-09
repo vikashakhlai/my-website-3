@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { normalizeArabic as normalizeArabicJS } from './utils/arabic-normalize';
 
@@ -51,7 +56,8 @@ export class DictionaryService {
       : searchQuery;
     const normalizedArabicPattern = hasArabic ? normalizedQuery : '';
 
-    const sql = `
+    try {
+      const sql = `
       WITH matched_words AS (
         -- 1. Совпадения по основному слову (words)
         SELECT w.id, 'word' AS source
@@ -108,16 +114,19 @@ export class DictionaryService {
       LIMIT 20;
     `;
 
-    const params = [normalizedArabicPattern, hasArabic ? '' : searchQuery];
+      const params = [normalizedArabicPattern, hasArabic ? '' : searchQuery];
 
-    const rows = await this.dataSource.query(sql, params);
-    const data = rows.map((row: any) => ({
-      ...row,
-      verb_forms: this.enrichVerbForms(row.verb_forms),
-      examples: row.examples && row.examples.length > 0 ? row.examples : [],
-    }));
+      const rows = await this.dataSource.query(sql, params);
+      const data = rows.map((row: any) => ({
+        ...row,
+        verb_forms: this.enrichVerbForms(row.verb_forms),
+        examples: row.examples && row.examples.length > 0 ? row.examples : [],
+      }));
 
-    return { results: data, total: data.length };
+      return { results: data, total: data.length };
+    } catch (error) {
+      throw new InternalServerErrorException('Ошибка при поиске в словаре');
+    }
   }
 
   async searchByRoot(root: string) {
@@ -126,16 +135,17 @@ export class DictionaryService {
       throw new BadRequestException("Параметр 'root' обязателен");
     }
 
-    let actualRoot = inputRoot;
+    try {
+      let actualRoot = inputRoot;
 
-    const directCheck = await this.dataSource.query(
-      'SELECT 1 FROM words WHERE root_ar = $1 LIMIT 1',
-      [inputRoot],
-    );
+      const directCheck = await this.dataSource.query(
+        'SELECT 1 FROM words WHERE root_ar = $1 LIMIT 1',
+        [inputRoot],
+      );
 
-    if (directCheck.length === 0) {
-      const formCheck = await this.dataSource.query(
-        `
+      if (directCheck.length === 0) {
+        const formCheck = await this.dataSource.query(
+          `
         SELECT DISTINCT w.root_ar
         FROM words w
         JOIN verb_forms vf ON w.id = vf.word_id
@@ -143,29 +153,29 @@ export class DictionaryService {
           OR w.word_ar_normalized = normalize_arabic($1)
         LIMIT 1
         `,
-        [inputRoot],
-      );
+          [inputRoot],
+        );
 
-      if (formCheck.length > 0) {
-        actualRoot = formCheck[0].root_ar;
-      } else {
-        const normalizedFormCheck = await this.dataSource.query(
-          `
+        if (formCheck.length > 0) {
+          actualRoot = formCheck[0].root_ar;
+        } else {
+          const normalizedFormCheck = await this.dataSource.query(
+            `
           SELECT DISTINCT w.root_ar
           FROM words w
           JOIN verb_forms vf ON w.id = vf.word_id
           WHERE normalize_arabic(vf.form_ar) ILIKE normalize_arabic($1) || '%'
           LIMIT 1
           `,
-          [inputRoot],
-        );
-        if (normalizedFormCheck.length > 0) {
-          actualRoot = normalizedFormCheck[0].root_ar;
+            [inputRoot],
+          );
+          if (normalizedFormCheck.length > 0) {
+            actualRoot = normalizedFormCheck[0].root_ar;
+          }
         }
       }
-    }
 
-    const sql = `
+      const sql = `
       SELECT 
         w.id,
         w.word_ar,
@@ -209,22 +219,25 @@ export class DictionaryService {
         w.id;
     `;
 
-    const result = await this.dataSource.query(sql, [actualRoot]);
+      const result = await this.dataSource.query(sql, [actualRoot]);
 
-    const words = result.map((row: any) => ({
-      ...row,
-      verb_forms: this.enrichVerbForms(row.verb_forms),
-      examples: row.examples && row.examples.length > 0 ? row.examples : [],
-    }));
+      const words = result.map((row: any) => ({
+        ...row,
+        verb_forms: this.enrichVerbForms(row.verb_forms),
+        examples: row.examples && row.examples.length > 0 ? row.examples : [],
+      }));
 
-    const grouped = words.reduce((acc: Record<string, any[]>, w: any) => {
-      const pos = w.part_of_speech || 'другое';
-      if (!acc[pos]) acc[pos] = [];
-      acc[pos].push(w);
-      return acc;
-    }, {});
+      const grouped = words.reduce((acc: Record<string, any[]>, w: any) => {
+        const pos = w.part_of_speech || 'другое';
+        if (!acc[pos]) acc[pos] = [];
+        acc[pos].push(w);
+        return acc;
+      }, {});
 
-    return { root: actualRoot, original_input: inputRoot, grouped };
+      return { root: actualRoot, original_input: inputRoot, grouped };
+    } catch (error) {
+      throw new InternalServerErrorException('Ошибка при поиске по корню');
+    }
   }
 
   async autocomplete(q: string) {
@@ -236,7 +249,8 @@ export class DictionaryService {
     const hasArabic = /[\u0600-\u06FF]/.test(query);
     const normalizedQuery = hasArabic ? normalizeArabicJS(query) : query;
 
-    const sql = `
+    try {
+      const sql = `
       WITH suggestions AS (
         -- 1. Основные слова (words)
         SELECT DISTINCT
@@ -282,16 +296,19 @@ export class DictionaryService {
       LIMIT 2;
     `;
 
-    const params = [hasArabic ? normalizedQuery : '', hasArabic ? '' : query];
-    const rows = await this.dataSource.query(sql, params);
+      const params = [hasArabic ? normalizedQuery : '', hasArabic ? '' : query];
+      const rows = await this.dataSource.query(sql, params);
 
-    const suggestions = rows.map((r: any) => ({
-      word_ar: r.word_ar,
-      word_ru: r.word_ru,
-      root_ar: r.root_ar,
-      label: r.label,
-    }));
+      const suggestions = rows.map((r: any) => ({
+        word_ar: r.word_ar,
+        word_ru: r.word_ru,
+        root_ar: r.root_ar,
+        label: r.label,
+      }));
 
-    return { suggestions };
+      return { suggestions };
+    } catch (error) {
+      throw new InternalServerErrorException('Ошибка при автодополнении');
+    }
   }
 }
