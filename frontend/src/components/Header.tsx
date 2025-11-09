@@ -5,7 +5,7 @@ import { FiLogOut } from "react-icons/fi";
 import "./Header.css";
 
 const Header = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -28,7 +28,10 @@ const Header = () => {
         <div className="auth-buttons">
           {isAuthenticated ? (
             <>
-              <Link to="/account" className="btn btn-primary header-account-link">
+              <Link
+                to="/account"
+                className="btn btn-primary header-account-link"
+              >
                 Мой Оазис
               </Link>
               <button

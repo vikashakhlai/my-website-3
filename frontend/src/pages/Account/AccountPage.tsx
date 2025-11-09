@@ -5,6 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 const AccountPage = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const isSettingsRoute = location.pathname.startsWith("/account/settings");
+  const oasisButtonClass = [
+    "btn",
+    isSettingsRoute ? "btn-outline" : "btn-primary",
+    styles.oasisButton,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={styles.layout}>
@@ -18,7 +26,7 @@ const AccountPage = () => {
           </div>
           <div className={styles.tabs} aria-label="Навигация по личному кабинету">
             {isAuthenticated && (
-              <Link to="/account" className={`btn btn-primary ${styles.oasisButton}`}>
+              <Link to="/account" className={oasisButtonClass}>
                 Мой Оазис
               </Link>
             )}

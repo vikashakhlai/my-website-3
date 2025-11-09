@@ -49,8 +49,14 @@
 }
 
 .oasisButton {
-  color: var(--color-text-inverse) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding-inline: var(--space-5);
+}
+
+.oasisButton.btn-primary {
+  color: var(--color-text-inverse) !important;
 }
 
 .oasisButton:hover,
