@@ -25,6 +25,7 @@ import { CommentsSection } from "../components/CommentsSection";
 import BackZone from "./BackZone";
 import { api } from "../api/auth";
 import { favoritesApi } from "../api/favorites";
+import { useToast } from "../context/ToastContext";
 
 const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,7 @@ const ArticlePage = () => {
   const [article, setArticle] = useState<Article | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useScrollToTop();
 
@@ -72,13 +74,19 @@ const ArticlePage = () => {
       if (isFavorite) {
         await favoritesApi.remove("article", articleId);
         setIsFavorite(false);
+        showToast("Статья удалена из избранного", "info");
       } else {
         await favoritesApi.add("article", articleId);
         setIsFavorite(true);
+        showToast("Статья успешно добавлена в ваш Оазис", "success");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Ошибка избранного:", err);
-      alert("Ошибка! Возможно, нужно войти.");
+      if (err?.response?.status === 409) {
+        showToast("Статья уже есть в избранном", "error");
+      } else {
+        showToast("Не удалось обновить избранное", "error");
+      }
     }
   };
 

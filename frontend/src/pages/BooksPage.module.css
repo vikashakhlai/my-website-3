@@ -132,6 +132,11 @@
   }
 }
 
+/* === Fade-in animation for content === */
+.fadeIn {
+  animation: fadeInGrid 0.6s ease-in-out;
+}
+
 /* === СТАГГЕР (плавное появление карточек поочередно) === */
 .bookCard {
   opacity: 0;

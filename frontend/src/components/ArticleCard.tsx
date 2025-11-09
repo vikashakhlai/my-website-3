@@ -17,6 +17,7 @@ const ArticleCard: React.FC<Props> = ({
   onLeave,
 }) => {
   const { id, titleRu, titleAr, description, imageUrl, themeRu } = article;
+  const cover = imageUrl || "";
 
   return (
     <div
@@ -26,13 +27,15 @@ const ArticleCard: React.FC<Props> = ({
     >
       <Link to={`/articles/${id}`} className={styles.card}>
         <div className={styles.imageWrapper}>
-          <img src={imageUrl} alt={titleRu} />
+          <img src={cover} alt={titleRu || titleAr || "Статья Oasis"} loading="lazy" />
         </div>
 
         <div className={styles.content}>
-          <div className={styles.header}>
+          <div className={styles.titles}>
             <h3 className={styles.titleRu}>{titleRu}</h3>
-            <h3 className={styles.titleAr}>{titleAr}</h3>
+            <h3 className={styles.titleAr} dir="rtl">
+              {titleAr}
+            </h3>
           </div>
 
           {themeRu && <span className={styles.tag}>{themeRu}</span>}

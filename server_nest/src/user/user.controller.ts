@@ -9,6 +9,8 @@ import {
   ForbiddenException,
   Patch,
   ParseUUIDPipe,
+  BadRequestException,
+  HttpCode,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { UserService } from './user.service';
@@ -20,6 +22,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { User } from './user.entity';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -146,6 +149,23 @@ export class UserController {
   @Delete(':id')
   async deleteUser(@Param('id', ParseUUIDPipe) userId: string) {
     return this.userService.deleteUser(userId);
+  }
+
+  @ApiOperation({ summary: 'Изменить пароль текущего пользователя' })
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('access-token')
+  @ApiResponse({ status: 200, description: 'Пароль успешно обновлён' })
+  @Patch('change-password')
+  @HttpCode(200)
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @Req() req: RequestWithUser,
+  ) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Пароли не совпадают');
+    }
+    await this.userService.changePassword(req.user.id, dto);
+    return { message: 'Password updated successfully' };
   }
 
   /** 🧩 DTO Mapper (скрывает пароль) */

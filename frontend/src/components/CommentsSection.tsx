@@ -10,6 +10,7 @@ import { ThumbsUp, ThumbsDown, Trash2, MessageSquare } from "lucide-react";
 import { api } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import styles from "./CommentsSection.module.css";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
 type TargetType = "book" | "article" | "media" | "personality" | "textbook";
 
@@ -144,6 +145,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const { user } = useAuth();
+  const requireAuth = useRequireAuth();
 
   const baseUrl = useMemo(() => {
     // берем base от axios инстанса, но если нужно — можно передать вручную
@@ -193,6 +195,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
   /** === Send comment (instant insert, без полного refetch) === */
   const handleSend = async () => {
+    if (!requireAuth()) return;
+
     const text = content.trim();
     if (!text) return;
     setLoading(true);
@@ -231,6 +235,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
   /** === React like/dislike === */
   const handleReact = async (id: number, value: 1 | -1) => {
+    if (!requireAuth()) return;
+
     const prevReaction = comments.find((c) => c.id === id)?.my_reaction ?? 0;
     const newReaction = prevReaction === value ? 0 : value;
 
@@ -260,6 +266,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
   /** === Delete === */
   const handleDelete = async (id: number) => {
+    if (!requireAuth()) return;
+
     if (!window.confirm("Удалить комментарий?")) return;
     try {
       await api.delete(`/comments/${id}`);
@@ -291,7 +299,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       if (stopped) return;
 
       const url = `${baseUrl}/comments/stream/${targetType}/${targetId}`;
-      const es = new EventSource(url);
+      const es = new EventSource(url, { withCredentials: true });
       eventSourceRef.current = es;
 
       es.onopen = () => {
@@ -409,6 +417,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
           <button
             className={styles.replyButton}
             onClick={() => {
+              if (!requireAuth()) return;
               setReplyTo({ id: c.id, email: c.user.email });
             }}
           >

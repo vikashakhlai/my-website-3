@@ -17,6 +17,9 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import AllPersonalitiesPage from "../pages/AllPersonalitiesPage";
 import DialectExercisePage from "../pages/DialectExercisePage/DialectExercisePage.js";
 import AboutPage from "./AboutPage.js";
+import AccountPage from "../pages/Account/AccountPage";
+import AccountHome from "../pages/Account/AccountHome";
+import AccountSettings from "../pages/Account/AccountSettings";
 
 const routes = [
   {
@@ -26,8 +29,11 @@ const routes = [
       { path: "/", element: <HomePage /> },
       { path: "/DictionaryPage", element: <DictionaryPage /> },
       { path: "/ArticlesPage", element: <ArticlesPage /> },
+      { path: "/articles", element: <ArticlesPage /> },
       { path: "/BooksPage", element: <BooksPage /> },
+      { path: "/books", element: <BooksPage /> },
       { path: "/StudentBooksPage", element: <StudentBooksPage /> },
+      { path: "/textbooks", element: <StudentBooksPage /> },
 
       { path: "/articles/:id", element: <ArticlePage /> },
       { path: "/books/:id", element: <BookPage /> },
@@ -62,6 +68,21 @@ const routes = [
             <DialectExercisePage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "/account",
+        element: (
+          <ProtectedRoute>
+            <AccountPage />
+          </ProtectedRoute>
+        ),
+        children: [
+          { index: true, element: <AccountHome /> },
+          {
+            path: "settings",
+            element: <AccountSettings />,
+          },
+        ],
       },
 
       // 🔐 Auth

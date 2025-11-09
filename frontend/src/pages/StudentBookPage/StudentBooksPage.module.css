@@ -255,3 +255,19 @@
     min-height: 320px;
   }
 }
+
+/* === Fade-in animation for content === */
+.fadeIn {
+  animation: fadeInContent 0.6s ease-in-out;
+}
+
+@keyframes fadeInContent {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

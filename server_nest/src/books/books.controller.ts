@@ -29,27 +29,25 @@ import { BookResponseDto } from './dto/book-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { Role } from 'src/auth/roles.enum';
-import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { RateBookDto } from './dto/rate-book.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { SearchBooksDto } from './dto/search-books.dto';
 import { ApiErrorResponses } from 'src/common/decorators/api-error-responses.decorator';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt.guard';
 
 @ApiTags('Books')
 @Controller('books')
 export class BooksController {
-  constructor(
-    private readonly bookService: BookService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly bookService: BookService) {}
 
   // ✅ Новый универсальный эндпоинт поиска + пагинации
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Получить список книг с пагинацией и фильтрами',
     description:
-      'Возвращает список книг с поддержкой пагинации и фильтрации по названию, тегу и автору. Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `isFavorite` for each book.',
+      'Возвращает список книг с поддержкой пагинации и фильтрации по названию, тегу и автору. Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `isFavorite` for каждой книги (если поддерживается).',
   })
   @ApiOkResponse({
     description: 'Список книг успешно получен',
@@ -98,8 +96,7 @@ export class BooksController {
     },
   })
   @Get()
-  async getBooks(@Query() query: SearchBooksDto, @Req() req: Request) {
-    const userId = this.extractUserId(req);
+  async getBooks(@Query() query: SearchBooksDto) {
     return this.bookService.searchBooks(query);
   }
 
@@ -141,10 +138,11 @@ export class BooksController {
 
   // === 📘 Одна книга + связанные ===
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Получить книгу с полной информацией и связанными данными',
     description:
-      'Возвращает полную информацию о книге, включая авторов, теги, издательство, рейтинги и связанные книги (похожие книги и другие книги автора). Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` and `isFavorite`.',
+      'Возвращает полную информацию о книге, включая авторов, теги, издательство, рейтинги и связанные книги (похожие книги и другие книги автора). Публичный эндпоинт, не требует аутентификации. If the request includes a valid JWT token, the response will also include `userRating` и `isFavorite`.',
   })
   @ApiOkResponse({
     description: 'Информация о книге успешно получена',
@@ -177,7 +175,7 @@ export class BooksController {
     @Param('id', ParseIntPipe) id: number,
     @Req() req: Request,
   ) {
-    const userId = this.extractUserId(req);
+    const userId = (req as any)?.user?.sub ?? (req as any)?.user?.id;
     return this.bookService.findOneWithRelated(id, userId);
   }
 
@@ -319,19 +317,5 @@ export class BooksController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.bookService.remove(id);
-  }
-
-  // === 🔐 Helper to decode optional JWT ===
-  private extractUserId(req: Request): string | undefined {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) return undefined;
-
-    try {
-      const token = authHeader.split(' ')[1];
-      const decoded: any = this.jwtService.verify(token);
-      return decoded.sub || decoded.id;
-    } catch {
-      return undefined;
-    }
   }
 }

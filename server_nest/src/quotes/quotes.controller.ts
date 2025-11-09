@@ -23,6 +23,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';

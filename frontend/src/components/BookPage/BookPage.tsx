@@ -10,6 +10,7 @@ import { useFavorites } from "../../hooks/useFavorites";
 import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
 import { api } from "../../api/auth";
+import { useRequireAuth } from "../../hooks/useRequireAuth";
 
 export interface Author {
   id: number;
@@ -56,6 +57,7 @@ const BookPage = () => {
   const [error, setError] = useState<string | null>(null);
   const { favorites, toggleFavorite } = useFavorites("book");
   const [localFavorite, setLocalFavorite] = useState(false);
+  const requireAuth = useRequireAuth();
 
   useScrollToTop();
 
@@ -113,6 +115,8 @@ const BookPage = () => {
 
   const handleToggleFavorite = async () => {
     if (!book) return;
+    if (!requireAuth()) return;
+
     const wasFavorite = favorites.some((f) => f.id === book.id);
     await toggleFavorite(book);
     setLocalFavorite(!wasFavorite);

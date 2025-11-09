@@ -71,15 +71,13 @@ nav.navigation {
   justify-self: end;
 }
 
-.user-email {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-  transition: color var(--transition-fast);
+.header-account-link {
+  color: var(--color-text-inverse) !important;
 }
 
-.user-email:hover {
-  text-decoration: underline;
+.header-account-link:hover,
+.header-account-link:focus {
+  color: var(--color-text-inverse) !important;
 }
 
 .logout-icon {

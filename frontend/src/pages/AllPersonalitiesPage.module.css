@@ -99,6 +99,13 @@
   }
 }
 
+/* === LIST LAYOUT (for articles) === */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* === ANIMATION FOR CARD APPEAR === */
 .fadeIn {
   animation: fadeInCards 0.6s ease-in-out;

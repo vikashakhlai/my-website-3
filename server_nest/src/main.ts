@@ -15,6 +15,7 @@ import { videoStreamMiddleware } from './middlewares/video-stream.middleware';
 import { subtitlesMiddleware } from './middlewares/subtitles.middleware';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter';
 import { AllConfigType, AppConfig } from './config/configuration.types';
+import { createCsrfMiddleware } from './middlewares/csrf.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -29,21 +30,21 @@ async function bootstrap() {
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(cookieParser());
+  app.use(createCsrfMiddleware(appConfig));
 
   const FRONTEND_URL = appConfig.frontendUrl;
   const corsOptions = {
-    origin: [FRONTEND_URL],
+    origin: FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
-      'Authorization',
-      'Range',
       'Content-Type',
-      'Origin',
       'Accept',
-      'X-Requested-With',
+      'Range',
+      'Authorization',
+      'X-CSRF-Token',
     ],
-    exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'],
+    exposedHeaders: ['Content-Length', 'Content-Range'],
   };
   app.use(cors(corsOptions));
   app.enableCors(corsOptions);

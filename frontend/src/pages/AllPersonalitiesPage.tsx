@@ -8,6 +8,7 @@ import useScrollToTop from "../hooks/useScrollToTop";
 import { Era } from "../types/era";
 import PersonalityFilters from "../components/PersonalityFilters";
 import Loader from "../components/Loader";
+import SkeletonCard from "../components/SkeletonCard";
 
 interface PaginationState {
   currentPage: number;
@@ -119,11 +120,7 @@ const AllPersonalitiesPage = () => {
         {error ? (
           <p className={styles.error}>{error}</p>
         ) : loading || (!personalities.length && !error) ? (
-          <div className={styles.gridPlaceholder}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className={styles.skeletonCard}></div>
-            ))}
-          </div>
+          <SkeletonCard variant="personality" count={12} layout="grid" />
         ) : (
           <div className={styles.fadeIn}>
             <PersonalityGrid

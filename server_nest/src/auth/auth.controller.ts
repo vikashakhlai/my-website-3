@@ -8,8 +8,10 @@ import {
   Get,
   UnauthorizedException,
   Res,
+  HttpCode,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
+import type { CookieOptions } from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -25,27 +27,123 @@ import { RegisterDto } from './dto/register.dto';
 import { UserResponseDto } from 'src/user/dto/user-response.dto';
 import { Public } from './decorators/public.decorator';
 import { Throttle } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import { AllConfigType, AppConfig, JwtConfig } from 'src/config/configuration.types';
+import { AuthTokens } from './auth.service';
+import {
+  clearCsrfCookie,
+  setCsrfCookie,
+} from 'src/common/utils/csrf.util';
 
 interface RequestWithUser extends Request {
   user: any;
 }
 
-const COOKIE_NAME = 'refresh_token';
+const ACCESS_COOKIE = 'access_token';
+const REFRESH_COOKIE = 'refresh_token';
 
-function setRefreshCookie(res: Response, token: string) {
-  res.cookie(COOKIE_NAME, token, {
+type CookiePair = { access: CookieOptions; refresh: CookieOptions };
+
+function parseTtlToMs(ttl: string | undefined, fallback: number): number {
+  if (!ttl) {
+    return fallback;
+  }
+
+  const trimmed = ttl.trim();
+  const match = /^([0-9]+)(ms|s|m|h|d)?$/i.exec(trimmed);
+  if (!match) {
+    return fallback;
+  }
+
+  const value = Number(match[1]);
+  if (Number.isNaN(value)) {
+    return fallback;
+  }
+
+  const unit = match[2]?.toLowerCase();
+  const multipliers: Record<string, number> = {
+    ms: 1,
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+
+  if (!unit) {
+    return value * 1000;
+  }
+
+  const multiplier = multipliers[unit];
+  return multiplier ? value * multiplier : fallback;
+}
+
+function buildCookieOptions(
+  configService: ConfigService<AllConfigType>,
+): CookiePair {
+  const appConfig = configService.getOrThrow<AppConfig>('app');
+  const jwtConfig = configService.getOrThrow<JwtConfig>('jwt');
+
+  const isProd = appConfig.nodeEnv === 'production';
+  let domain: string | undefined;
+
+  try {
+    domain = isProd ? new URL(appConfig.frontendUrl).hostname : undefined;
+  } catch (err) {
+    domain = undefined;
+  }
+
+  const base: CookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/api/v1/auth',
-    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-  });
+    secure: isProd,
+    sameSite: (isProd ? 'none' : 'lax') as 'lax' | 'strict' | 'none',
+    path: '/',
+  };
+
+  if (isProd && domain) {
+    base.domain = domain;
+  }
+
+  const accessMaxAge = parseTtlToMs(jwtConfig.accessExpiresIn, 15 * 60 * 1000);
+  const refreshMaxAge = parseTtlToMs(
+    jwtConfig.refreshExpiresIn,
+    30 * 24 * 60 * 60 * 1000,
+  );
+
+  return {
+    access: { ...base, maxAge: accessMaxAge },
+    refresh: { ...base, maxAge: refreshMaxAge },
+  };
+}
+
+function setAuthCookies(
+  res: Response,
+  configService: ConfigService<AllConfigType>,
+  tokens: AuthTokens,
+): CookiePair {
+  const options = buildCookieOptions(configService);
+  res.cookie(ACCESS_COOKIE, tokens.access_token, options.access);
+  res.cookie(REFRESH_COOKIE, tokens.refresh_token, options.refresh);
+  return options;
+}
+
+function clearAuthCookies(
+  res: Response,
+  configService: ConfigService<AllConfigType>,
+) {
+  const options = buildCookieOptions(configService);
+  const { maxAge: _accessMaxAge, ...accessRest } = options.access;
+  const { maxAge: _refreshMaxAge, ...refreshRest } = options.refresh;
+  res.clearCookie(ACCESS_COOKIE, accessRest);
+  res.clearCookie(REFRESH_COOKIE, refreshRest);
 }
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService<AllConfigType>,
+  ) {}
 
   @Public()
   @ApiOperation({ summary: 'Регистрация нового пользователя' })
@@ -57,7 +155,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(dto.email, dto.password);
-    setRefreshCookie(res, result.refresh_token);
+    const cookieOptions = setAuthCookies(res, this.configService, result);
+    setCsrfCookie(res, this.configService, cookieOptions.access.maxAge);
     return result;
   }
 
@@ -73,8 +172,17 @@ export class AuthController {
   ) {
     if (!req.user) throw new UnauthorizedException('Invalid credentials');
     const result = await this.authService.login(req.user);
-    setRefreshCookie(res, result.refresh_token);
+    const cookieOptions = setAuthCookies(res, this.configService, result);
+    setCsrfCookie(res, this.configService, cookieOptions.access.maxAge);
     return result;
+  }
+
+  @Public()
+  @Get('csrf')
+  @HttpCode(204)
+  rotateCsrf(@Res({ passthrough: true }) res: Response) {
+    const cookieOptions = buildCookieOptions(this.configService);
+    setCsrfCookie(res, this.configService, cookieOptions.access.maxAge);
   }
 
   @ApiBearerAuth('access-token')
@@ -97,12 +205,13 @@ export class AuthController {
     @Req() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies[COOKIE_NAME];
+    const refreshToken = req.cookies?.[REFRESH_COOKIE];
     const result = await this.authService.rotateRefreshToken(
       req.user.id,
       refreshToken,
     );
-    setRefreshCookie(res, result.refresh_token);
+    const cookieOptions = setAuthCookies(res, this.configService, result);
+    setCsrfCookie(res, this.configService, cookieOptions.access.maxAge);
     return result;
   }
 
@@ -115,7 +224,8 @@ export class AuthController {
     @Req() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    res.clearCookie(COOKIE_NAME, { path: '/api/v1/auth' });
+    clearAuthCookies(res, this.configService);
+    clearCsrfCookie(res, this.configService);
     await this.authService.revokeAllUserSessions(req.user.id);
     return { success: true };
   }

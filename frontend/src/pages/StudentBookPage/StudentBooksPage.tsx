@@ -6,6 +6,7 @@ import { TextBookProps } from "../../types/TextBook";
 import styles from "./StudentBooksPage.module.css";
 import useScrollToTop from "../../hooks/useScrollToTop";
 import TextbookFilters from "../../components/TextbookFilters";
+import SkeletonCard from "../../components/SkeletonCard";
 
 const StudentBooksPage: React.FC = () => {
   useScrollToTop();
@@ -75,41 +76,11 @@ const StudentBooksPage: React.FC = () => {
       />
 
       {loading ? (
-        <>
-          <div className={styles.topSection}>
-            <div className={`${styles.skeletonCard} ${styles.skeletonBig}`}>
-              <div className={styles.skeletonCover}></div>
-              <div className={styles.skeletonContent}>
-                <div className={styles.skeletonLine}></div>
-                <div className={styles.skeletonLineShort}></div>
-                <div className={styles.skeletonLineShort}></div>
-                <div className={styles.skeletonLine}></div>
-                <div className={styles.skeletonLine}></div>
-              </div>
-            </div>
-            <div className={`${styles.skeletonCard} ${styles.skeletonSmall}`}>
-              <div className={styles.skeletonCover}></div>
-            </div>
-          </div>
-          <div className={styles.remainingSection}>
-            <h2 className={styles.sectionTitle}>Остальные учебники</h2>
-            <div className={styles.booksGrid}>
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className={`${styles.skeletonCard} ${styles.skeletonMiddle}`}>
-                  <div className={styles.skeletonCover}></div>
-                  <div className={styles.skeletonContent}>
-                    <div className={styles.skeletonLine}></div>
-                    <div className={styles.skeletonLineShort}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <SkeletonCard variant="textbook" count={7} layout="grid" />
       ) : books.length === 0 ? (
         <div className={styles.noResults}>Учебники не найдены</div>
       ) : (
-        <>
+        <div className={styles.fadeIn}>
           <div className={styles.topSection}>
             {bigBook && <StudentBookCard type="big" book={bigBook} />}
             {smallBook && <StudentBookCard type="small" book={smallBook} />}
@@ -131,7 +102,7 @@ const StudentBooksPage: React.FC = () => {
             totalPages={totalPages}
             onPageChange={setPage}
           />
-        </>
+        </div>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import styles from "./DialectPage.module.css";
 import { Media } from "../types/media";
 import useScrollToTop from "../hooks/useScrollToTop";
 import { api } from "../api/auth";
+import SkeletonCard from "../components/SkeletonCard";
 
 interface Topic {
   id: number;
@@ -233,11 +234,7 @@ const DialectPage = () => {
 
       {/* Контент */}
       {loading && !loadedOnce && (
-        <div className={styles.skeletonGrid}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className={styles.skeletonCard}></div>
-          ))}
-        </div>
+        <SkeletonCard variant="dialect" count={6} layout="grid" />
       )}
 
       {!loading && loadedOnce && visibleCount === 0 && (
@@ -245,7 +242,7 @@ const DialectPage = () => {
       )}
 
       {!loading && visibleCount > 0 && (
-        <div className={isSingleFiltered ? styles.gridSingle : styles.grid}>
+        <div className={`${isSingleFiltered ? styles.gridSingle : styles.grid} ${styles.fadeIn}`}>
           {filteredMedia.map((m) => (
             <DialectCard key={m.id} media={m} activeTopics={filters.topics} />
           ))}

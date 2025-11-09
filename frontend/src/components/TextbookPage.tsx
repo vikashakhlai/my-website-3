@@ -8,6 +8,8 @@ import { useFavorites } from "../hooks/useFavorites";
 import { StarRating } from "./StarRating";
 import { CommentsSection } from "./CommentsSection";
 import { api } from "../api/auth";
+import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useAuth } from "../context/AuthContext";
 
 export interface Textbook {
   id: number;
@@ -32,6 +34,8 @@ const TextbookPage = () => {
   const [error, setError] = useState<string | null>(null);
   const { favorites, toggleFavorite } = useFavorites("textbook");
   const [localFavorite, setLocalFavorite] = useState(false);
+  const requireAuth = useRequireAuth();
+  const { isAuthenticated } = useAuth();
 
   useScrollToTop();
 
@@ -69,6 +73,8 @@ const TextbookPage = () => {
 
   const handleToggleFavorite = async () => {
     if (!textbook) return;
+    if (!requireAuth()) return;
+
     const wasFavorite = favorites.some((f) => f.id === textbook.id);
     await toggleFavorite(textbook);
     setLocalFavorite(!wasFavorite);
@@ -78,7 +84,8 @@ const TextbookPage = () => {
   useEffect(() => {
     if (!id) return;
     const eventSource = new EventSource(
-      `/api-nest/textbooks/stream/${id}/rating`
+      `/api-nest/textbooks/stream/${id}/rating`,
+      { withCredentials: true }
     );
 
     eventSource.onmessage = (event) => {
@@ -158,33 +165,38 @@ const TextbookPage = () => {
           </div>
 
           {/* 📘 Кнопка скачивания PDF */}
-          {/* 📘 Кнопка скачивания PDF */}
           {textbook.pdf_url ? (
-            textbook.canDownload ? (
-              <button
-                className="download-btn"
-                onClick={async () => {
-                  try {
-                    const { data } = await api.get(
-                      `/textbooks/${textbook.id}/download`
-                    );
-                    window.location.href = data.url; // реальный файл
-                  } catch (e) {
-                    alert("Ошибка: не удалось скачать файл");
-                    console.error(e);
+            <button
+              className={`download-btn${
+                textbook.canDownload ? "" : " locked"
+              }`}
+              onClick={async () => {
+                if (!requireAuth()) return;
+
+                if (!textbook.canDownload) {
+                  alert("У вас нет доступа к загрузке этого файла.");
+                  return;
+                }
+
+                try {
+                  const { data } = await api.get(
+                    `/textbooks/${textbook.id}/download`
+                  );
+                  if (data?.url) {
+                    window.location.href = data.url;
                   }
-                }}
-              >
-                📘 Скачать PDF
-              </button>
-            ) : (
-              <button
-                className="download-btn locked"
-                onClick={() => (window.location.href = "/Login")}
-              >
-                🔒 Войти, чтобы скачать
-              </button>
-            )
+                } catch (e) {
+                  alert("Ошибка: не удалось скачать файл");
+                  console.error(e);
+                }
+              }}
+            >
+              {textbook.canDownload
+                ? "📘 Скачать PDF"
+                : isAuthenticated
+                ? "🔒 Недоступно"
+                : "🔒 Войти, чтобы скачать"}
+            </button>
           ) : (
             <p className="no-pdf">PDF не доступен</p>
           )}

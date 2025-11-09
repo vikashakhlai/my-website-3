@@ -12,6 +12,7 @@ import { UserModule } from '../user/user.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { LoginAttemptsService } from './login-attempts.service';
 
 @Module({
   imports: [
@@ -33,7 +34,13 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
   ],
 
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    LoginAttemptsService,
+  ],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

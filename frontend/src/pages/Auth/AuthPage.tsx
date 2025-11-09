@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -16,6 +16,7 @@ export default function AuthPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error" | null>(null);
@@ -44,18 +45,27 @@ export default function AuthPage() {
 
       const res = await api.post(endpoint, payload);
 
-      const token = res.data?.access_token;
-      if (!token) throw new Error("Токен не получен от сервера");
+      await login();
 
-      // ✅ login() только обновляет контекст
-      await login(token);
+      const rawReturn = searchParams.get("returnTo");
+      let next = "/";
+      if (rawReturn) {
+        try {
+          const decoded = decodeURIComponent(rawReturn);
+          if (decoded.startsWith("/")) {
+            next = decoded;
+          }
+        } catch (e) {
+          console.warn("Некорректный returnTo параметр", e);
+        }
+      }
 
       showToast(
         isRegister ? "Регистрация прошла успешно!" : "Вы успешно вошли!",
         "success"
       );
 
-      navigate("/");
+      navigate(next, { replace: true });
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||

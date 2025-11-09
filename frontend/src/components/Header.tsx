@@ -28,8 +28,8 @@ const Header = () => {
         <div className="auth-buttons">
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="user-email">
-                {user?.email || "Личный кабинет"}
+              <Link to="/account" className="btn btn-primary header-account-link">
+                Мой Оазис
               </Link>
               <button
                 onClick={handleLogout}

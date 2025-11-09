@@ -1,5 +1,5 @@
 // src/context/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api, setUnauthorizedHandler } from "../api/auth";
 import Loader from "../components/Loader";
 
@@ -13,8 +13,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (token: string) => Promise<void>;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,36 +24,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialLoadRef = useRef(true);
 
-  // 🔁 Проверяем токен при перезагрузке страницы
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+  const fetchCurrentUser = async () => {
+    try {
+      const { data } = await api.get<User>("/auth/me");
+      setUser(data);
+    } catch (err) {
+      setUser(null);
+      throw err;
+    } finally {
       setLoading(false);
-      return;
+      initialLoadRef.current = false;
     }
+  };
 
-    (async () => {
-      try {
-        const { data } = await api.get<User>("/auth/me");
-        setUser(data);
-      } catch {
-        localStorage.removeItem("token");
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  useEffect(() => {
+    fetchCurrentUser().catch(() => {
+      // handled in fetchCurrentUser
+    });
   }, []);
 
-  // 🔐 Настраиваем обработчик 401 ошибок
   useEffect(() => {
     const handleUnauthorized = () => {
-      localStorage.removeItem("token");
+      const isInitial = initialLoadRef.current;
+      initialLoadRef.current = false;
       setUser(null);
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      setLoading(false);
+
+      if (isInitial) {
+        return;
       }
+
+      const path = window.location.pathname;
+      if (path.startsWith("/login") || path.startsWith("/register")) {
+        return;
+      }
+
+      const returnTo = encodeURIComponent(
+        `${path}${window.location.search}${window.location.hash}` || "/"
+      );
+      window.location.href = `/login?returnTo=${returnTo}`;
     };
 
     setUnauthorizedHandler(handleUnauthorized);
@@ -63,27 +74,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  // 🔐 Логин (сюда приходит token, как и раньше)
-  const login = async (token: string) => {
-    try {
-      localStorage.setItem("token", token);
-
-      const { data } = await api.get<User>("/auth/me");
-      setUser(data);
-    } catch (err) {
-      console.error("Ошибка входа:", err);
-      localStorage.removeItem("token");
-      setUser(null);
-    }
+  const login = async () => {
+    setLoading(true);
+    await fetchCurrentUser().catch(() => {
+      // errors handled inside fetchCurrentUser
+    });
   };
 
-  // 🚪 Выход - перенаправляем на страницу входа
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    // Используем window.location для надежного редиректа
-    if (window.location.pathname !== "/login") {
-      window.location.href = "/login";
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (err) {
+      console.error("Ошибка выхода:", err);
+    } finally {
+      setUser(null);
+      setLoading(false);
+      initialLoadRef.current = false;
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
   };
 

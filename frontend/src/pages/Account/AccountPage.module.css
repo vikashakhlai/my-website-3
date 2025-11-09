@@ -1,0 +1,128 @@
+.layout {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+  padding: var(--space-8) var(--space-4);
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: var(--border-radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.subtitle {
+  color: rgba(58, 58, 72, 0.85);
+  font-size: var(--font-size-base);
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.oasisButton {
+  color: var(--color-text-inverse) !important;
+  padding-inline: var(--space-5);
+}
+
+.oasisButton:hover,
+.oasisButton:focus {
+  color: var(--color-text-inverse) !important;
+}
+
+.settingsLink {
+  border-radius: var(--border-radius-full);
+  padding-inline: var(--space-4);
+}
+
+.settingsActive {
+  background: rgba(99, 102, 241, 0.16) !important;
+  color: var(--color-primary) !important;
+  border-color: rgba(99, 102, 241, 0.16) !important;
+}
+
+.card {
+  background: var(--color-bg);
+  border-radius: var(--border-radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    padding: var(--space-6) var(--space-3);
+  }
+
+  .title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .header {
+    padding: var(--space-5);
+  }
+
+  .tabs {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .oasisButton,
+  .settingsLink {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

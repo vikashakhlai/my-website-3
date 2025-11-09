@@ -15,6 +15,7 @@ import { StarRating } from "./StarRating";
 import { api } from "../api/auth";
 import BookGallery from "./BookGallery";
 import Loader from "../components/Loader";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
 const PersonalityPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ const PersonalityPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { favorites, toggleFavorite } = useFavorites("personality");
+  const requireAuth = useRequireAuth();
 
   useScrollToTop();
 
@@ -58,7 +60,8 @@ const PersonalityPage = () => {
   useEffect(() => {
     if (!id) return;
     const eventSource = new EventSource(
-      `/api-nest/personalities/stream/${id}/rating`
+      `/api-nest/personalities/stream/${id}/rating`,
+      { withCredentials: true }
     );
 
     eventSource.onmessage = (event) => {
@@ -123,7 +126,10 @@ const PersonalityPage = () => {
             <div className={styles.favoriteButtonWrapper}>
               <FavoriteButton
                 isFavorite={isFavorite}
-                onToggle={() => toggleFavorite(personality)}
+                onToggle={() => {
+                  if (!requireAuth()) return;
+                  toggleFavorite(personality);
+                }}
                 variant="corner"
               />
             </div>

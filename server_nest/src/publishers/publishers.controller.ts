@@ -23,6 +23,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { PublishersService } from './publishers.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';

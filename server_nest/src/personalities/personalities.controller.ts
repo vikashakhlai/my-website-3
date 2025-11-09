@@ -192,6 +192,7 @@ export class PersonalitiesController {
     description: 'Список личностей успешно получен',
   })
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get()
   async findAll(
     @Query('page') page = '1',

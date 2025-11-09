@@ -4,12 +4,17 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../../user/user.service';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 
 interface JwtPayload {
   sub: string;
   role: string;
   jti?: string;
   tokenVersion?: number;
+}
+
+function cookieExtractor(req: Request) {
+  return req?.cookies?.['access_token'] ?? null;
 }
 
 @Injectable()
@@ -19,7 +24,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly config: ConfigService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
       issuer: 'your-app',
@@ -31,7 +39,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const user = await this.userService.findById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
 
-    // опционально: инвалидировать access при изменении tokenVersion
     if (
       user.tokenVersion &&
       payload.tokenVersion &&

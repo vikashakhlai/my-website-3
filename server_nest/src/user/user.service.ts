@@ -10,6 +10,7 @@ import { User, AccessLevel } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/auth/roles.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -151,5 +152,29 @@ export class UserService {
 
     await this.userRepository.save(user);
     return user;
+  }
+
+  async changePassword(
+    userId: string,
+    { oldPassword, newPassword }: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'password', 'tokenVersion'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const isValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isValid) {
+      throw new BadRequestException('Invalid current password');
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.tokenVersion = Date.now();
+
+    await this.userRepository.save(user);
   }
 }

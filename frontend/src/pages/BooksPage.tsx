@@ -6,6 +6,7 @@ import { Book } from "../types/Book";
 import { api } from "../api/auth";
 import BookFilters from "../components/BookFilters";
 import Loader from "../components/Loader";
+import SkeletonCard from "../components/SkeletonCard";
 
 type TagDto = { id: number; name: string };
 type AuthorDto = { id: number; full_name: string };
@@ -147,17 +148,7 @@ const BooksPage = () => {
         {error ? (
           <p className={styles.error}>{error}</p>
         ) : loading ? (
-          <div className={styles.gridPlaceholder}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="skeletonCard">
-                <div className="skeletonCover">
-                  <div className="skeletonTheme"></div>
-                </div>
-                <div className="skeletonTitle"></div>
-                <div className="skeletonTitleShort"></div>
-              </div>
-            ))}
-          </div>
+          <SkeletonCard variant="book" count={12} layout="grid" />
         ) : (
           <div className={styles.fadeIn}>
             <BookList books={books} />

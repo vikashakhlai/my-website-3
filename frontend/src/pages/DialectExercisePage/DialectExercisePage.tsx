@@ -9,6 +9,7 @@ import DialogueCompare from "../../components/DialogueCompare";
 import BackZone from "../../components/BackZone";
 import FavoriteButton from "../../components/FavoriteButton";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { StarRating } from "../../components/StarRating";
 import { CommentsSection } from "../../components/CommentsSection";
 import { api } from "../../api/auth";
@@ -40,6 +41,7 @@ export default function DialectExercisePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
 
   const [media, setMedia] = useState<MediaWithRating | null>(null);
   const [dialogue, setDialogue] = useState<Dialogue | null>(null);
@@ -135,16 +137,13 @@ export default function DialectExercisePage() {
     if (esRef.current) esRef.current.close();
     if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-
     let stopped = false;
 
     const connect = () => {
       if (stopped) return;
 
-      const url = `${apiBase}/media/stream/${id}/rating?token=${token}`;
-      const es = new EventSource(url);
+      const url = `${apiBase}/media/stream/${id}/rating`;
+      const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 
       es.onmessage = (ev) => {
@@ -181,21 +180,32 @@ export default function DialectExercisePage() {
   // ===== 3) Favorite toggle =====
   const handleToggleFavorite = async () => {
     if (!media) return;
+    if (!isAuthenticated) {
+      showToast("Войдите, чтобы управлять избранным", "info");
+      return;
+    }
     try {
       if (fav) {
         await api.delete("/favorites", {
           data: { targetType: "media", targetId: media.id },
         });
         setFav(false);
+        showToast("Материал удалён из избранного", "info");
       } else {
         await api.post("/favorites", {
           targetType: "media",
           targetId: media.id,
         });
         setFav(true);
+        showToast("Материал успешно добавлен в ваш Оазис", "success");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Ошибка избранного:", e);
+      if (e?.response?.status === 409) {
+        showToast("Материал уже есть в избранном", "error");
+      } else {
+        showToast("Не удалось обновить избранное", "error");
+      }
     }
   };
 

@@ -1,14 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  Request,
-  ParseIntPipe,
-  Sse,
+  Controller,
+  Delete,
+  Get,
   MessageEvent,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  Sse,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -150,6 +151,22 @@ export class RatingsController {
       RatingStatsDto,
       await this.ratingsService.getAverage(target_type, target_id),
     );
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Популярное сейчас',
+    description: 'Возвращает список объектов с наивысшими рейтингами. Публичный эндпоинт.',
+  })
+  @ApiOkResponse({
+    description: 'Список трендовых элементов',
+  })
+  @Get('trending')
+  async getTrending(@Query('limit') limit?: string) {
+    const parsed = Number(limit);
+    const resolvedLimit =
+      Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 20) : 10;
+    return this.ratingsService.getTrendingWithData(resolvedLimit);
   }
 
   /** 🔁 Live-обновление рейтинга через SSE */

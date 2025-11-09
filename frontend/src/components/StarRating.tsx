@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { api } from "../api/auth";
 import styles from "./StarRating.module.css";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
 interface StarRatingProps {
   targetType: "book" | "article" | "media" | "personality" | "textbook";
@@ -24,6 +25,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
   const [average, setAverage] = useState(initialAverage ?? 0);
   const [votes, setVotes] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const requireAuth = useRequireAuth();
 
   // 🧩 Обновление состояния при изменении targetId или props
   useEffect(() => {
@@ -59,6 +61,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
   // 🧩 Отправка оценки
   const handleClick = async (value: number) => {
     if (loading) return;
+    if (!requireAuth()) return;
+
     setLoading(true);
 
     try {
@@ -92,7 +96,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
         import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "/api-nest";
 
       const url = `${apiBase}/ratings/stream/${targetType}/${targetId}`;
-      eventSource = new EventSource(url);
+      eventSource = new EventSource(url, { withCredentials: true });
 
       eventSource.onopen = () => {
         console.info(`✅ Подключено к SSE для ${targetType} #${targetId}`);

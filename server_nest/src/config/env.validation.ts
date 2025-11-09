@@ -103,15 +103,7 @@ export const envValidationSchema = Joi.object({
     })
     .description('Секретный ключ для подписи access токенов (минимум 32 символа в production, 16 в development)'),
 
-  JWT_EXPIRES_IN: Joi.string()
-    .optional()
-    .description('Устаревший: время жизни JWT токена (используется как fallback для JWT_ACCESS_EXPIRES_IN)'),
-
   JWT_ACCESS_TTL: Joi.string()
-    .optional()
-    .description('Устаревший: время жизни access токена (используется как fallback для JWT_ACCESS_EXPIRES_IN)'),
-
-  JWT_ACCESS_EXPIRES_IN: Joi.string()
     .optional()
     .default('15m')
     .description('Время жизни access токена (например: 15m, 1h, 7d)'),
@@ -135,12 +127,8 @@ export const envValidationSchema = Joi.object({
 
   JWT_REFRESH_TTL: Joi.string()
     .optional()
-    .description('Устаревший: время жизни refresh токена (используется как fallback для JWT_REFRESH_EXPIRES_IN)'),
-
-  JWT_REFRESH_EXPIRES_IN: Joi.string()
-    .optional()
-    .default('7d')
-    .description('Время жизни refresh токена (например: 15m, 1h, 7d)'),
+    .default('30d')
+    .description('Время жизни refresh токена (например: 7d, 30d)'),
 })
   .unknown(true) // Разрешаем системные переменные окружения (Windows, Linux, etc.)
   .custom((value, helpers) => {
