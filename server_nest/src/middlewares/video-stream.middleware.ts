@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { createReadStream, statSync } from 'fs';
-import { join } from 'path';
+import { extname, join, normalize } from 'path';
 
 export function videoStreamMiddleware(req: Request, res: Response) {
   res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
@@ -28,16 +28,25 @@ export function videoStreamMiddleware(req: Request, res: Response) {
   );
 
   const { dialect, filename } = req.params;
-  const videoPath = join(
-    __dirname,
-    '..',
-    '..',
-    'uploads',
-    'dialect',
-    dialect,
-    'videos',
-    filename,
-  );
+
+  if (!dialect || !filename) {
+    return res
+      .status(400)
+      .send('Некорректный запрос: отсутствует dialect или filename');
+  }
+
+  const baseDir = join(__dirname, '..', '..', 'uploads', 'dialect');
+  const videoPath = normalize(join(baseDir, dialect, 'videos', filename));
+
+  if (!videoPath.startsWith(baseDir)) {
+    return res.status(400).send('Недопустимый путь к файлу');
+  }
+
+  const ext = extname(videoPath).toLowerCase();
+  const allowedVideoExt = ['.mp4', '.m4v', '.webm', '.mkv', '.avi', '.mov'];
+  if (!allowedVideoExt.includes(ext)) {
+    return res.status(400).send('Неподдерживаемый формат видео');
+  }
 
   try {
     const stat = statSync(videoPath);
@@ -69,7 +78,7 @@ export function videoStreamMiddleware(req: Request, res: Response) {
     res.writeHead(206, headers);
     file.pipe(res);
   } catch (err) {
-    console.error('❌ Ошибка при отдаче видео:', err);
+    console.error('Ошибка при отдаче видео:', err);
     res.status(404).send('Видео не найдено');
   }
 }

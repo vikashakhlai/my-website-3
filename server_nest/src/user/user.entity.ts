@@ -47,7 +47,19 @@ export class User {
   accessLevel!: AccessLevel;
 
   @Column({ type: 'text', nullable: true })
-  refreshTokenHash!: string | null;
+  refreshTokenHash?: string; // ← изменено на ?string
+
+  @Column({ nullable: true })
+  refreshTokenUserId?: string;
+
+  @Column({ nullable: true })
+  refreshTokenUserAgent?: string;
+
+  @Column({ nullable: true })
+  refreshTokenIp?: string;
+
+  @Column({ nullable: true })
+  refreshTokenExp?: Date;
 
   @Column({ type: 'bigint', nullable: true })
   tokenVersion?: number;

@@ -17,7 +17,6 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
-  // если есть nginx/ingress — важен для реального IP
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(cookieParser());

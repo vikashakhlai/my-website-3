@@ -1,4 +1,3 @@
-// src/auth/auth.controller.ts
 import {
   Body,
   Controller,
@@ -43,6 +42,13 @@ function setRefreshCookie(res: Response, token: string) {
   });
 }
 
+function getClientInfo(req: Request) {
+  return {
+    ip: req.ip || req.connection.remoteAddress || undefined,
+    userAgent: req.headers['user-agent'] || undefined,
+  };
+}
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -55,9 +61,15 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.register(dto.email, dto.password);
+    const clientInfo = getClientInfo(req);
+    const result = await this.authService.register(
+      dto.email,
+      dto.password,
+      clientInfo,
+    );
     setRefreshCookie(res, result.refresh_token);
     return result;
   }
@@ -73,8 +85,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() loginDto: LoginDto,
   ): Promise<AuthTokens> {
-    // if (!req.user) throw new UnauthorizedException('Invalid credentials');
-    const result = await this.authService.login(req.user);
+    const clientInfo = getClientInfo(req);
+    const result = await this.authService.login(req.user, clientInfo);
     setRefreshCookie(res, result.refresh_token);
     return result;
   }
@@ -82,6 +94,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Профиль пользователя по access-токену' })
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Get('me')
   getProfile(@Req() req: RequestWithUser): UserResponseDto {
     if (!req.user) throw new UnauthorizedException('Token is invalid');
@@ -97,9 +110,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const refreshToken = req.cookies[COOKIE_NAME];
+    const clientInfo = getClientInfo(req);
     const result = await this.authService.rotateRefreshToken(
       req.user.id,
       refreshToken,
+      clientInfo,
     );
     setRefreshCookie(res, result.refresh_token);
     return result;
@@ -107,6 +122,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Выход (очистка refresh cookie и отзыв сессий)' })
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('logout')
   async logout(
     @Req() req: RequestWithUser,

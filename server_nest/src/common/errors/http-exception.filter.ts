@@ -27,7 +27,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? { message: responseBody }
         : (responseBody as Record<string, unknown>);
 
-    // Никогда не отдаём stack/внутренние детали наружу в prod
     const safe = {
       statusCode: status,
       path: req.originalUrl,
@@ -36,7 +35,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ...payload,
     };
 
-    // Можно логгировать exception отдельно (Sentry/ELK), но не выдавать клиенту
     res.status(status).json(safe);
     console.error(exception);
   }

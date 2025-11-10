@@ -112,9 +112,9 @@ export class MediaController {
     const result = await this.mediaService.findOneWithRating(id, req.user.id);
 
     const dto = mapToDto(MediaWithRatingResponseDto, result);
-    dto.averageRating = (result as any).averageRating;
-    dto.votes = (result as any).votes;
-    dto.userRating = (result as any).userRating ?? null;
+    dto.averageRating = result.averageRating;
+    dto.votes = result.votes;
+    dto.userRating = result.userRating ?? null;
 
     return dto;
   }

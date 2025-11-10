@@ -254,7 +254,6 @@ export class MediaService {
 
       if (dto.dialectId !== undefined) {
         media.dialectId = dto.dialectId || null;
-        media.dialect = dto.dialectId ? ({ id: dto.dialectId } as any) : null;
       }
 
       if (dto.topicIds !== undefined) {
